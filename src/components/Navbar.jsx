@@ -227,7 +227,7 @@ function NavBar({ user }) {
 
             {/* Settings Link */}
             <Link
-              to="/Settings"
+              to="/settings"
               onClick={() => setMenuOpen(false)}
               className="flex items-center space-x-3 py-3 px-4 text-gray-700 hover:text-gray-600 hover:bg-gray-50 rounded-xl transition-all duration-200 group"
             >
