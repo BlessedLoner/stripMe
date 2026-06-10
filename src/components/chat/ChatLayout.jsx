@@ -357,12 +357,29 @@ export default function ChatLayout() {
   // *************************
   const notificationSoundRef = useRef(null);
 
-  useEffect(() => {
-    notificationSoundRef.current = new Audio("/notification.mp3");
-  }, []);
+  // useEffect(() => {
+  //   notificationSoundRef.current = new Audio("/notification.mp3");
+  // }, []);
 
   useEffect(() => {
-    if (Notification.permission === "default") {
+    try {
+      notificationSoundRef.current = new Audio("/notification.mp3");
+    } catch (err) {
+      console.error("Audio init failed:", err);
+    }
+  }, []);
+
+  // useEffect(() => {
+  //   if (Notification.permission === "default") {
+  //     Notification.requestPermission();
+  //   }
+  // }, []);
+
+  useEffect(() => {
+    if (
+      typeof Notification !== "undefined" &&
+      Notification.permission === "default"
+    ) {
       Notification.requestPermission();
     }
   }, []);
@@ -418,10 +435,16 @@ export default function ChatLayout() {
 
           if (notificationSoundRef.current) {
             notificationSoundRef.current.currentTime = 0;
-            notificationSoundRef.current.play().catch(() => {});
+            notificationSoundRef.current.play().catch((err) => {
+              console.error("Sound play failed:", err);
+            });
           }
 
-          if (Notification.permission === "granted" && document.hidden) {
+          if (
+            typeof Notification !== "undefined" &&
+            Notification.permission === "granted" &&
+            document.hidden
+          ) {
             new Notification("New message", {
               body: `${senderName} sent you a message`,
               icon: "/favicon.ico",
@@ -484,7 +507,11 @@ export default function ChatLayout() {
     return result;
   }, [conversations, flirtConversations, filter, searchTerm]);
 
-  const totalUnread = conversations.reduce((sum, c) => sum + c.unread_count, 0);
+  // const totalUnread = conversations.reduce((sum, c) => sum + c.unread_count, 0);
+  const totalUnread = conversations.reduce(
+    (sum, c) => sum + (c.unread_count || 0),
+    0,
+  );
 
   /* ============================= */
   /* 5️⃣ Mark As Read */
@@ -507,17 +534,50 @@ export default function ChatLayout() {
   /* ============================= */
   /* 6️⃣ UI */
   /* ============================= */
-  const getInitials = (name) => {
+  // const getInitials = (name) => {
+  //   return name
+  //     .split(" ")
+  //     .map((word) => word[0])
+  //     .join("")
+  //     .toUpperCase()
+  //     .slice(0, 2);
+  // };
+
+  const getInitials = (name = "") => {
     return name
       .split(" ")
-      .map((word) => word[0])
+      .map((word) => word[0] || "")
       .join("")
       .toUpperCase()
       .slice(0, 2);
   };
 
+  // const formatTime = (dateString) => {
+  //   const date = new Date(dateString);
+  //   const now = new Date();
+  //   const diffInHours = (now - date) / (1000 * 60 * 60);
+
+  //   if (diffInHours < 24) {
+  //     return date.toLocaleTimeString([], {
+  //       hour: "2-digit",
+  //       minute: "2-digit",
+  //     });
+  //   } else if (diffInHours < 48) {
+  //     return "Yesterday";
+  //   } else {
+  //     return date.toLocaleDateString([], { month: "short", day: "numeric" });
+  //   }
+  // };
+
   const formatTime = (dateString) => {
+    if (!dateString) return "";
+
     const date = new Date(dateString);
+
+    if (isNaN(date.getTime())) {
+      return "";
+    }
+
     const now = new Date();
     const diffInHours = (now - date) / (1000 * 60 * 60);
 
@@ -528,9 +588,12 @@ export default function ChatLayout() {
       });
     } else if (diffInHours < 48) {
       return "Yesterday";
-    } else {
-      return date.toLocaleDateString([], { month: "short", day: "numeric" });
     }
+
+    return date.toLocaleDateString([], {
+      month: "short",
+      day: "numeric",
+    });
   };
 
   const handleToggleFavoriteFromList = async (e, conversation) => {
