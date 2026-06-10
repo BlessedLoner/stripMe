@@ -150,7 +150,7 @@ function NavBar({ user }) {
 
             {/* Chat Link */}
             <Link
-              to="/Chat"
+              to="/chat"
               onClick={() => setMenuOpen(false)}
               className="flex items-center space-x-3 py-3 px-4 text-gray-700 hover:text-green-600 hover:bg-green-50 rounded-xl transition-all duration-200 group"
             >
