@@ -1,0 +1,183 @@
+/* MemberSpinner.css */
+.spinner-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.love-spinner {
+  position: relative;
+  width: 30px;
+  height: 30px;
+  margin-bottom: 1rem;
+}
+
+.heart-shape {
+  position: absolute;
+  width: 50px;
+  height: 50px;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: linear-gradient(45deg, #cc2c2c, #ce303d);
+  animation: heartbeat 1.5s ease-in-out infinite;
+}
+
+.heart-shape:before,
+.heart-shape:after {
+  content: "";
+  position: absolute;
+  width: 50px;
+  height: 50px;
+  background: linear-gradient(45deg, #cc2c2c, #ce303d);
+  border-radius: 50%;
+}
+
+.heart-shape:before {
+  top: -30px;
+  left: 0;
+}
+
+.heart-shape:after {
+  top: 0;
+  left: 30px;
+}
+
+.heart-shape {
+  transform: translate(-50%, -50%) rotate(-45deg);
+}
+
+/* Sparkles */
+.sparkle {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background: #fff;
+  border-radius: 50%;
+  animation: sparkle 2s ease-in-out infinite;
+}
+
+.s1 {
+  top: 10px;
+  left: 20px;
+  animation-delay: 0s;
+}
+.s2 {
+  top: 60px;
+  left: 10px;
+  animation-delay: 0.6s;
+}
+.s3 {
+  top: 40px;
+  left: 65px;
+  animation-delay: 1.2s;
+}
+
+/* Pulse rings */
+.pulse-ring {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 80px;
+  height: 80px;
+  border: 2px solid rgba(255, 107, 157, 0.3);
+  border-radius: 50%;
+  animation: lovePulse 2s ease-out infinite;
+}
+
+.delay-1 {
+  animation-delay: 0.6s;
+  width: 100px;
+  height: 100px;
+}
+
+.delay-2 {
+  animation-delay: 1.2s;
+  width: 120px;
+  height: 120px;
+}
+
+.loading-text {
+  color: #ff6b9d;
+  font-family: "Arial", sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  margin-top: 1rem;
+  text-align: center;
+  animation: textPulse 2s ease-in-out infinite;
+}
+
+/* Animations */
+@keyframes heartbeat {
+  0%,
+  100% {
+    transform: translate(-50%, -50%) rotate(-45deg) scale(1);
+  }
+  25% {
+    transform: translate(-50%, -50%) rotate(-45deg) scale(1.1);
+  }
+  50% {
+    transform: translate(-50%, -50%) rotate(-45deg) scale(1);
+  }
+  75% {
+    transform: translate(-50%, -50%) rotate(-45deg) scale(1.05);
+  }
+}
+
+@keyframes lovePulse {
+  0% {
+    transform: translate(-50%, -50%) scale(0.8);
+    opacity: 1;
+    border-color: rgba(255, 107, 157, 0.8);
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1.5);
+    opacity: 0;
+    border-color: rgba(255, 107, 157, 0.1);
+  }
+}
+
+@keyframes sparkle {
+  0%,
+  100% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1);
+    opacity: 1;
+    box-shadow: 0 0 10px #fff;
+  }
+}
+
+@keyframes textPulse {
+  0%,
+  100% {
+    opacity: 0.7;
+  }
+  50% {
+    opacity: 1;
+    text-shadow: 0 0 10px rgba(255, 107, 157, 0.5);
+  }
+}
+
+/* Optional: Add some romantic glow */
+.love-spinner::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100px;
+  height: 100px;
+  background: radial-gradient(
+    circle,
+    rgba(255, 107, 157, 0.2) 0%,
+    transparent 70%
+  );
+  filter: blur(10px);
+  z-index: -1;
+}
