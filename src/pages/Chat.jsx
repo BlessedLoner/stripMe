@@ -592,7 +592,7 @@ export default function Chat() {
   }
 
   return (
-    <div className="h-[100dvh] flex flex-col bg-surface overflow-hidden">
+    <div className="h-[90dvh] flex flex-col bg-surface overflow-hidden">
       {/* Header */}
       <div className="p-3 border-b border-primary/10 bg-primary/10 flex items-center justify-between shrink-0 gap-2">
         <div className="flex items-center space-x-3 min-w-0 flex-1">
@@ -741,7 +741,7 @@ export default function Chat() {
               className={`flex ${isUser ? "justify-end" : "justify-start"}`}
             >
               <div
-                className={`max-w-xs rounded-2xl shadow-sm overflow-hidden ${
+                className={`max-w-[80%] sm:max-w-md rounded-2xl shadow-sm overflow-hidden ${
                   isUser
                     ? "bg-primary text-white rounded-br-sm"
                     : "bg-primary/10 text-black rounded-bl-sm"
@@ -931,7 +931,7 @@ export default function Chat() {
                 flex-1
                 border
                 border-primary
-                rounded-3xl 
+                rounded-full 
                 px-4
                 py-2
                 resize-none
