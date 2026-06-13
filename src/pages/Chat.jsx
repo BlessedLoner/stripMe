@@ -592,7 +592,7 @@ export default function Chat() {
   }
 
   return (
-    <div className="h-[90dvh] flex flex-col bg-surface overflow-hidden">
+    <div className="h-[95dvh] flex flex-col bg-surface overflow-hidden">
       {/* Header */}
       <div className="p-3 border-b border-primary/10 bg-primary/10 flex items-center justify-between shrink-0 gap-2">
         <div className="flex items-center space-x-3 min-w-0 flex-1">
