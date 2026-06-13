@@ -518,7 +518,6 @@ export default function ChatLayout() {
   /* ============================= */
 
   const handleConversationSelect = async (id) => {
-    setIsMobileListOpen(false);
     navigate(`/chat/${id}`);
 
     setConversations((prev) =>
@@ -905,9 +904,18 @@ export default function ChatLayout() {
         </div>
       </div>
 
-      {isMobileListOpen && !conversationId && (
+      {/* {isMobileListOpen && !conversationId && (
         <div
           className="fixed inset-0 bg-black/50 z-40 md:hidden"
+          onClick={() => setIsMobileListOpen(false)}
+          aria-hidden="true"
+        />
+      )} */}
+
+      {/* Overlay for mobile when list is open */}
+      {isMobileListOpen && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
           onClick={() => setIsMobileListOpen(false)}
           aria-hidden="true"
         />
