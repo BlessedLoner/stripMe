@@ -903,6 +903,33 @@ export default function ChatLayout() {
           )}
         </div>
       </div>
+
+      {/* Chat Area */}
+      <div
+        className={`
+            flex-1 flex flex-col overflow-hidden
+            ${!conversationId ? "hidden md:flex" : "flex"}
+          `}
+      >
+        {conversationId ? (
+          <Outlet context={{ onBack: () => setIsMobileListOpen(true) }} />
+        ) : (
+          <div className="md:flex flex-1 items-center bg-surface justify-center p-6">
+            <div className="text-center max-w-md">
+              <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-gray-100 flex items-center justify-center">
+                <MessageSquare size={32} className="text-gray-400" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-800 mb-2">
+                Select a conversation
+              </h3>
+              <p className="text-gray-500">
+                Choose a conversation from the list to start messaging, or
+                create a new one to begin.
+              </p>
+            </div>
+          </div>
+        )}
+      </div>
     </main>
   );
 }
