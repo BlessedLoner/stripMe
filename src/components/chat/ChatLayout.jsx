@@ -355,19 +355,19 @@ export default function ChatLayout() {
   }, [currentUser]);
 
   // *************************
-  const notificationSoundRef = useRef(null);
+  // const notificationSoundRef = useRef(null);
 
   // useEffect(() => {
   //   notificationSoundRef.current = new Audio("/notification.mp3");
   // }, []);
 
-  useEffect(() => {
-    try {
-      notificationSoundRef.current = new Audio("/notification.mp3");
-    } catch (err) {
-      console.error("Audio init failed:", err);
-    }
-  }, []);
+  // useEffect(() => {
+  //   try {
+  //     notificationSoundRef.current = new Audio("/notification.mp3");
+  //   } catch (err) {
+  //     console.error("Audio init failed:", err);
+  //   }
+  // }, []);
 
   // useEffect(() => {
   //   if (Notification.permission === "default") {
@@ -375,103 +375,103 @@ export default function ChatLayout() {
   //   }
   // }, []);
 
-  useEffect(() => {
-    if (
-      typeof Notification !== "undefined" &&
-      Notification.permission === "default"
-    ) {
-      Notification.requestPermission();
-    }
-  }, []);
+  // useEffect(() => {
+  //   if (
+  //     typeof Notification !== "undefined" &&
+  //     Notification.permission === "default"
+  //   ) {
+  //     Notification.requestPermission();
+  //   }
+  // }, []);
 
   /* ============================= */
   /* Real-Time Notification Subscription */
   /* ============================= */
-  useEffect(() => {
-    if (!currentUser) return;
+  // useEffect(() => {
+  //   if (!currentUser) return;
 
-    const channel = supabase
-      .channel("new-message-notifications")
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "messages",
-        },
-        async (payload) => {
-          const newMessage = payload.new;
+  //   const channel = supabase
+  //     .channel("new-message-notifications")
+  //     .on(
+  //       "postgres_changes",
+  //       {
+  //         event: "INSERT",
+  //         schema: "public",
+  //         table: "messages",
+  //       },
+  //       async (payload) => {
+  //         const newMessage = payload.new;
 
-          const { data: conversation, error: convError } = await supabase
-            .from("conversations")
-            .select("user_id")
-            .eq("id", newMessage.conversation_id)
-            .single();
+  //         const { data: conversation, error: convError } = await supabase
+  //           .from("conversations")
+  //           .select("user_id")
+  //           .eq("id", newMessage.conversation_id)
+  //           .single();
 
-          if (convError || !conversation) return;
+  //         if (convError || !conversation) return;
 
-          if (conversation.user_id !== currentUser.id) return;
+  //         if (conversation.user_id !== currentUser.id) return;
 
-          if (
-            newMessage.sender_type === "real_user" &&
-            newMessage.sender_user_id === currentUser.id
-          ) {
-            return;
-          }
+  //         if (
+  //           newMessage.sender_type === "real_user" &&
+  //           newMessage.sender_user_id === currentUser.id
+  //         ) {
+  //           return;
+  //         }
 
-          if (newMessage.conversation_id === conversationId) return;
+  //         if (newMessage.conversation_id === conversationId) return;
 
-          let senderName = "Someone";
-          if (newMessage.sender_type === "fictional") {
-            const { data: sender } = await supabase
-              .from("fictional_profiles")
-              .select("display_name")
-              .eq("id", newMessage.sender_fictional_id)
-              .single();
-            senderName = sender?.display_name || "Fictional user";
-          }
+  //         let senderName = "Someone";
+  //         if (newMessage.sender_type === "fictional") {
+  //           const { data: sender } = await supabase
+  //             .from("fictional_profiles")
+  //             .select("display_name")
+  //             .eq("id", newMessage.sender_fictional_id)
+  //             .single();
+  //           senderName = sender?.display_name || "Fictional user";
+  //         }
 
-          showToast(`${senderName} sent a message`);
+  //         showToast(`${senderName} sent a message`);
 
-          if (notificationSoundRef.current) {
-            notificationSoundRef.current.currentTime = 0;
-            notificationSoundRef.current.play().catch((err) => {
-              console.error("Sound play failed:", err);
-            });
-          }
+  //         if (notificationSoundRef.current) {
+  //           notificationSoundRef.current.currentTime = 0;
+  //           notificationSoundRef.current.play().catch((err) => {
+  //             console.error("Sound play failed:", err);
+  //           });
+  //         }
 
-          if (
-            typeof Notification !== "undefined" &&
-            Notification.permission === "granted" &&
-            document.hidden
-          ) {
-            new Notification("New message", {
-              body: `${senderName} sent you a message`,
-              icon: "/favicon.ico",
-            });
-          }
+  //         if (
+  //           typeof Notification !== "undefined" &&
+  //           Notification.permission === "granted" &&
+  //           document.hidden
+  //         ) {
+  //           new Notification("New message", {
+  //             body: `${senderName} sent you a message`,
+  //             icon: "/favicon.ico",
+  //           });
+  //         }
 
-          const { data: blockCheck } = await supabase
-            .from("blocked_profiles")
-            .select("id")
-            .eq("user_profile_id", currentUser.id)
-            .eq("blocked_fictional_id", newMessage.sender_fictional_id)
-            .maybeSingle();
+  //         const { data: blockCheck } = await supabase
+  //           .from("blocked_profiles")
+  //           .select("id")
+  //           .eq("user_profile_id", currentUser.id)
+  //           .eq("blocked_fictional_id", newMessage.sender_fictional_id)
+  //           .maybeSingle();
 
-          if (blockCheck) {
-            console.log("🚫 Message from blocked profile ignored");
-            return;
-          }
-        },
-      )
-      .subscribe((status) => {
-        console.log("📡 Notification channel:", status);
-      });
+  //         if (blockCheck) {
+  //           console.log("🚫 Message from blocked profile ignored");
+  //           return;
+  //         }
+  //       },
+  //     )
+  //     .subscribe((status) => {
+  //       console.log("📡 Notification channel:", status);
+  //     });
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [currentUser, conversationId]);
+  //   return () => {
+  //     supabase.removeChannel(channel);
+  //   };
+  // }, [currentUser, conversationId]);
 
   /* ============================= */
   /* 4️⃣ Filters */
