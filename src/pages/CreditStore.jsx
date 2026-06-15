@@ -163,7 +163,7 @@ function CreditStore() {
       if (profileError) throw profileError;
 
       const res = await fetch(
-        "http://operator-api-production-de23.up.railway.app/payments/create-session",
+        "https://operator-api-production-de23.up.railway.app/payments/create-session",
         {
           method: "POST",
           headers: {
