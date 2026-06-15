@@ -162,17 +162,20 @@ function CreditStore() {
 
       if (profileError) throw profileError;
 
-      const res = await fetch("http://localhost:4000/payments/create-session", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${user.token}`, // Add auth token if needed
+      const res = await fetch(
+        "http://operator-api-production-de23.up.railway.app/payments/create-session",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${user.token}`, // Add auth token if needed
+          },
+          body: JSON.stringify({
+            user_profile_id: profileData.id,
+            package_id: packageId,
+          }),
         },
-        body: JSON.stringify({
-          user_profile_id: profileData.id,
-          package_id: packageId,
-        }),
-      });
+      );
 
       const data = await res.json();
 
