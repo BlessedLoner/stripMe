@@ -786,10 +786,7 @@ export default function Chat() {
       </div>
 
       {/* Messages container */}
-      <div
-        ref={messagesContainerRef}
-        className="flex-1 overflow-y-auto p-4 space-y-4 min-h-0"
-      >
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 min-h-0">
         {messages.map((msg) => {
           const isUser = msg.sender_type === "real_user";
           return (
