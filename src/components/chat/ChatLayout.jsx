@@ -629,7 +629,7 @@ export default function ChatLayout() {
   const isLoading = filter === "flirts" ? loadingFlirts : loading;
 
   return (
-    <main className="pt-16 flex flex-col md:flex-row h-screen bg-primary/10">
+    <main className="pt-16 flex flex-col md:flex-row h-screen overflow-hidden bg-primary/10">
       <div
         className={`
               md:w-[360px] border-r flex flex-col
@@ -916,7 +916,7 @@ export default function ChatLayout() {
       {/* Chat Area */}
       <div
         className={`
-            flex-1 flex flex-col overflow-hidden
+            flex-1 min-h-0 flex flex-col overflow-hidden
             ${!conversationId ? "hidden md:flex" : "flex"}
           `}
       >

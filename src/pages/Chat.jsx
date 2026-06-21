@@ -409,6 +409,7 @@ export default function Chat() {
   }
 
   /* ---------------- Send message (with block check and credit check) ---------------- */
+  /* ---------------- Send message (with block check and credit check) ---------------- */
   async function sendMessage() {
     // Prevent duplicate sends
     if (sending) return;
@@ -648,8 +649,8 @@ export default function Chat() {
   return (
     <div className="h-[90dvh] flex flex-col bg-surface overflow-hidden">
       {/* Header */}
-      <div className="shrink-0 border-b border-primary/10 bg-primary/10">
-        <div className="p-3 flex items-center justify-between gap-2">
+      <div className="p-3 border-b border-primary/10 bg-primary/10 flex items-center justify-between shrink-0 gap-2">
+        <div className="flex items-center space-x-3 min-w-0 flex-1">
           <button
             onClick={() => navigate("/chat")}
             className="md:hidden flex-shrink-0 rounded-full w-8 h-8 hover:bg-black/5"
@@ -819,7 +820,7 @@ export default function Chat() {
 
       {/* Input area – conditional */}
       {isBlocked ? (
-        <div className="shrink-0 p-4 bg-red-50 border-t border-red-200 text-center">
+        <div className="p-4 bg-red-50 border-t border-red-200 text-center">
           <p className="text-red-600 mb-2">
             You have blocked {fictionalName}. You cannot send messages.
           </p>
@@ -988,21 +989,21 @@ export default function Chat() {
                   }
                 }}
                 className="
-                    form-input
-                    flex-1
-                    border
-                    border-primary
-                    rounded-2xl
-                    px-4
-                    py-3
-                    resize-none
-                    overflow-y-auto
-                    focus:outline-none
-                    focus:ring-2
-                    focus:ring-primary
-                    min-h-[44px]
-                    max-h-[120px]
-                  "
+    form-input
+    flex-1
+    border
+    border-primary
+    rounded-2xl
+    px-4
+    py-3
+    resize-none
+    overflow-y-auto
+    focus:outline-none
+    focus:ring-2
+    focus:ring-primary
+    min-h-[44px]
+    max-h-[120px]
+  "
               />
 
               {/* Send Button */}
