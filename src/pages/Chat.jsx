@@ -8,7 +8,9 @@ export default function Chat() {
   const { conversationId } = useParams();
   const bottomRef = useRef(null);
   const fileInputRef = useRef(null);
+  const textareaRef = useRef(null);
 
+  const [sending, setSending] = useState(false);
   const [profileId, setProfileId] = useState(null);
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
@@ -408,155 +410,207 @@ export default function Chat() {
 
   /* ---------------- Send message (with block check and credit check) ---------------- */
   async function sendMessage() {
+    // Prevent duplicate sends
+    if (sending) return;
+
+    // Prevent empty sends
     if ((!input.trim() && !imageFile) || !conversationId) return;
 
-    // Block check – both state and live DB
+    // Block check
     if (isBlocked || !blockChecked) {
       alert("You have blocked this profile. Unblock to send messages.");
       return;
     }
 
-    // Credit check – show out of credits modal
+    // Credit check
     if (credits <= 0) {
       setShowOutOfCreditsModal(true);
       return;
     }
 
-    // Extra safety: check DB directly
-    if (profileId && recipientId) {
-      const { data: blockExists } = await supabase
-        .from("blocked_profiles")
-        .select("id")
-        .eq("user_profile_id", profileId)
-        .eq("blocked_fictional_id", recipientId)
-        .maybeSingle();
-      if (blockExists) {
-        alert("You have blocked this profile. Unblock to send messages.");
-        setIsBlocked(true);
-        return;
+    try {
+      setSending(true);
+
+      // Save values BEFORE clearing state
+      const messageText = input.trim();
+      const currentImage = imageFile;
+
+      // Clear UI immediately for smoother experience
+      setInput("");
+
+      // Reset textarea height immediately
+      if (textareaRef.current) {
+        textareaRef.current.style.height = "44px";
       }
-    }
 
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
+      // Remove selected image preview immediately
+      if (currentImage) {
+        removeImage();
+      }
 
-    if (userError || !user) {
-      console.error("User not authenticated");
-      return;
-    }
+      // Extra safety block check from DB
+      if (profileId && recipientId) {
+        const { data: blockExists } = await supabase
+          .from("blocked_profiles")
+          .select("id")
+          .eq("user_profile_id", profileId)
+          .eq("blocked_fictional_id", recipientId)
+          .maybeSingle();
 
-    let imageUrl = null;
-
-    // ✅ FIXED IMAGE UPLOAD WITH SANITIZED FILENAME
-    if (imageFile) {
-      try {
-        // Sanitize the file name - remove spaces and special characters
-        const originalName = imageFile.name;
-        const fileExt = originalName.split(".").pop();
-
-        // Remove special characters and replace with underscore
-        let baseName = originalName.slice(0, originalName.lastIndexOf("."));
-        baseName = baseName.replace(/[^a-zA-Z0-9]/g, "_");
-        baseName = baseName.substring(0, 50); // Limit length
-
-        const fileName = `${Date.now()}-${baseName}.${fileExt}`;
-        const path = `${conversationId}/${fileName}`;
-
-        const { error: uploadError } = await supabase.storage
-          .from("Chat-images")
-          .upload(path, imageFile, {
-            cacheControl: "3600",
-            upsert: false,
-            contentType: imageFile.type,
-          });
-
-        if (uploadError) {
-          console.error("Upload error:", uploadError);
-          alert(
-            "Failed to upload image. Please try again with a different file name.",
-          );
+        if (blockExists) {
+          alert("You have blocked this profile. Unblock to send messages.");
+          setIsBlocked(true);
           return;
         }
+      }
 
-        const { data } = supabase.storage
-          .from("Chat-images")
-          .getPublicUrl(path);
-        imageUrl = data.publicUrl;
+      // Get authenticated user
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
 
-        await supabase.from("message_images").insert({
-          sender_id: user.id,
-          recipient_id: recipientId,
-          conversation_id: conversationId,
-          image_url: imageUrl,
-        });
-      } catch (uploadErr) {
-        console.error("Upload exception:", uploadErr);
-        alert("Error uploading image. Please try again.");
+      if (userError || !user) {
+        console.error("User not authenticated");
         return;
       }
-    }
 
-    const CREDIT_COST = 1;
-    const { error } = await supabase.rpc("send_message_with_credits", {
-      p_conversation_id: conversationId,
-      p_sender_type: "real_user",
-      p_sender_user_id: profileId,
-      p_content: input || null,
-      p_image_url: imageUrl,
-      p_direction: "user_to_fictional",
-      p_credit_cost: CREDIT_COST,
-    });
+      let imageUrl = null;
 
-    if (error) {
-      if (error.message.includes("Insufficient credits")) {
-        setShowOutOfCreditsModal(true);
-      } else {
-        console.error(error);
-        alert("Failed to send message");
+      /* ---------------- IMAGE UPLOAD ---------------- */
+      if (currentImage) {
+        try {
+          const originalName = currentImage.name;
+          const fileExt = originalName.split(".").pop();
+
+          let baseName = originalName.slice(0, originalName.lastIndexOf("."));
+
+          // Sanitize filename
+          baseName = baseName.replace(/[^a-zA-Z0-9]/g, "_");
+          baseName = baseName.substring(0, 50);
+
+          const fileName = `${Date.now()}-${baseName}.${fileExt}`;
+          const path = `${conversationId}/${fileName}`;
+
+          const { error: uploadError } = await supabase.storage
+            .from("Chat-images")
+            .upload(path, currentImage, {
+              cacheControl: "3600",
+              upsert: false,
+              contentType: currentImage.type,
+            });
+
+          if (uploadError) {
+            console.error("Upload error:", uploadError);
+
+            // Restore message if upload failed
+            setInput(messageText);
+
+            alert(
+              "Failed to upload image. Please try again with a different file.",
+            );
+
+            return;
+          }
+
+          const { data } = supabase.storage
+            .from("Chat-images")
+            .getPublicUrl(path);
+
+          imageUrl = data.publicUrl;
+
+          // Save image reference
+          await supabase.from("message_images").insert({
+            sender_id: user.id,
+            recipient_id: recipientId,
+            conversation_id: conversationId,
+            image_url: imageUrl,
+          });
+        } catch (uploadErr) {
+          console.error("Upload exception:", uploadErr);
+
+          // Restore message
+          setInput(messageText);
+
+          alert("Error uploading image. Please try again.");
+
+          return;
+        }
       }
-      return;
-    }
 
-    // Update conversation's last message preview
-    const messagePreview = input?.trim()
-      ? input.substring(0, 50)
-      : imageFile
-        ? "📷 Sent a photo"
-        : null;
+      /* ---------------- SEND MESSAGE RPC ---------------- */
 
-    if (messagePreview) {
-      const { error: updateConvError } = await supabase
-        .from("conversations")
-        .update({
-          last_message_at: new Date().toISOString(),
-          last_message_sender_id: profileId,
-          last_message_preview: messagePreview,
-        })
-        .eq("id", conversationId);
+      const CREDIT_COST = 1;
 
-      if (updateConvError) {
-        console.error(
-          "Failed to update conversation last message:",
-          updateConvError,
-        );
+      const { error } = await supabase.rpc("send_message_with_credits", {
+        p_conversation_id: conversationId,
+        p_sender_type: "real_user",
+        p_sender_user_id: profileId,
+        p_content: messageText || null,
+        p_image_url: imageUrl,
+        p_direction: "user_to_fictional",
+        p_credit_cost: CREDIT_COST,
+      });
+
+      if (error) {
+        console.error("RPC send error:", error);
+
+        // Restore text if failed
+        setInput(messageText);
+
+        if (error.message?.includes("Insufficient credits")) {
+          setShowOutOfCreditsModal(true);
+        } else {
+          alert("Failed to send message");
+        }
+
+        return;
       }
+
+      /* ---------------- UPDATE CONVERSATION PREVIEW ---------------- */
+
+      const messagePreview = messageText
+        ? messageText.substring(0, 50)
+        : currentImage
+          ? "📷 Sent a photo"
+          : null;
+
+      if (messagePreview) {
+        const { error: updateConvError } = await supabase
+          .from("conversations")
+          .update({
+            last_message_at: new Date().toISOString(),
+            last_message_sender_id: profileId,
+            last_message_preview: messagePreview,
+          })
+          .eq("id", conversationId);
+
+        if (updateConvError) {
+          console.error(
+            "Failed to update conversation last message:",
+            updateConvError,
+          );
+        }
+      }
+
+      /* ---------------- MARK AS READ ---------------- */
+
+      await supabase.from("conversation_reads").upsert({
+        conversation_id: conversationId,
+        user_id: profileId,
+        last_read_at: new Date().toISOString(),
+      });
+
+      /* ---------------- REFRESH DATA ---------------- */
+
+      await Promise.all([fetchMessages(), loadCredits()]);
+    } catch (err) {
+      console.error("Send message error:", err);
+      alert("Failed to send message");
+    } finally {
+      setSending(false);
     }
-
-    await supabase.from("conversation_reads").upsert({
-      conversation_id: conversationId,
-      user_id: profileId,
-      last_read_at: new Date().toISOString(),
-    });
-
-    setInput("");
-    removeImage();
-
-    await fetchMessages();
-    await loadCredits();
   }
-
   // Navigate to credits page and close modals
   function goToCredits() {
     setShowLowCreditModal(false);
@@ -594,8 +648,8 @@ export default function Chat() {
   return (
     <div className="h-[90dvh] flex flex-col bg-surface overflow-hidden">
       {/* Header */}
-      <div className="p-3 border-b border-primary/10 bg-primary/10 flex items-center justify-between shrink-0 gap-2">
-        <div className="flex items-center space-x-3 min-w-0 flex-1">
+      <div className="shrink-0 border-b border-primary/10 bg-primary/10">
+        <div className="p-3 flex items-center justify-between gap-2">
           <button
             onClick={() => navigate("/chat")}
             className="md:hidden flex-shrink-0 rounded-full w-8 h-8 hover:bg-black/5"
@@ -732,7 +786,10 @@ export default function Chat() {
       </div>
 
       {/* Messages container */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 min-h-0">
+      <div
+        ref={messagesContainerRef}
+        className="flex-1 overflow-y-auto p-4 space-y-4 min-h-0"
+      >
         {messages.map((msg) => {
           const isUser = msg.sender_type === "real_user";
           return (
@@ -765,7 +822,7 @@ export default function Chat() {
 
       {/* Input area – conditional */}
       {isBlocked ? (
-        <div className="p-4 bg-red-50 border-t border-red-200 text-center">
+        <div className="shrink-0 p-4 bg-red-50 border-t border-red-200 text-center">
           <p className="text-red-600 mb-2">
             You have blocked {fictionalName}. You cannot send messages.
           </p>
@@ -911,48 +968,55 @@ export default function Chat() {
               </button>
 
               <textarea
+                ref={textareaRef}
                 rows={1}
                 value={input}
                 placeholder="Type a message..."
                 onChange={(e) => {
                   setInput(e.target.value);
 
-                  e.target.style.height = "auto";
-                  e.target.style.height = `${Math.min(e.target.scrollHeight, 120)}px`;
+                  e.target.style.height = "44px";
+                  e.target.style.height = `${Math.min(
+                    e.target.scrollHeight,
+                    120,
+                  )}px`;
                 }}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && !e.shiftKey) {
                     e.preventDefault();
-                    sendMessage();
+
+                    if (!sending) {
+                      sendMessage();
+                    }
                   }
                 }}
                 className="
-                form-input
-                flex-1
-                border
-                border-primary
-                rounded-full 
-                px-4
-                py-2
-                resize-none
-                overflow-y-auto
-                focus:outline-none
-                focus:ring-2
-                focus:ring-primary
-                min-h-[44px]
-                max-h-[120px]
-              "
+                    form-input
+                    flex-1
+                    border
+                    border-primary
+                    rounded-2xl
+                    px-4
+                    py-3
+                    resize-none
+                    overflow-y-auto
+                    focus:outline-none
+                    focus:ring-2
+                    focus:ring-primary
+                    min-h-[44px]
+                    max-h-[120px]
+                  "
               />
 
               {/* Send Button */}
               <button
                 onClick={sendMessage}
+                disabled={sending || (!input.trim() && !imageFile)}
                 className={`p-2 rounded-full transition-all duration-300 ${
                   input.trim() || imageFile
                     ? "bg-primary text-white hover:opacity-90"
                     : "bg-gray-300 text-gray-500 cursor-not-allowed"
-                }`}
-                disabled={!input.trim() && !imageFile}
+                } ${sending ? "opacity-50 cursor-not-allowed" : ""}`}
               >
                 <svg
                   className="w-5 h-5 transform rotate-45"
