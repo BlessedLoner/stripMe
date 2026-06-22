@@ -535,14 +535,6 @@ export default function ChatLayout() {
   /* ============================= */
   /* 6️⃣ UI */
   /* ============================= */
-  // const getInitials = (name) => {
-  //   return name
-  //     .split(" ")
-  //     .map((word) => word[0])
-  //     .join("")
-  //     .toUpperCase()
-  //     .slice(0, 2);
-  // };
 
   const getInitials = (name = "") => {
     return name
@@ -552,23 +544,6 @@ export default function ChatLayout() {
       .toUpperCase()
       .slice(0, 2);
   };
-
-  // const formatTime = (dateString) => {
-  //   const date = new Date(dateString);
-  //   const now = new Date();
-  //   const diffInHours = (now - date) / (1000 * 60 * 60);
-
-  //   if (diffInHours < 24) {
-  //     return date.toLocaleTimeString([], {
-  //       hour: "2-digit",
-  //       minute: "2-digit",
-  //     });
-  //   } else if (diffInHours < 48) {
-  //     return "Yesterday";
-  //   } else {
-  //     return date.toLocaleDateString([], { month: "short", day: "numeric" });
-  //   }
-  // };
 
   const formatTime = (dateString) => {
     if (!dateString) return "";
