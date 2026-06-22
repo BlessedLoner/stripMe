@@ -989,21 +989,21 @@ export default function Chat() {
                   }
                 }}
                 className="
-    form-input
-    flex-1
-    border
-    border-primary
-    rounded-2xl
-    px-4
-    py-3
-    resize-none
-    overflow-y-auto
-    focus:outline-none
-    focus:ring-2
-    focus:ring-primary
-    min-h-[44px]
-    max-h-[120px]
-  "
+                  form-input
+                  flex-1
+                  border
+                  border-primary
+                  rounded-full  
+                  px-4
+                  py-3
+                  resize-none
+                  overflow-y-auto
+                  focus:outline-none
+                  focus:ring-2
+                  focus:ring-primary
+                  min-h-11
+                  max-h-30
+                "
               />
 
               {/* Send Button */}

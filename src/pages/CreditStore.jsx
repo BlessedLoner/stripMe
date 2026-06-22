@@ -491,7 +491,7 @@ function CreditStore() {
 
             <div className="absolute inset-0 bg-linear-to-r from-primary-900/80 via-secondary-800/70 to-accent-800/60" />
 
-            <div className="relative z-10 w-full max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <div className="relative z-10 w-full max-w-4xl mx-auto pt-8 sm:px-6 lg:px-8 text-center">
               <div className="flex items-center justify-center gap-3 mb-4">
                 <span className="px-3 py-1 bg-yellow-500/20 text-yellow-300 text-xs font-semibold rounded-full border border-yellow-500/30">
                   🚀 Coming Soon
