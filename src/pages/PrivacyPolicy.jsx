@@ -38,14 +38,14 @@ export default function PrivacyPolicy() {
 
         <p className="text-white mt-2">
           The entity responsible for processing your personal data is
-          stripMe.com.
+          stripPals.com.
         </p>
 
         <p className="text-white mt-2">
           If you have any questions, requests, or concerns regarding your
           personal data, you may contact our data protection officer at:{" "}
-          <a href="https://www.stripMe.com" className="underline">
-            support@stripMe.com{" "}
+          <a href="https://www.strippals.com" className="underline">
+            support@strippals.com{" "}
           </a>{" "}
         </p>
 
@@ -292,8 +292,8 @@ export default function PrivacyPolicy() {
 
         <h3 className="text-white mt-2">
           Requests may be submitted to{" "}
-          <a href="https://www.stripMe.com" className="underline">
-            support@stripMe.com{" "}
+          <a href="https://www.strippals.com" className="underline">
+            support@strippals.com{" "}
           </a>{" "}
           . We will respond within one (1) month, subject to extensions
           permitted by law.

@@ -12,10 +12,10 @@ export default function Pricing() {
         <ol>
           <li className="text-2xl text-white mt-4">Overview</li>
           <p className="text-white mt-2">
-            StripMe.com offers a variety of subscription plans to suit different
-            preferences and needs. Our pricing is designed to provide value
-            while ensuring a high-quality experience for our users. Below is an
-            overview of our current subscription options:
+            StripPals.com offers a variety of subscription plans to suit
+            different preferences and needs. Our pricing is designed to provide
+            value while ensuring a high-quality experience for our users. Below
+            is an overview of our current subscription options:
           </p>
 
           <li className="text-2xl text-white mt-4">Subscription Plans</li>
@@ -43,7 +43,7 @@ export default function Pricing() {
               <Link to="/credits" className="text-blue-500 underline">
                 Credit Store
               </Link>{" "}
-              or contact our support team at support@stripme.com
+              or contact our support team at support@strippals.com
             </li>
             <li>
               {" "}

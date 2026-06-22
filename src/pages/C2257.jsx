@@ -9,7 +9,7 @@ export default function C2257() {
         <p className="text-white mt-2"> Last updated: May 10, 2026</p>
 
         <p className="text-white mt-3">
-          StripMe.com is committed to complying with 18 U.S.C. § 2257, which
+          StripPals.com is committed to complying with 18 U.S.C. § 2257, which
           requires producers of sexually explicit content to maintain records of
           the ages and identities of performers. We take this responsibility
           seriously and have implemented strict procedures to ensure compliance
@@ -17,7 +17,7 @@ export default function C2257() {
         </p>
 
         <p className="text-white mt-3">
-          All performers featured on StripMe.com are required to provide valid
+          All performers featured on StripPals.com are required to provide valid
           government-issued identification to verify their age and identity. We
           maintain detailed records of this information in accordance with the
           requirements of 18 U.S.C. § 2257. Our compliance officer is
@@ -29,7 +29,7 @@ export default function C2257() {
         <ol>
           <li className="text-2xl text-white mt-4">Nature of the Website</li>
           <p className="text-white mt-2">
-            StripMe.com is an adult-oriented online entertainment platform
+            StripPals.com is an adult-oriented online entertainment platform
             created for consensual adult enjoyment. Many of our members are
             adult users seeking to explore fantasies and engage in imaginative,
             pleasure-focused interactions. For additional information about our
@@ -53,14 +53,14 @@ export default function C2257() {
             Name: [Company Name/ Custodian Name] <br />
             Address: [Company Address] <br />
             Phone: [Phone Number] <br />
-            Email: support@stripme.com
+            Email: support@strippals.com
           </address>
 
           <li className="text-2xl text-white mt-4">Content Covered</li>
           <p className="text-white mt-2">
             The records maintained by the Record Custodian pertain to all
-            sexually explicit content hosted on StripMe.com. This includes, but
-            is not limited to, videos, images, and live performances that
+            sexually explicit content hosted on StripPals.com. This includes,
+            but is not limited to, videos, images, and live performances that
             feature explicit sexual conduct as defined by 18 U.S.C. § 2256.
           </p>
 
@@ -97,7 +97,7 @@ export default function C2257() {
             Zero Tolerance for Minors
           </li>
           <p className="text-white mt-2">
-            StripMe.com has a strict zero-tolerance policy regarding the
+            StripPals.com has a strict zero-tolerance policy regarding the
             involvement of minors in any sexually explicit content. We are
             committed to ensuring that all performers featured on our platform
             are of legal age and that our content complies with all applicable

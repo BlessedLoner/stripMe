@@ -2487,9 +2487,9 @@ export default function AccountSettings() {
             {/* Logo & Name - Centered */}
             <div className="flex justify-center mb-8">
               <div className="flex items-center">
-                <img src={Logo} alt="StripMe" className="w-12 h-12" />
+                <img src={Logo} alt="StripPals" className="w-12 h-12" />
                 <span className="ml-2 text-xl font-serif font-semibold text-white">
-                  StripMe
+                  StripPals
                 </span>
               </div>
             </div>
@@ -2538,7 +2538,7 @@ export default function AccountSettings() {
             {/* Copyright */}
             <div className="border-t border-white/10 pt-6 text-center">
               <p className="text-white/50 text-xs">
-                stripMe.com © 2026 All rights reserved.
+                stripPals.com © 2026 All rights reserved.
               </p>
             </div>
           </div>

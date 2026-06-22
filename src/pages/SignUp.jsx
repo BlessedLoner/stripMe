@@ -775,7 +775,7 @@ export default function SignUpPage() {
                         {/* Mobile heading */}
                         <div className="lg:hidden text-center mb-6">
                           <h1 className="text-3xl font-serif pt-6 font-semibold text-white mb-2">
-                            Join StripMe
+                            Join StripPals Today
                           </h1>
                           <p className="text-gray-200">
                             Start your journey to meaningful connections
@@ -923,9 +923,9 @@ export default function SignUpPage() {
             {/* Logo & Name - Centered */}
             <div className="flex justify-center mb-8">
               <div className="flex items-center">
-                <img src={Logo} alt="StripMe" className="w-12 h-12" />
+                <img src={Logo} alt="StripPals" className="w-12 h-12" />
                 <span className="ml-2 text-xl font-serif font-semibold text-white">
-                  StripMe
+                  StripPals
                 </span>
               </div>
             </div>
@@ -976,14 +976,14 @@ export default function SignUpPage() {
             {/* Informational Text */}
             <div className="text-center text-white/60 text-xs leading-relaxed max-w-4xl mx-auto mb-6">
               <p>
-                The minimum age for participation on stripMe.com is 18 years.
+                The minimum age for participation on stripPals.com is 18 years.
                 The site is optimised for desktops, mobile phones and tablets.
-                stripMe.com is a social platform for men and women who are
+                stripPals.com is a social platform for men and women who are
                 looking for fun, flirty contact. Every day, hundreds of members
                 sign up. Based on your profile settings, you will receive match
                 suggestions. However, you can also use our search functionality
                 and browse for profiles yourself. This is completely up to you.
-                stripMe.com is designed for entertainment. Profiles are partly
+                stripPals.com is designed for entertainment. Profiles are partly
                 fictional, physical arrangements with these profiles are not
                 possible. We strongly advise you to read our Terms and
                 Conditions before using our Service.
@@ -993,7 +993,7 @@ export default function SignUpPage() {
             {/* Copyright */}
             <div className="border-t border-white/10 pt-6 text-center">
               <p className="text-white/50 text-xs">
-                stripMe.com © 2026 All rights reserved.
+                stripPals.com © 2026 All rights reserved.
               </p>
             </div>
           </div>
@@ -1131,15 +1131,6 @@ export default function SignUpPage() {
           </div>
         )}
       </div>
-      {/* ... (the main signup form, footer, signin modal - unchanged) ... */}
-      <style>{`
-        .clerk-container {
-          width: 100%;
-        }
-        .bg-slider {
-          z-index: 0;
-        }
-      `}</style>
     </div>
   );
 }

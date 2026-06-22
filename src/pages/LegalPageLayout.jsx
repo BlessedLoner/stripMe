@@ -55,9 +55,9 @@ export default function LegalPageLayout({ title, children, lastUpdated }) {
           {/* Logo & Name - Centered */}
           <div className="flex justify-center mb-8">
             <div className="flex items-center">
-              <img src={Logo} alt="StripMe" className="w-12 h-12" />
+              <img src={Logo} alt="StripPals" className="w-12 h-12" />
               <span className="ml-2 text-xl font-serif font-semibold text-white">
-                StripMe
+                StripPals
               </span>
             </div>
           </div>
@@ -107,7 +107,7 @@ export default function LegalPageLayout({ title, children, lastUpdated }) {
           {/* Copyright */}
           <div className="border-t border-white/10 pt-6 text-center">
             <p>
-              &copy; {new Date().getFullYear()} StripMe. All rights reserved.
+              &copy; {new Date().getFullYear()} StripPals. All rights reserved.
             </p>
           </div>
         </div>

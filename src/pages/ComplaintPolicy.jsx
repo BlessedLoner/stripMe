@@ -9,7 +9,7 @@ export default function ComplaintPolicy() {
         <p className="text-white mt-2"> Last updated: May 10, 2026</p>
 
         <p className="text-white mt-3">
-          At StripMe.com, we are committed to providing a safe and enjoyable
+          At StripPals.com, we are committed to providing a safe and enjoyable
           experience for all our users. We take complaints seriously and have
           established a clear process for handling them. If you have a complaint
           about our services, please follow the steps outlined below:
@@ -18,7 +18,7 @@ export default function ComplaintPolicy() {
         <ol className="list-decimal list-inside text-white mt-3">
           <li>
             Contact our support team: You can reach out to our support team via
-            email at support@stripme.com. Please provide as much detail as
+            email at support@strippals.com. Please provide as much detail as
             possible about your complaint, including any relevant screenshots or
             evidence.
           </li>
@@ -65,7 +65,7 @@ export default function ComplaintPolicy() {
         <p className="text-white mt-3">
           If you come across content that you believe violates our policies,
           please report it immediately by contacting our support team at
-          support@stripme.com.
+          support@strippals.com.
         </p>
         <ul className="list-disc list-inside text-white mt-3">
           <li>
@@ -106,7 +106,7 @@ export default function ComplaintPolicy() {
         <p className="text-white mt-3">
           If you believe that your content was removed in error or that your
           account was suspended unfairly, you may submit a counter-notice to our
-          support team at support@stripme.com. Please include the following
+          support team at support@strippals.com. Please include the following
           information in your counter-notice:
         </p>
         <ul className="list-disc list-inside text-white mt-3">

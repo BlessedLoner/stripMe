@@ -18,10 +18,10 @@ export default function Contact() {
           <li>
             Email: You can send us an email at{" "}
             <a
-              href="mailto:support@stripme.com"
+              href="mailto:support@strippals.com"
               className="text-blue-500 underline"
             >
-              support@stripme.com
+              support@strippals.com
             </a>
           </li>
         </ul>

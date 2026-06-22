@@ -10,25 +10,25 @@ export default function CookiesPolicy() {
 
         <p className="text-white mt-3">
           The people we encounter shape our experiences and perspectives.
-          StripMe.com is an independent online social platform serving a broad
+          StripPals.com is an independent online social platform serving a broad
           and diverse adult audience. Our community includes single men and
           women, couples, married individuals, and older singles, among others.
           The platform is fully compatible with desktop computers, tablets, and
           smartphones, and is designed to be completely discreet.
         </p>
 
-        <h2 className="text-2xl text-white mt-4"> What is StripMe.com?</h2>
+        <h2 className="text-2xl text-white mt-4"> What is StripPals.com?</h2>
 
         <p className="text-white mt-2">
-          StripMe.com is an adult-oriented online entertainment platform created
-          for consensual adult enjoyment. Many of our members are adult users
-          seeking to explore fantasies and engage in imaginative,
+          StripPals.com is an adult-oriented online entertainment platform
+          created for consensual adult enjoyment. Many of our members are adult
+          users seeking to explore fantasies and engage in imaginative,
           pleasure-focused interactions. For additional information about our
           adult fantasy services, please visit our website.
         </p>
 
         <p className="text-white mt-2">
-          StripMe.com (the “Website”) uses cookies and similar technologies to
+          StripPals.com (the “Website”) uses cookies and similar technologies to
           store information on your device. This Cookie Policy explains how and
           why cookies are used and may be updated from time to time without
           prior notice. Any changes will be published on the Website. We

@@ -9,10 +9,10 @@ export default function TermsOfUse() {
       <main className="relative min-h-screen overflow-hidden">
         <h1 className="text-3xl text-white">GENERAL TERMS AND CONDITIONS</h1>
         <p className="text-white mt-4">
-          Welcome to StripMe! These General Terms and Conditions govern your use
-          of our website and services. By accessing or using our platform, you
-          agree to comply with these terms. Please read them carefully before
-          using our services.
+          Welcome to StripPals! These General Terms and Conditions govern your
+          use of our website and services. By accessing or using our platform,
+          you agree to comply with these terms. Please read them carefully
+          before using our services.
         </p>
         <p className="text-white mt-4">
           You must be at least 18 years old and have reached the age of majority
@@ -426,8 +426,8 @@ export default function TermsOfUse() {
                 (b) You must notify us of your decision to cancel within
                 fourteen (14) days from the date of purchase. <br />
                 (c) To exercise this right, please contact us at:{" "}
-                <a href="https://www.stripMe.com" className="underline">
-                  support@stripMe.com{" "}
+                <a href="https://www.strippals.com" className="underline">
+                  support@strippals.com{" "}
                 </a>{" "}
                 <br /> (d) You are required to pay for any credits used prior to
                 cancellation. Accordingly, only the value of unused credits at
@@ -466,7 +466,7 @@ export default function TermsOfUse() {
             <ul>
               <li className="text-white mt-2">
                 Questions or complaints. In the event of a question or
-                complaint, you can email support@stripMe.com.
+                complaint, you can email support@strippals.com.
               </li>
               <p>
                 (a) We aim to answer any questions within 5 working days. <br />

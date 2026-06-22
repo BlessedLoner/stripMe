@@ -28,7 +28,7 @@ export const LoveSpinner = ({
       data-testid="love-spinner"
     >
       <div className="love-spinner">
-        <img src={Logo} alt="StripMe" className="mx-auto w-24 h-24 mb-4" />
+        <img src={Logo} alt="StripPals" className="mx-auto w-24 h-24 mb-4" />
 
         {[...Array(3)].map((_, i) => (
           <div

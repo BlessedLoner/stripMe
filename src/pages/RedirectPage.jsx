@@ -17,11 +17,11 @@ const RedirectPage = () => {
         <header className="flex flex-col items-center mb-8 pt-16">
           <img
             src={Logo}
-            alt="StripMe logo"
+            alt="StripPals logo"
             className="w-40 h-40 object-contain mb-4"
           />
           {/* <span className="logo text-3xl md:text-4xl font-serif font-semibold tracking-tight">
-            StripMe
+            StripPals
           </span> */}
         </header>
 

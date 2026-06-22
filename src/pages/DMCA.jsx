@@ -11,11 +11,11 @@ export default function DMCA() {
         <ol>
           <li className="text-2xl text-white mt-4">Overview</li>
           <p className="text-white mt-2">
-            StripMe.com respects the intellectual property rights of others and
-            is committed to complying with the Digital Millennium Copyright Act
-            (DMCA). If you believe that your copyrighted work has been infringed
-            upon on our platform, please follow the instructions below to submit
-            a DMCA notice.
+            StripPals.com respects the intellectual property rights of others
+            and is committed to complying with the Digital Millennium Copyright
+            Act (DMCA). If you believe that your copyrighted work has been
+            infringed upon on our platform, please follow the instructions below
+            to submit a DMCA notice.
           </p>
 
           <li className="text-2xl text-white mt-4">
@@ -29,7 +29,7 @@ export default function DMCA() {
             Name: [Company Name] <br />
             Address: [Company Address] <br />
             Phone: [Phone Number] <br />
-            Email: support@stripme.com
+            Email: support@strippals.com
           </address>
           <p className="text-white mt-2">
             Your notice must include the following information:
@@ -65,7 +65,7 @@ export default function DMCA() {
 
           <li className="text-2xl text-white mt-4">Content Removal</li>
           <p className="text-white mt-2">
-            Upon receipt of a valid DMCA notice, StripMe.com will promptly
+            Upon receipt of a valid DMCA notice, StripPals.com will promptly
             remove or disable access to the allegedly infringing material. We
             will also notify the user who uploaded the content and provide them
             with an opportunity to respond.
@@ -95,12 +95,12 @@ export default function DMCA() {
           </ul>
           <p className="text-white mt-2">Counter-notices should be sent to:</p>
           <address className="text-white mt-2 not-italic underline">
-            Email: support@stripme.com
+            Email: support@strippals.com
           </address>
 
           <li className="text-2xl text-white mt-4">Restoration of Content</li>
           <p className="text-white mt-2">
-            If a valid counter-notification is received, StripMe.com will
+            If a valid counter-notification is received, StripPals.com will
             promptly restore the removed content unless we receive notice from
             the original complainant that they have filed a lawsuit seeking a
             court order to restrain the user from engaging in infringing
@@ -115,15 +115,15 @@ export default function DMCA() {
           </p>
 
           <p className="text-white mt-2">
-            StripMe.com takes misrepresentation of copyright infringement claims
-            seriously. If you knowingly submit false information in a DMCA
-            notice or counter-notification, you may be subject to legal
+            StripPals.com takes misrepresentation of copyright infringement
+            claims seriously. If you knowingly submit false information in a
+            DMCA notice or counter-notification, you may be subject to legal
             liability for damages, including costs and attorneys' fees.
           </p>
 
           <li className="text-2xl text-white mt-4">Policy Updates</li>
           <p className="text-white mt-2">
-            StripMe.com reserves the right to update this DMCA policy at any
+            StripPals.com reserves the right to update this DMCA policy at any
             time. Any changes will be effective immediately upon posting on our
             website.
           </p>

@@ -133,9 +133,9 @@ function Home({ intervalMs = 5000, transitionMs = 800 }) {
               {/* Left: Logo */}
               <div className="flex items-center space-x-3">
                 <Link to="/" className="inline-flex items-center">
-                  <img src={Logo} alt="StripMe" className="h-10 w-auto" />
+                  <img src={Logo} alt="StripPals" className="h-10 w-auto" />
                   <span className="ml-2 text-lg gradient-text font-serif font-semibold text-white/90 hidden sm:inline">
-                    StripMe
+                    StripPals
                   </span>
                 </Link>
               </div>
@@ -329,7 +329,7 @@ function Home({ intervalMs = 5000, transitionMs = 800 }) {
                         <VideoCard
                           src={StripMe_vid}
                           poster="/path/to/poster.jpg"
-                          title="StripMe - Quick Preview"
+                          title="StripPals - Quick Preview"
                           controls={true}
                           autoplay={true}
                           className="w-full h-full object-cover"
@@ -414,7 +414,7 @@ function Home({ intervalMs = 5000, transitionMs = 800 }) {
               </h2>
               <p className="text-xl text-text-secondary max-w-3xl mx-auto">
                 Join thousands of couples who found their perfect match through
-                StripMe' intelligent matching system.
+                StripPals' intelligent matching system.
               </p>
             </div>
 
@@ -435,7 +435,7 @@ function Home({ intervalMs = 5000, transitionMs = 800 }) {
                     </span>
                   </div>
                   <blockquote className="text-text-secondary mb-4 italic">
-                    "We matched on StripMe and knew instantly we had something
+                    "We matched on StripPals and knew instantly we had something
                     special. The compatibility score was 96%, and it was spot
                     on!"
                   </blockquote>
@@ -527,8 +527,8 @@ function Home({ intervalMs = 5000, transitionMs = 800 }) {
                   </div>
                 </div>
                 <blockquote className="text-text-secondary mb-4 italic">
-                  "StripMe helped us connect on a deeper level from day one. The
-                  conversation starters were amazing!"
+                  "StripPals helped us connect on a deeper level from day one.
+                  The conversation starters were amazing!"
                 </blockquote>
                 <div className="flex items-center space-x-3">
                   <div className="flex -space-x-2">
@@ -838,9 +838,9 @@ function Home({ intervalMs = 5000, transitionMs = 800 }) {
             {/* Logo & Name - Centered */}
             <div className="flex justify-center mb-8">
               <div className="flex items-center">
-                <img src={Logo} alt="StripMe" className="w-12 h-12" />
+                <img src={Logo} alt="StripPals" className="w-12 h-12" />
                 <span className="ml-2 text-xl font-serif font-semibold text-white">
-                  StripMe
+                  StripPals
                 </span>
               </div>
             </div>
@@ -887,14 +887,14 @@ function Home({ intervalMs = 5000, transitionMs = 800 }) {
             {/* Informational Text */}
             <div className="text-center text-white/60 text-xs leading-relaxed max-w-4xl mx-auto mb-6">
               <p>
-                The minimum age for participation on stripMe.com is 18 years.
+                The minimum age for participation on stripPals.com is 18 years.
                 The site is optimised for desktops, mobile phones and tablets.
-                stripMe.com is a social platform for men and women who are
+                stripPals.com is a social platform for men and women who are
                 looking for fun, flirty contact. Every day, hundreds of members
                 sign up. Based on your profile settings, you will receive match
                 suggestions. However, you can also use our search functionality
                 and browse for profiles yourself. This is completely up to you.
-                stripMe.com is designed for entertainment. Profiles are partly
+                stripPals.com is designed for entertainment. Profiles are partly
                 fictional, physical arrangements with these profiles are not
                 possible. We strongly advise you to read our Terms and
                 Conditions before using our Service.
@@ -904,7 +904,7 @@ function Home({ intervalMs = 5000, transitionMs = 800 }) {
             {/* Copyright */}
             <div className="border-t border-white/10 pt-6 text-center">
               <p className="text-white/50 text-xs">
-                stripMe.com © 2026 All rights reserved.
+                stripPals.com © 2026 All rights reserved.
               </p>
             </div>
           </div>

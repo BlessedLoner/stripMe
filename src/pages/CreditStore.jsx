@@ -489,23 +489,36 @@ function CreditStore() {
               loading="lazy"
             />
 
-            <div className="absolute inset-0 bg-gradient-to-r from-primary-900/80 via-secondary-800/70 to-accent-800/60" />
+            <div className="absolute inset-0 bg-linear-to-r from-primary-900/80 via-secondary-800/70 to-accent-800/60" />
 
             <div className="relative z-10 w-full max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-              <h2 className="text-4xl pt-20 sm:text-3xl md:text-5xl font-serif font-semibold gradient-text leading-tight mb-6">
+              <div className="flex items-center justify-center gap-3 mb-4">
+                <span className="px-3 py-1 bg-yellow-500/20 text-yellow-300 text-xs font-semibold rounded-full border border-yellow-500/30">
+                  🚀 Coming Soon
+                </span>
+              </div>
+
+              <h2 className="text-4xl pt-8 sm:text-3xl md:text-5xl font-serif font-semibold gradient-text leading-tight mb-4">
                 Premium Features
-                <span className="text-primary"> Worth Every Credit</span>
+                <span className="text-primary"> Coming Soon</span>
               </h2>
 
-              <p className="mx-auto text-xl text-text-secondary text-sm sm:text-base lg:text-lg text-white/90 max-w-3xl mb-6 leading-relaxed">
-                Discover what makes StripMe premium features so effective at
-                creating meaningful connections
+              <p className="mx-auto text-xl text-text-secondary text-sm sm:text-base lg:text-lg text-white/90 max-w-3xl mb-8 leading-relaxed">
+                We're building exciting new features to help you connect better.
+                <span className="block text-sm text-white/70 mt-1">
+                  Stay tuned for updates!
+                </span>
               </p>
 
               {/* Feature Grid */}
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
                 {/* Super Connections */}
-                <div className="card text-center hover:shadow-button-hover transition-all duration-300">
+                <div className="card text-center hover:shadow-button-hover transition-all duration-300 relative overflow-hidden">
+                  <div className="absolute top-3 right-3">
+                    <span className="text-[10px] font-medium px-2.5 py-1 bg-yellow-500/20 text-yellow-300 rounded-full border border-yellow-500/30">
+                      Soon
+                    </span>
+                  </div>
                   <div className="w-16 h-16 bg-error-100 rounded-full flex items-center justify-center mx-auto mb-4">
                     <svg
                       className="w-8 h-8 text-error-500"
@@ -522,23 +535,27 @@ function CreditStore() {
                   <h3 className="text-xl font-serif font-semibold text-text-primary mb-3">
                     Super Connections
                   </h3>
-                  <p className="text-text-secondary mb-4">
+                  <p className="text-text-secondary mb-4 text-sm">
                     Stand out from the crowd. Super connections get 3x more
-                    responses than regular likes.
+                    responses.
                   </p>
                   <div className="text-sm text-primary font-medium">
                     2 Credits per Super Connection
                   </div>
-                  <button
-                    className="mt-4 text-primary hover:text-primary-600 font-medium transition-colors duration-300"
-                    onClick={() => alert("Super Connections preview feature")}
-                  >
-                    Try Free Preview →
-                  </button>
+                  <div className="mt-4">
+                    <span className="inline-block px-4 py-2 bg-gray-200/20 text-gray-400 text-sm rounded-lg cursor-default">
+                      Coming Soon →
+                    </span>
+                  </div>
                 </div>
 
                 {/* Premium Messages */}
-                <div className="card text-center hover:shadow-button-hover transition-all duration-300">
+                <div className="card text-center hover:shadow-button-hover transition-all duration-300 relative overflow-hidden">
+                  <div className="absolute top-3 right-3">
+                    <span className="text-[10px] font-medium px-2.5 py-1 bg-yellow-500/20 text-yellow-300 rounded-full border border-yellow-500/30">
+                      Soon
+                    </span>
+                  </div>
                   <div className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
                     <svg
                       className="w-8 h-8 text-primary"
@@ -552,22 +569,26 @@ function CreditStore() {
                   <h3 className="text-xl font-serif font-semibold text-text-primary mb-3">
                     Premium Messages
                   </h3>
-                  <p className="text-text-secondary mb-4">
-                    Send rich media messages with photos, and priority delivery.
+                  <p className="text-text-secondary mb-4 text-sm">
+                    Send rich media messages with photos and priority delivery.
                   </p>
                   <div className="text-sm text-primary font-medium">
                     2 Credits per Message
                   </div>
-                  <button
-                    className="mt-4 text-primary hover:text-primary-600 font-medium transition-colors duration-300"
-                    onClick={() => alert("Premium Messages preview feature")}
-                  >
-                    Try Free Preview →
-                  </button>
+                  <div className="mt-4">
+                    <span className="inline-block px-4 py-2 bg-gray-200/20 text-gray-400 text-sm rounded-lg cursor-default">
+                      Coming Soon →
+                    </span>
+                  </div>
                 </div>
 
                 {/* Profile Boost */}
-                <div className="card text-center hover:shadow-button-hover transition-all duration-300">
+                <div className="card text-center hover:shadow-button-hover transition-all duration-300 relative overflow-hidden">
+                  <div className="absolute top-3 right-3">
+                    <span className="text-[10px] font-medium px-2.5 py-1 bg-yellow-500/20 text-yellow-300 rounded-full border border-yellow-500/30">
+                      Soon
+                    </span>
+                  </div>
                   <div className="w-16 h-16 bg-secondary-100 rounded-full flex items-center justify-center mx-auto mb-4">
                     <svg
                       className="w-8 h-8 text-secondary"
@@ -584,23 +605,26 @@ function CreditStore() {
                   <h3 className="text-xl font-serif font-semibold text-text-primary mb-3">
                     Profile Boost
                   </h3>
-                  <p className="text-text-secondary mb-4">
-                    Get 10x more profile views for 30 minutes. Perfect for peak
-                    dating hours.
+                  <p className="text-text-secondary mb-4 text-sm">
+                    Get 10x more profile views for 30 minutes.
                   </p>
                   <div className="text-sm text-primary font-medium">
                     5 Credits per Boost
                   </div>
-                  <button
-                    className="mt-4 text-primary hover:text-primary-600 font-medium transition-colors duration-300"
-                    onClick={() => alert("Profile Boost preview feature")}
-                  >
-                    Try Free Preview →
-                  </button>
+                  <div className="mt-4">
+                    <span className="inline-block px-4 py-2 bg-gray-200/20 text-gray-400 text-sm rounded-lg cursor-default">
+                      Coming Soon →
+                    </span>
+                  </div>
                 </div>
 
                 {/* Advanced Filters */}
-                <div className="card text-center hover:shadow-button-hover transition-all duration-300">
+                <div className="card text-center hover:shadow-button-hover transition-all duration-300 relative overflow-hidden">
+                  <div className="absolute top-3 right-3">
+                    <span className="text-[10px] font-medium px-2.5 py-1 bg-yellow-500/20 text-yellow-300 rounded-full border border-yellow-500/30">
+                      Soon
+                    </span>
+                  </div>
                   <div className="w-16 h-16 bg-accent-100 rounded-full flex items-center justify-center mx-auto mb-4">
                     <svg
                       className="w-8 h-8 text-accent-700"
@@ -617,23 +641,26 @@ function CreditStore() {
                   <h3 className="text-xl font-serif font-semibold text-text-primary mb-3">
                     Advanced Filters
                   </h3>
-                  <p className="text-text-secondary mb-4">
-                    Filter by education, lifestyle, interests, and relationship
-                    goals for better matches.
+                  <p className="text-text-secondary mb-4 text-sm">
+                    Filter by education, lifestyle, interests, and goals.
                   </p>
                   <div className="text-sm text-primary font-medium">
                     1 Credit per Search
                   </div>
-                  <button
-                    className="mt-4 text-primary hover:text-primary-600 font-medium transition-colors duration-300"
-                    onClick={() => alert("Advanced Filters preview feature")}
-                  >
-                    Try Free Preview →
-                  </button>
+                  <div className="mt-4">
+                    <span className="inline-block px-4 py-2 bg-gray-200/20 text-gray-400 text-sm rounded-lg cursor-default">
+                      Coming Soon →
+                    </span>
+                  </div>
                 </div>
 
                 {/* Read Receipts */}
-                <div className="card text-center hover:shadow-button-hover transition-all duration-300">
+                <div className="card text-center hover:shadow-button-hover transition-all duration-300 relative overflow-hidden">
+                  <div className="absolute top-3 right-3">
+                    <span className="text-[10px] font-medium px-2.5 py-1 bg-yellow-500/20 text-yellow-300 rounded-full border border-yellow-500/30">
+                      Soon
+                    </span>
+                  </div>
                   <div className="w-16 h-16 bg-success-100 rounded-full flex items-center justify-center mx-auto mb-4">
                     <svg
                       className="w-8 h-8 text-success-600"
@@ -650,23 +677,26 @@ function CreditStore() {
                   <h3 className="text-xl font-serif font-semibold text-text-primary mb-3">
                     Read Receipts
                   </h3>
-                  <p className="text-text-secondary mb-4">
-                    Know when your messages are read and optimize your
-                    conversation timing.
+                  <p className="text-text-secondary mb-4 text-sm">
+                    Know when your messages are read and optimize timing.
                   </p>
                   <div className="text-sm text-primary font-medium">
                     1 Credit per Conversation
                   </div>
-                  <button
-                    className="mt-4 text-primary hover:text-primary-600 font-medium transition-colors duration-300"
-                    onClick={() => alert("Read Receipts preview feature")}
-                  >
-                    Try Free Preview →
-                  </button>
+                  <div className="mt-4">
+                    <span className="inline-block px-4 py-2 bg-gray-200/20 text-gray-400 text-sm rounded-lg cursor-default">
+                      Coming Soon →
+                    </span>
+                  </div>
                 </div>
 
-                {/* Rewind Feature */}
-                <div className="card text-center hover:shadow-button-hover transition-all duration-300">
+                {/* Rewind */}
+                <div className="card text-center hover:shadow-button-hover transition-all duration-300 relative overflow-hidden">
+                  <div className="absolute top-3 right-3">
+                    <span className="text-[10px] font-medium px-2.5 py-1 bg-yellow-500/20 text-yellow-300 rounded-full border border-yellow-500/30">
+                      Soon
+                    </span>
+                  </div>
                   <div className="w-16 h-16 bg-warning-100 rounded-full flex items-center justify-center mx-auto mb-4">
                     <svg
                       className="w-8 h-8 text-warning-600"
@@ -683,26 +713,25 @@ function CreditStore() {
                   <h3 className="text-xl font-serif font-semibold text-text-primary mb-3">
                     Rewind
                   </h3>
-                  <p className="text-text-secondary mb-4">
+                  <p className="text-text-secondary mb-4 text-sm">
                     Accidentally passed on someone? Rewind and get a second
-                    chance to connect.
+                    chance.
                   </p>
                   <div className="text-sm text-primary font-medium">
                     3 Credits per Rewind
                   </div>
-                  <button
-                    className="mt-4 text-primary hover:text-primary-600 font-medium transition-colors duration-300"
-                    onClick={() => alert("Rewind preview feature")}
-                  >
-                    Try Free Preview →
-                  </button>
+                  <div className="mt-4">
+                    <span className="inline-block px-4 py-2 bg-gray-200/20 text-gray-400 text-sm rounded-lg cursor-default">
+                      Coming Soon →
+                    </span>
+                  </div>
                 </div>
               </div>
 
               {/* 10-Credit Package Section - Separated Below Main Grid */}
               {tenCreditPackage && (
                 <div className="text-center border border-gray-20 rounded-lg mb-6">
-                  <div className="bg-gradient-to-r from-primary-50 to-accent-50 rounded-xl p-8 max-w-2xl mx-auto">
+                  <div className="bg-linear-to-r from-primary-50 to-accent-50 rounded-xl p-8 max-w-2xl mx-auto">
                     <h3 className="text-3xl font-serif font-semibold text-red-200 mb-4">
                       Start Small, Test Premium Features
                     </h3>
@@ -878,10 +907,10 @@ function CreditStore() {
                   <strong className="text-white">Customer Support:</strong>
                   Need help? Contact our support team 24/7 at{" "}
                   <a
-                    href="mailto:support@stripme.com"
+                    href="mailto:support@strippals.com"
                     className="text-white hover:text-primary-300"
                   >
-                    support@StripMe.com{" "}
+                    support@StripPals.com{" "}
                   </a>
                   or call{" "}
                   <a
@@ -901,9 +930,9 @@ function CreditStore() {
             {/* Logo & Name - Centered */}
             <div className="flex justify-center mb-8">
               <div className="flex items-center">
-                <img src={Logo} alt="StripMe" className="w-12 h-12" />
+                <img src={Logo} alt="StripPals" className="w-12 h-12" />
                 <span className="ml-2 text-xl font-serif font-semibold text-white">
-                  StripMe
+                  StripPals
                 </span>
               </div>
             </div>
@@ -952,7 +981,7 @@ function CreditStore() {
             {/* Copyright */}
             <div className="border-t border-white/10 pt-6 text-center">
               <p className="text-white/50 text-xs">
-                stripMe.com © 2026 All rights reserved.
+                stripPals.com © 2026 All rights reserved.
               </p>
             </div>
           </div>
