@@ -997,7 +997,6 @@ export default function Chat() {
                   px-4
                   py-3
                   resize-none
-                  overflow-y-auto
                   focus:outline-none
                   focus:ring-2
                   focus:ring-primary
