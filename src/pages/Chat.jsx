@@ -647,7 +647,7 @@ export default function Chat() {
   }
 
   return (
-    <div className="h-[90dvh] flex flex-col bg-surface overflow-hidden">
+    <div className="h-[95dvh] flex flex-col bg-surface overflow-hidden">
       {/* Header */}
       <div className="p-3 border-b border-primary/10 bg-primary/10 flex items-center justify-between shrink-0 gap-2">
         <div className="flex items-center space-x-3 min-w-0 flex-1">
@@ -971,18 +971,18 @@ export default function Chat() {
                 value={input}
                 placeholder="Type a message..."
                 onChange={(e) => {
-                  setInput(e.target.value);
+                  const value = e.target.value;
+                  setInput(value);
 
+                  // ✅ Reset to min height first, then grow if there's text
                   e.target.style.height = "44px";
-                  e.target.style.height = `${Math.min(
-                    e.target.scrollHeight,
-                    120,
-                  )}px`;
+                  if (value.trim()) {
+                    e.target.style.height = `${Math.min(e.target.scrollHeight, 120)}px`;
+                  }
                 }}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && !e.shiftKey) {
                     e.preventDefault();
-
                     if (!sending) {
                       sendMessage();
                     }
@@ -1000,8 +1000,9 @@ export default function Chat() {
                   focus:outline-none
                   focus:ring-2
                   focus:ring-primary
-                  min-h-11
-                  max-h-30
+                  min-h-[44px]
+                  max-h-[120px]
+                  leading-5
                 "
               />
 
