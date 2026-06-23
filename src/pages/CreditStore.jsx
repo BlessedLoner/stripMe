@@ -914,10 +914,10 @@ function CreditStore() {
                   </a>
                   or call{" "}
                   <a
-                    href="tel:+1-800-STRIP-ME"
+                    href="tel:+1-800-STRIP-PALS"
                     className="text-white hover:text-primary-300"
                   >
-                    1-800-STRIP-ME
+                    1-800-STRIP-PALS
                   </a>
                 </p>
               </div>
