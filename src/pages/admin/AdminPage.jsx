@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { supabase } from "../../lib/supabaseClient";
 import { useNavigate } from "react-router-dom";
+import LocationInput from "../../components/LocationInput";
 
 // List of supported countries
 const COUNTRIES = [
@@ -853,7 +854,114 @@ export default function AdminPage() {
                 </div>
 
                 {/* Location */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-4">
+                  {/* Country */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Country *
+                    </label>
+
+                    <select
+                      name="country"
+                      value={formData.country}
+                      onChange={handleInputChange}
+                      required
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="">Select country</option>
+
+                      {COUNTRIES.map((c) => (
+                        <option key={c.code} value={c.code}>
+                          {c.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* LocationIQ Search */}
+                  {formData.country && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Search Location
+                      </label>
+
+                      <LocationInput
+                        countryCode={formData.country.toLowerCase()}
+                        onSelect={(location) => {
+                          setFormData((prev) => ({
+                            ...prev,
+
+                            city: location.city || "",
+
+                            state: location.state || "",
+
+                            location_latitude: location.lat || "",
+
+                            location_longitude: location.lng || "",
+                          }));
+                        }}
+                      />
+                    </div>
+                  )}
+
+                  {/* Auto-filled Preview */}
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        State
+                      </label>
+
+                      <input
+                        type="text"
+                        value={formData.state || ""}
+                        readOnly
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        City
+                      </label>
+
+                      <input
+                        type="text"
+                        value={formData.city || ""}
+                        readOnly
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Latitude
+                      </label>
+
+                      <input
+                        type="text"
+                        value={formData.location_latitude || ""}
+                        readOnly
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Longitude
+                      </label>
+
+                      <input
+                        type="text"
+                        value={formData.location_longitude || ""}
+                        readOnly
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Location */}
+                {/* <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Country *
@@ -897,9 +1005,9 @@ export default function AdminPage() {
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
-                </div>
+                </div> */}
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Latitude
@@ -926,7 +1034,7 @@ export default function AdminPage() {
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
-                </div>
+                </div> */}
 
                 {/* Appearance */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
