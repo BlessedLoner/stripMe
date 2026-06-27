@@ -57,6 +57,7 @@ export default function AdminPage() {
     country: "",
     city: "",
     height: "",
+    body_type: "",
     hair_color: "",
     eye_color: "",
     tattoo: false,
@@ -224,6 +225,7 @@ export default function AdminPage() {
       image_url: "",
       country: selectedCountry,
       city: "",
+      body_type: "",
       height: "",
       hair_color: "",
       eye_color: "",
@@ -272,6 +274,7 @@ export default function AdminPage() {
       smoker: profile.smoker || false,
       relationship: profile.relationship || "",
       interests: profile.interests?.join(", ") || "",
+      body_type: profile.body_type || "",
     });
     setPhotosInput((profile.photos || []).join(", "));
 
@@ -356,6 +359,7 @@ export default function AdminPage() {
       image_url: formData.image_url || null,
       country: formData.country,
       city: formData.city || null,
+      body_type: formData.body_type || null,
       height: formData.height ? parseInt(formData.height, 10) : null,
       hair_color: formData.hair_color || null,
       eye_color: formData.eye_color || null,
@@ -431,6 +435,7 @@ export default function AdminPage() {
       image_url: formData.image_url || null,
       country: formData.country,
       city: formData.city || null,
+      body_type: formData.body_type || null,
       height: formData.height ? parseInt(formData.height, 10) : null,
       hair_color: formData.hair_color || null,
       eye_color: formData.eye_color || null,
@@ -1038,6 +1043,18 @@ export default function AdminPage() {
 
                 {/* Appearance */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Body Type
+                    </label>
+                    <input
+                      type="text"
+                      name="body_type"
+                      value={formData.body_type}
+                      onChange={handleInputChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Height (cm)
