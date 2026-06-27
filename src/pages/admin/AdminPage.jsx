@@ -44,6 +44,7 @@ export default function AdminPage() {
   // Form state
   const [formData, setFormData] = useState({
     display_name: "",
+    name: "",
     age: "",
     gender: "",
     bio: "",
@@ -213,6 +214,7 @@ export default function AdminPage() {
   function resetForm() {
     setFormData({
       display_name: "",
+      name: "",
       age: "",
       gender: "",
       bio: "",
@@ -254,6 +256,7 @@ export default function AdminPage() {
     setEditingId(profile.id);
     setFormData({
       display_name: profile.display_name || "",
+      name: profile.name || "",
       age: profile.age?.toString() || "",
       gender: profile.gender || "",
       bio: profile.bio || "",
@@ -343,6 +346,7 @@ export default function AdminPage() {
 
     const insertData = {
       display_name: formData.display_name.trim(),
+      name: formData.name.trim(),
       age: ageNum,
       gender: formData.gender || null,
       bio: formData.bio || null,
@@ -419,6 +423,7 @@ export default function AdminPage() {
 
     const updateData = {
       display_name: formData.display_name.trim(),
+      name: formData.name.trim(),
       age: ageNum,
       gender: formData.gender || null,
       bio: formData.bio || null,
@@ -779,6 +784,19 @@ export default function AdminPage() {
                       type="text"
                       name="display_name"
                       value={formData.display_name}
+                      onChange={handleInputChange}
+                      required
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Name *
+                    </label>
+                    <input
+                      type="text"
+                      name="name"
+                      value={formData.name}
                       onChange={handleInputChange}
                       required
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
