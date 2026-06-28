@@ -449,57 +449,57 @@ export default function ProfilePage() {
             </div>
           </div>
         </div>
-
-        {/* Related Profiles – below the two columns */}
-        <div className="relative max-w-5xl mx-auto px-8 pb-16">
-          <h2 className="text-3xl text-white font-semibold mb-6">
-            You might also like
-          </h2>
-
-          {loadingRelated ? (
-            <div className="flex flex-col-2 justify-center py-12">
-              <div className="w-8 h-8 border-4 border-purple-600 border-t-transparent rounded-full animate-spin" />
-            </div>
-          ) : relatedProfiles.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {relatedProfiles.map((profile) => (
-                <div
-                  key={profile.id}
-                  className="bg-black rounded-2xl overflow-hidden cursor-pointer hover:scale-105 transition-transform duration-200"
-                  onClick={() =>
-                    navigate(`/profile/${profile.id}`, {
-                      state: { member: profile },
-                    })
-                  }
-                >
-                  <img
-                    src={
-                      profile.image_url ||
-                      "https://via.placeholder.com/400x300?text=Profile"
-                    }
-                    alt={profile.display_name}
-                    className="w-full h-48 object-cover"
-                  />
-                  <div className="p-4">
-                    <h3 className="text-xl text-white font-semibold">
-                      {profile.display_name}, {profile.age}
-                    </h3>
-                    <p className="text-white/60 text-sm">
-                      {[profile.city, profile.state, profile.country]
-                        .filter(Boolean)
-                        .join(", ")}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-white/60 text-center py-12">
-              No similar profiles found at the moment.
-            </p>
-          )}
-        </div>
       </section>
+
+      {/* Related Profiles – below the two columns */}
+      <div className="relative max-w-5xl mx-auto px-8 pb-16">
+        <h2 className="text-3xl text-white font-semibold mb-6">
+          You might also like
+        </h2>
+
+        {loadingRelated ? (
+          <div className="flex flex-col-2 justify-center py-12">
+            <div className="w-8 h-8 border-4 border-purple-600 border-t-transparent rounded-full animate-spin" />
+          </div>
+        ) : relatedProfiles.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {relatedProfiles.map((profile) => (
+              <div
+                key={profile.id}
+                className="bg-black rounded-2xl overflow-hidden cursor-pointer hover:scale-105 transition-transform duration-200"
+                onClick={() =>
+                  navigate(`/profile/${profile.id}`, {
+                    state: { member: profile },
+                  })
+                }
+              >
+                <img
+                  src={
+                    profile.image_url ||
+                    "https://via.placeholder.com/400x300?text=Profile"
+                  }
+                  alt={profile.display_name}
+                  className="w-full h-48 object-cover"
+                />
+                <div className="p-4">
+                  <h3 className="text-xl text-white font-semibold">
+                    {profile.display_name}, {profile.age}
+                  </h3>
+                  <p className="text-white/60 text-sm">
+                    {[profile.city, profile.state, profile.country]
+                      .filter(Boolean)
+                      .join(", ")}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-white/60 text-center py-12">
+            No similar profiles found at the moment.
+          </p>
+        )}
+      </div>
 
       {activeImage && (
         <div

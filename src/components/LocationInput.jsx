@@ -34,6 +34,9 @@ export default function LocationInput({ onSelect, countryCode }) {
       );
 
       const data = await res.json();
+
+      console.log("FULL LOCATIONIQ RESPONSE:", data);
+
       const address = data.address || {};
 
       const cleanLocation = {
@@ -41,14 +44,14 @@ export default function LocationInput({ onSelect, countryCode }) {
           address.city ||
           address.town ||
           address.village ||
-          address.hamlet ||
+          address.municipality ||
           "",
 
-        state: address.state || address.county || "",
+        state: address.state || address.region || address.state_district || "",
 
-        region: address.region || address.state_district || "",
+        country: address.country || "",
 
-        country: address.country_code?.toUpperCase() || "",
+        countryCode: address.country_code?.toUpperCase() || "",
 
         lat: parseFloat(place.lat),
         lng: parseFloat(place.lon),
@@ -56,11 +59,49 @@ export default function LocationInput({ onSelect, countryCode }) {
 
       console.log("FINAL CLEAN LOCATION:", cleanLocation);
 
-      onSelect(cleanLocation); // ✅ now parent gets CLEAN data
+      onSelect(cleanLocation);
     } catch (err) {
       console.error("Reverse geocode error:", err);
     }
   };
+
+  // const handleSelect = async (place) => {
+  //   setQuery(place.display_name);
+  //   setResults([]);
+
+  //   try {
+  //     const res = await fetch(
+  //       `https://api.locationiq.com/v1/reverse?key=${import.meta.env.VITE_LOCATIONIQ_KEY}&lat=${place.lat}&lon=${place.lon}&format=json`,
+  //     );
+
+  //     const data = await res.json();
+  //     const address = data.address || {};
+
+  //     const cleanLocation = {
+  //       city:
+  //         address.city ||
+  //         address.town ||
+  //         address.village ||
+  //         address.hamlet ||
+  //         "",
+
+  //       state: address.state || address.county || "",
+
+  //       region: address.region || address.state_district || "",
+
+  //       country: address.country_code?.toUpperCase() || "",
+
+  //       lat: parseFloat(place.lat),
+  //       lng: parseFloat(place.lon),
+  //     };
+
+  //     console.log("FINAL CLEAN LOCATION:", cleanLocation);
+
+  //     onSelect(cleanLocation); // ✅ now parent gets CLEAN data
+  //   } catch (err) {
+  //     console.error("Reverse geocode error:", err);
+  //   }
+  // };
 
   return (
     <div className="relative w-full">
