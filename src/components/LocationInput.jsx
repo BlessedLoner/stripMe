@@ -14,7 +14,9 @@ export default function LocationInput({ onSelect, countryCode }) {
 
     try {
       const res = await fetch(
-        `https://api.locationiq.com/v1/autocomplete?key=${import.meta.env.VITE_LOCATIONIQ_KEY}&q=${value}&limit=5&format=json&countrycodes=${countryCode}`,
+        `https://api.locationiq.com/v1/autocomplete?key=${
+          import.meta.env.VITE_LOCATIONIQ_KEY
+        }&q=${value}&countrycodes=${countryCode}&limit=5&normalizecity=1&addressdetails=1`,
       );
 
       const data = await res.json();
@@ -44,14 +46,12 @@ export default function LocationInput({ onSelect, countryCode }) {
           address.city ||
           address.town ||
           address.village ||
-          address.municipality ||
+          address.hamlet ||
           "",
 
-        state: address.state || address.region || address.state_district || "",
+        state: address.state_code || address.state || "",
 
         country: address.country || "",
-
-        countryCode: address.country_code?.toUpperCase() || "",
 
         lat: parseFloat(place.lat),
         lng: parseFloat(place.lon),
@@ -110,20 +110,39 @@ export default function LocationInput({ onSelect, countryCode }) {
         value={query}
         onChange={(e) => fetchLocations(e.target.value)}
         placeholder="Enter your location..."
-        className="w-full border border-white/20 rounded-lg py-3 px-4 bg-black text-white  focus:ring-2 focus:ring-primary/20"
+        className="w-full border border-white/20 rounded-lg py-3 px-4 bg-black text-white focus:ring-2 focus:ring-primary/20"
       />
 
       {results.length > 0 && (
-        <ul className="absolute bg-white border w-full mt-1 rounded-lg shadow-lg z-50">
-          {results.map((place, index) => (
-            <li
-              key={`${place.place_id}-${index}`}
-              onClick={() => handleSelect(place)}
-              className="p-2 hover:bg-gray-100 cursor-pointer"
-            >
-              {place.display_name}
-            </li>
-          ))}
+        <ul className="absolute bg-white border w-full mt-1 rounded-lg shadow-lg z-50 max-h-72 overflow-y-auto">
+          {results.map((place, index) => {
+            const address = place.address || {};
+
+            const city =
+              address.city ||
+              address.town ||
+              address.village ||
+              address.hamlet ||
+              "";
+
+            const state = address.state_code || address.state || "";
+
+            const country = address.country_code?.toUpperCase() || "";
+
+            return (
+              <li
+                key={`${place.place_id}-${index}`}
+                onClick={() => handleSelect(place)}
+                className="p-3 hover:bg-gray-100 cursor-pointer border-b text-black"
+              >
+                <div className="font-medium">
+                  {city}
+                  {state ? ` ${state}` : ""}
+                  {country ? `, ${country}` : ""}
+                </div>
+              </li>
+            );
+          })}
         </ul>
       )}
     </div>
