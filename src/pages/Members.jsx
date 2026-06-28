@@ -29,17 +29,19 @@ export default function MembersFromDB({ limit = 200 }) {
 
   const [currentPage, setCurrentPage] = useState(1);
   const [loadingPage, setLoadingPage] = useState(false);
-  const membersPerPage = 10;
+  const [totalCount, setTotalCount] = useState(0);
+  const membersPerPage = 20;
 
-  const totalPages = Math.ceil(filteredMembers.length / membersPerPage);
+  // const totalPages = Math.ceil(filteredMembers.length / membersPerPage);
+  const totalPages = Math.ceil(totalCount / membersPerPage);
 
-  const indexOfLastMember = currentPage * membersPerPage;
-  const indexOfFirstMember = indexOfLastMember - membersPerPage;
+  // const indexOfLastMember = currentPage * membersPerPage;
+  // const indexOfFirstMember = indexOfLastMember - membersPerPage;
 
-  const currentMembers = filteredMembers.slice(
-    indexOfFirstMember,
-    indexOfLastMember,
-  );
+  // const currentMembers = filteredMembers.slice(
+  //   indexOfFirstMember,
+  //   indexOfLastMember,
+  // );
 
   const changePage = (page) => {
     if (page < 1 || page > totalPages) return;
@@ -100,7 +102,10 @@ export default function MembersFromDB({ limit = 200 }) {
 
     async function fetchFiltered() {
       try {
-        let q = supabase.from("fictional_profiles").select("*");
+        // let q = supabase.from("fictional_profiles").select("*");
+        let q = supabase
+          .from("fictional_profiles")
+          .select("*", { count: "exact" });
 
         if (currentUser?.country) {
           q = q.eq("country", currentUser.country);
@@ -125,13 +130,15 @@ export default function MembersFromDB({ limit = 200 }) {
         const from = (currentPage - 1) * membersPerPage;
         const to = from + membersPerPage - 1;
 
-        q = q.order("created_at", { ascending: false }).range(from, to);
+        q = q.order("shuffle_order", { ascending: true }).range(from, to);
 
-        const { data, error: qErr } = await q;
+        const { data, count, error: qErr } = await q;
 
         if (!mounted) return;
 
         if (qErr) throw qErr;
+
+        setTotalCount(count || 0);
 
         let results = Array.isArray(data) ? data : [];
 
@@ -155,7 +162,7 @@ export default function MembersFromDB({ limit = 200 }) {
           return 0;
         });
 
-        setFilteredMembers(results);
+        setFilteredMembers(results || []);
       } catch (err) {
         if (mounted) {
           setError(err);
@@ -455,7 +462,7 @@ export default function MembersFromDB({ limit = 200 }) {
             <>
               {/* Responsive Grid - Mobile: 1, Tablet: 2, Desktop: 3-4, Large: 5 */}
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
-                {currentMembers.map((m) => {
+                {filteredMembers.map((m) => {
                   let imgSrc = null;
                   if (m.image_url && m.image_url.startsWith("http"))
                     imgSrc = m.image_url;
