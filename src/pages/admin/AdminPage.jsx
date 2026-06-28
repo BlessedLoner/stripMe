@@ -107,7 +107,12 @@ export default function AdminPage() {
 
       if (error) throw error;
       setPrivatePhotos(data || []);
-      setPrivatePhotosInput(data.map((p) => p.image_url).join(", "));
+
+      const urls = (data || []).map((p) => p.image_url);
+
+      setTempPhotoUrls(urls);
+
+      setPrivatePhotosInput(urls.join(", "));
     } catch (err) {
       console.error("Error fetching private photos:", err);
     }
@@ -283,8 +288,6 @@ export default function AdminPage() {
 
     // Fetch existing private photos
     await fetchPrivatePhotos(profile.id);
-    setTempPhotoUrls(profile.private_photos || []);
-    setPrivatePhotosInput((profile.private_photos || []).join(", "));
 
     setModalOpen(true);
   }
@@ -984,80 +987,6 @@ export default function AdminPage() {
                 </div>
 
                 {/* Location */}
-                {/* <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Country *
-                    </label>
-                    <select
-                      name="country"
-                      value={formData.country}
-                      onChange={handleInputChange}
-                      required
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="">Select country</option>
-                      {COUNTRIES.map((c) => (
-                        <option key={c.code} value={c.code}>
-                          {c.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      State
-                    </label>
-                    <input
-                      type="text"
-                      name="state"
-                      value={formData.state}
-                      onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      City
-                    </label>
-                    <input
-                      type="text"
-                      name="city"
-                      value={formData.city}
-                      onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-                </div> */}
-
-                {/* <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Latitude
-                    </label>
-                    <input
-                      type="number"
-                      step="any"
-                      name="location_latitude"
-                      value={formData.location_latitude}
-                      onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Longitude
-                    </label>
-                    <input
-                      type="number"
-                      step="any"
-                      name="location_longitude"
-                      value={formData.location_longitude}
-                      onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-                </div> */}
 
                 {/* Appearance */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
