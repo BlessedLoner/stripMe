@@ -149,51 +149,90 @@ export default function ProfilePage() {
 
     async function fetchRelated() {
       try {
-        // Build filters based on current member
-        const minAge = member.age ? member.age - 3 : null;
-        const maxAge = member.age ? member.age + 3 : null;
-        const city = member.city;
-        const country = member.country;
+        const minAge = member.age ? member.age - 5 : 18;
+        const maxAge = member.age ? member.age + 5 : 99;
 
-        // Start query
+        // STEP 1:
+        // Get profiles in same country + similar age
         let query = supabase
           .from("fictional_profiles")
           .select("*")
-          .neq("id", member.id) // exclude current profile
+          .neq("id", member.id)
+          .eq("is_deleted", false)
           .gte("age", minAge)
-          .lte("age", maxAge);
+          .lte("age", maxAge)
+          .eq("country", member.country)
+          .limit(30);
 
-        // Prefer same city, then same country, otherwise no location filter
-        if (city) {
-          query = query.eq("city", city);
-        } else if (country) {
-          query = query.eq("country", country);
-        }
-
-        query = query.eq("is_deleted", false);
-
-        // Limit to 6 profiles
-        const { data, error } = await query.limit(6);
+        const { data, error } = await query;
 
         if (error) throw error;
+
+        let profiles = (data || []).map(normalizeProfile).filter(Boolean);
+
+        // STEP 2:
+        // Smart ranking system
+        profiles.sort((a, b) => {
+          let scoreA = 0;
+          let scoreB = 0;
+
+          // Same city = highest priority
+          if (a.city?.toLowerCase() === member.city?.toLowerCase()) {
+            scoreA += 5;
+          }
+
+          if (b.city?.toLowerCase() === member.city?.toLowerCase()) {
+            scoreB += 5;
+          }
+
+          // Same state
+          if (a.state?.toLowerCase() === member.state?.toLowerCase()) {
+            scoreA += 3;
+          }
+
+          if (b.state?.toLowerCase() === member.state?.toLowerCase()) {
+            scoreB += 3;
+          }
+
+          // Similar interests
+          const memberInterests = member.interests || [];
+
+          const commonA =
+            a.interests?.filter((i) => memberInterests.includes(i)).length || 0;
+
+          const commonB =
+            b.interests?.filter((i) => memberInterests.includes(i)).length || 0;
+
+          scoreA += commonA;
+          scoreB += commonB;
+
+          return scoreB - scoreA;
+        });
+
+        // STEP 3:
+        // Shuffle slightly so it doesn't look repetitive
+        profiles = profiles.sort(() => Math.random() - 0.5);
+
+        // STEP 4:
+        // Show only 6
+        profiles = profiles.slice(0, 6);
+
         if (active) {
-          const profiles = (data || []).map(normalizeProfile).filter(Boolean);
           setRelatedProfiles(profiles);
         }
       } catch (err) {
         console.error("Error fetching related profiles:", err);
-        // Silently fail – no need to show error to user
       } finally {
         if (active) setLoadingRelated(false);
       }
     }
 
     fetchRelated();
+
     return () => {
       active = false;
     };
   }, [member]);
-
   // --------------------------------------------------------------------
   // 4. Handle message button: find or create conversation
   // --------------------------------------------------------------------

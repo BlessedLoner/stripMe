@@ -628,7 +628,7 @@ export default function MembersFromDB({ limit = 200 }) {
                           disabled={loadingPage || typeof page !== "number"}
                           className={`w-8 h-8 rounded-lg text-sm font-medium transition ${
                             currentPage === page
-                              ? "bg-purple-600 text-white"
+                              ? "bg-purple-600 text-primary"
                               : "bg-gray-100 hover:bg-gray-200 text-gray-700"
                           } ${typeof page !== "number" ? "cursor-default" : ""}`}
                         >
