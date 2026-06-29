@@ -315,10 +315,31 @@ export default function ChatLayout() {
             }
           }
 
-          console.log("🔄 Reloading conversations from realtime update");
+          setConversations((prev) =>
+            prev
+              .map((c) => {
+                if (c.id !== updated.id) return c;
 
-          await loadConversations();
-          await fetchFlirtConversations();
+                const isUnread =
+                  updated.last_message_sender_id !== currentUser.id &&
+                  (!c.last_read_at ||
+                    new Date(updated.last_message_at) >
+                      new Date(c.last_read_at));
+
+                return {
+                  ...c,
+                  last_message_at: updated.last_message_at,
+                  last_message_sender_id: updated.last_message_sender_id,
+                  last_message_preview: updated.last_message_preview,
+                  unread_count: isUnread ? 1 : 0,
+                };
+              })
+              .sort(
+                (a, b) =>
+                  new Date(b.last_message_at || 0) -
+                  new Date(a.last_message_at || 0),
+              ),
+          );
         },
       )
       .subscribe();
