@@ -279,8 +279,97 @@ export default function ProfilePage() {
     }
   };
   // --------------------------------------------------------------------
-  // Loading user profile
+  // Quick Flirt: send a flirt message to the member
   // --------------------------------------------------------------------
+  const flirtMessages = [
+    "🔥 Ready for fun?",
+    "💕 You look amazing",
+    "😉 Want to chat?",
+  ];
+
+  const sendQuickFlirt = async (text) => {
+    if (!currentUser) {
+      navigate("/sign-up", {
+        state: { from: location.pathname },
+      });
+      return;
+    }
+
+    if (!member || !profile) return;
+
+    try {
+      let conversationId;
+
+      // ---------------------------------------------------
+      // 1. CHECK EXISTING CONVERSATION
+      // ---------------------------------------------------
+      const { data: existingConversation, error: fetchError } = await supabase
+        .from("conversations")
+        .select("id")
+        .eq("user_id", profile.id)
+        .eq("fictional_profile_id", member.id)
+        .maybeSingle();
+
+      if (fetchError) throw fetchError;
+
+      // ---------------------------------------------------
+      // 2. CREATE CONVERSATION IF NONE EXISTS
+      // ---------------------------------------------------
+      if (!existingConversation) {
+        const { data: newConversation, error: createError } = await supabase
+          .from("conversations")
+          .insert({
+            user_id: profile.id,
+            fictional_profile_id: member.id,
+            is_favorite: false,
+            started_by_flirt: true,
+            last_message_at: new Date().toISOString(),
+            last_message_preview: text,
+            last_message_sender_id: profile.id,
+          })
+          .select()
+          .single();
+
+        if (createError) throw createError;
+
+        conversationId = newConversation.id;
+      } else {
+        conversationId = existingConversation.id;
+
+        // update conversation preview
+        const { error: updateError } = await supabase
+          .from("conversations")
+          .update({
+            last_message_at: new Date().toISOString(),
+            last_message_preview: text,
+            last_message_sender_id: profile.id,
+          })
+          .eq("id", conversationId);
+
+        if (updateError) throw updateError;
+      }
+
+      // ---------------------------------------------------
+      // 3. INSERT MESSAGE
+      // ---------------------------------------------------
+      const { error: messageError } = await supabase.from("messages").insert({
+        conversation_id: conversationId,
+        sender_real_user_id: profile.id,
+        sender_type: "real_user",
+        content: text,
+        direction: "user_to_fictional",
+      });
+
+      if (messageError) throw messageError;
+
+      // ---------------------------------------------------
+      // 4. OPEN CHAT
+      // ---------------------------------------------------
+      navigate(`/chat/${conversationId}`);
+    } catch (err) {
+      console.error("Quick flirt failed:", err);
+    }
+  };
 
   // --------------------------------------------------------------------
   // Loading & Error States
@@ -341,6 +430,18 @@ export default function ProfilePage() {
           >
             Message
           </button>
+
+          <div className="flex flex-wrap gap-2 mt-4">
+            {flirtMessages.map((msg, idx) => (
+              <button
+                key={idx}
+                onClick={() => sendQuickFlirt(msg)}
+                className="px-4 py-2 rounded-full bg-pink-600 text-white text-sm hover:bg-pink-700 transition"
+              >
+                {msg}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Two‑column layout for Bio/About (left) and Preferences (right) */}
