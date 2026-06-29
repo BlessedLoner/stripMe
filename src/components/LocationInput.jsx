@@ -7,7 +7,7 @@ export default function LocationInput({ onSelect, countryCode }) {
   const fetchLocations = async (value) => {
     setQuery(value);
 
-    if (value.length < 3) {
+    if (value.length < 1) {
       setResults([]);
       return;
     }
@@ -133,7 +133,7 @@ export default function LocationInput({ onSelect, countryCode }) {
               <li
                 key={`${place.place_id}-${index}`}
                 onClick={() => handleSelect(place)}
-                className="w-full border border-white/20 rounded-lg py-3 px-4 bg-black text-white focus:border-primary focus:ring-2 focus:ring-primary/20"
+                className="w-full border border-black rounded-lg py-3 px-4 bg-white text-black focus:border-primary focus:ring-2 focus:ring-primary/20"
               >
                 <div className="font-medium">
                   {city}
