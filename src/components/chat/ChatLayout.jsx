@@ -328,9 +328,10 @@ export default function ChatLayout() {
 
                 return {
                   ...c,
-                  last_message_at: updated.last_message_at,
-                  last_message_sender_id: updated.last_message_sender_id,
-                  last_message_preview: updated.last_message_preview,
+
+                  // merge ALL updated fields
+                  ...updated,
+
                   unread_count: isUnread ? 1 : 0,
                 };
               })
