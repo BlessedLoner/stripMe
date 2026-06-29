@@ -114,7 +114,7 @@ export default function LocationInput({ onSelect, countryCode }) {
       />
 
       {results.length > 0 && (
-        <ul className="absolute bg-primary/10 border w-full mt-1 rounded-lg shadow-lg z-50 max-h-72 overflow-y-auto">
+        <ul className="absolute bg-black/10 border w-full mt-1 rounded-lg shadow-lg z-50 max-h-72 overflow-y-auto">
           {results.map((place, index) => {
             const address = place.address || {};
 
