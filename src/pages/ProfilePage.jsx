@@ -452,7 +452,7 @@ export default function ProfilePage() {
       </section>
 
       {/* Related Profiles – below the two columns */}
-      <div className="relative bg-primary/10 max-w-5xl mx-auto px-8 pb-16">
+      <div className="bg-black pb-16">
         <h2 className="text-3xl text-white font-semibold mb-6">
           You might also like
         </h2>
@@ -462,7 +462,7 @@ export default function ProfilePage() {
             <div className="w-8 h-8 border-4 border-purple-600 border-t-transparent rounded-full animate-spin" />
           </div>
         ) : relatedProfiles.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-4 gap-6">
             {relatedProfiles.map((profile) => (
               <div
                 key={profile.id}

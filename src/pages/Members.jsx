@@ -492,7 +492,7 @@ export default function MembersFromDB({ limit = 200 }) {
                               state: { member: m },
                             })
                           }
-                          className="w-full h-40 object-cover"
+                          className="w-full h-50 object-cover"
                         >
                           {imgSrc ? (
                             <img
