@@ -452,7 +452,7 @@ export default function ProfilePage() {
       </section>
 
       {/* Related Profiles – below the two columns */}
-      <div className="bg-black max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
+      <div className="bg-black px-6 py-16">
         <h2 className="text-3xl text-white font-semibold mb-6">
           You might also like
         </h2>
