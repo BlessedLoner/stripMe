@@ -482,7 +482,7 @@ export default function MembersFromDB({ limit = 200 }) {
                   return (
                     <div
                       key={m.id}
-                      className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden group cursor-pointer border border-primary/20 flex flex-col"
+                      className="bg-white rounded-2xl overflow-hidden  cursor-pointer hover:scale-105 transition-transform duration-200 border border-primary/20 flex flex-col"
                     >
                       {/* Image Section */}
                       <div className="relative w-full aspect-10/5 overflow-hidden">
@@ -492,7 +492,7 @@ export default function MembersFromDB({ limit = 200 }) {
                               state: { member: m },
                             })
                           }
-                          className="w-full h-100"
+                          className="w-full h-40 object-cover"
                         >
                           {imgSrc ? (
                             <img

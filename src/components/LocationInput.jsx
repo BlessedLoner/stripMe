@@ -133,7 +133,7 @@ export default function LocationInput({ onSelect, countryCode }) {
               <li
                 key={`${place.place_id}-${index}`}
                 onClick={() => handleSelect(place)}
-                className="p-3 hover:bg-primary/20 cursor-pointer border-b text-black"
+                className="w-full border border-white/20 rounded-lg py-3 px-4 bg-black text-white focus:border-primary focus:ring-2 focus:ring-primary/20"
               >
                 <div className="font-medium">
                   {city}
