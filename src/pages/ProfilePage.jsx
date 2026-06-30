@@ -298,11 +298,13 @@ export default function ProfilePage() {
     if (!member || !profile) return;
 
     try {
-      let conversationId;
+      // Check credits first
+      if (credits <= 0) {
+        setShowOutOfCreditsModal(true);
+        return;
+      }
 
-      // ---------------------------------------------------
-      // 1. CHECK EXISTING CONVERSATION
-      // ---------------------------------------------------
+      // Check existing conversation
       const { data: existingConversation, error: fetchError } = await supabase
         .from("conversations")
         .select("id")
@@ -312,9 +314,9 @@ export default function ProfilePage() {
 
       if (fetchError) throw fetchError;
 
-      // ---------------------------------------------------
-      // 2. CREATE CONVERSATION IF NONE EXISTS
-      // ---------------------------------------------------
+      let conversationId;
+
+      // Create conversation if it doesn't exist
       if (!existingConversation) {
         const { data: newConversation, error: createError } = await supabase
           .from("conversations")
@@ -323,9 +325,6 @@ export default function ProfilePage() {
             fictional_profile_id: member.id,
             is_favorite: false,
             started_by_flirt: true,
-            last_message_at: new Date().toISOString(),
-            last_message_preview: text,
-            last_message_sender_id: profile.id,
           })
           .select()
           .single();
@@ -335,63 +334,43 @@ export default function ProfilePage() {
         conversationId = newConversation.id;
       } else {
         conversationId = existingConversation.id;
-
-        // update conversation preview
-        const { error: updateError } = await supabase
-          .from("conversations")
-          .update({
-            last_message_at: new Date().toISOString(),
-            last_message_preview: text,
-            last_message_sender_id: profile.id,
-          })
-          .eq("id", conversationId);
-
-        if (updateError) throw updateError;
       }
 
-      // check credits first
-      const { data: currentProfile, error: creditError } = await supabase
-        .from("user_profiles")
-        .select("credits")
-        .eq("id", profile.id)
-        .single();
+      // Send flirt message using SAME RPC as chat
+      const { error: rpcError } = await supabase.rpc(
+        "send_message_with_credits",
+        {
+          p_conversation_id: conversationId,
+          p_sender_type: "real_user",
+          p_sender_user_id: profile.id,
+          p_content: text,
+          p_image_url: null,
+          p_direction: "user_to_fictional",
+          p_credit_cost: 1,
+        },
+      );
 
-      if (creditError) throw creditError;
+      if (rpcError) {
+        console.error("Quick flirt RPC error:", rpcError);
 
-      if (!currentProfile || currentProfile.credits <= 0) {
-        alert("You are low on credits. Please buy more credits.");
+        if (rpcError.message?.includes("Insufficient credits")) {
+          setShowOutOfCreditsModal(true);
+        }
+
         return;
       }
 
-      // ---------------------------------------------------
-      // 3. INSERT MESSAGE
-      // ---------------------------------------------------
-      // send flirt message
-      const { error: messageError } = await supabase.from("messages").insert({
-        conversation_id: conversationId,
-
-        // use the SAME column your normal chat sender uses
-        sender_user_id: profile.id,
-
-        sender_type: "real_user",
-        content: text,
-        direction: "user_to_fictional",
-        credit_cost: 1,
-      });
-
-      if (messageError) throw messageError;
-
-      // deduct 1 credit
+      // Update conversation preview
       await supabase
-        .from("user_profiles")
+        .from("conversations")
         .update({
-          credits: currentProfile.credits - 1,
+          last_message_at: new Date().toISOString(),
+          last_message_sender_id: profile.id,
+          last_message_preview: text,
         })
-        .eq("id", profile.id);
+        .eq("id", conversationId);
 
-      // ---------------------------------------------------
-      // 4. OPEN CHAT
-      // ---------------------------------------------------
+      // Optional:
       navigate(`/chat/${conversationId}`);
     } catch (err) {
       console.error("Quick flirt failed:", err);
