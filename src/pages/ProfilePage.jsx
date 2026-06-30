@@ -349,18 +349,45 @@ export default function ProfilePage() {
         if (updateError) throw updateError;
       }
 
+      // check credits first
+      const { data: currentProfile, error: creditError } = await supabase
+        .from("user_profiles")
+        .select("credits")
+        .eq("id", profile.id)
+        .single();
+
+      if (creditError) throw creditError;
+
+      if (!currentProfile || currentProfile.credits <= 0) {
+        alert("You are low on credits. Please buy more credits.");
+        return;
+      }
+
       // ---------------------------------------------------
       // 3. INSERT MESSAGE
       // ---------------------------------------------------
+      // send flirt message
       const { error: messageError } = await supabase.from("messages").insert({
         conversation_id: conversationId,
-        sender_real_user_id: profile.id,
+
+        // use the SAME column your normal chat sender uses
+        sender_user_id: profile.id,
+
         sender_type: "real_user",
         content: text,
         direction: "user_to_fictional",
+        credit_cost: 1,
       });
 
       if (messageError) throw messageError;
+
+      // deduct 1 credit
+      await supabase
+        .from("user_profiles")
+        .update({
+          credits: currentProfile.credits - 1,
+        })
+        .eq("id", profile.id);
 
       // ---------------------------------------------------
       // 4. OPEN CHAT
