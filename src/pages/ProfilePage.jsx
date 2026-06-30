@@ -808,7 +808,7 @@ export default function ProfilePage() {
       )}
 
       {/* Related Profiles – below the two columns */}
-      <div className="bg-black px-6 py-16">
+      <div className="bg-black px-6 pt-16">
         <h2 className="text-3xl text-white font-semibold mb-6">
           You might also like
         </h2>
