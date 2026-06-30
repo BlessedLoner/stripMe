@@ -63,6 +63,10 @@ export default function ProfilePage() {
   const [loadingRelated, setLoadingRelated] = useState(false);
   const [activeImage, setActiveImage] = useState(null);
 
+  const [sendingFlirt, setSendingFlirt] = useState(null);
+  const [showFlirtSuccess, setShowFlirtSuccess] = useState(false);
+  const [lastFlirtConversationId, setLastFlirtConversationId] = useState(null);
+
   // Current authenticated user (for chat)
   const [currentUser, setCurrentUser] = useState(null);
 
@@ -338,6 +342,9 @@ export default function ProfilePage() {
   ];
 
   const sendQuickFlirt = async (text) => {
+    if (sendingFlirt) return; // Prevent multiple clicks
+
+    setSendingFlirt(text);
     if (!currentUser) {
       navigate("/sign-up", {
         state: { from: location.pathname },
@@ -420,12 +427,17 @@ export default function ProfilePage() {
         })
         .eq("id", conversationId);
 
+      setLastFlirtConversationId(conversationId);
+      setShowFlirtSuccess(true);
+
       await loadCredits(profile.id);
 
       // Optional:
-      navigate(`/chat/${conversationId}`);
+      // navigate(`/chat/${conversationId}`);
     } catch (err) {
       console.error("Quick flirt failed:", err);
+    } finally {
+      setSendingFlirt(null);
     }
   };
 
@@ -500,18 +512,49 @@ export default function ProfilePage() {
             <h2 className="text-3xl text-white font-semibold mb-2">
               Quick Flirt
             </h2>
+            <br />
 
             {flirtMessages.map((msg, idx) => (
               <button
                 key={idx}
                 onClick={() => sendQuickFlirt(msg)}
-                className="px-4 py-2 rounded-full bg-pink-600 text-white text-sm hover:bg-pink-700 transition"
+                disabled={sendingFlirt !== null}
+                className={`px-4 py-2 rounded-full text-white text-sm transition-all duration-300 flex items-center justify-center gap-2 ${
+                  sendingFlirt === msg
+                    ? "opacity-80 cursor-not-allowed"
+                    : "hover:scale-105"
+                }`}
                 style={{
                   backgroundImage:
                     "linear-gradient(to right, #8b4b6b, #d4a574)",
                 }}
               >
-                {msg}
+                {sendingFlirt === msg ? (
+                  <>
+                    <svg
+                      className="w-4 h-4 animate-spin"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                      />
+                      <path
+                        d="M4 12a8 8 0 018-8"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                      />
+                    </svg>
+                    Sending...
+                  </>
+                ) : (
+                  msg
+                )}
               </button>
             ))}
           </div>
@@ -624,6 +667,36 @@ export default function ProfilePage() {
           </div>
         </div>
       </section>
+
+      {showFlirtSuccess && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
+          <div className="bg-zinc-900 rounded-2xl p-6 w-[90%] max-w-sm text-center border border-pink-500/20">
+            <h3 className="text-xl font-semibold text-white mb-3">
+              Flirt Sent 💕
+            </h3>
+
+            <p className="text-white/70 mb-6">
+              Your flirt message was sent successfully.
+            </p>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowFlirtSuccess(false)}
+                className="flex-1 py-2 rounded-lg bg-zinc-700 text-white hover:bg-zinc-600"
+              >
+                Continue Browsing
+              </button>
+
+              <button
+                onClick={() => navigate(`/chat/${lastFlirtConversationId}`)}
+                className="flex-1 py-2 rounded-lg bg-pink-500 text-white hover:bg-pink-600"
+              >
+                View Chat
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Low Credit Warning Modal */}
       {showLowCreditModal && (
