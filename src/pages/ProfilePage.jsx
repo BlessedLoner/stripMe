@@ -68,6 +68,16 @@ export default function ProfilePage() {
 
   const [profile, setProfile] = useState(null);
 
+  const [credits, setCredits] = useState(0);
+
+  const [showOutOfCreditsModal, setShowOutOfCreditsModal] = useState(false);
+
+  const [showLowCreditModal, setShowLowCreditModal] = useState(false);
+
+  const [lowCreditWarningShown, setLowCreditWarningShown] = useState(false);
+
+  const lowCreditThreshold = 5;
+
   useEffect(() => {
     const fetchProfile = async () => {
       if (!currentUser) return;
@@ -88,6 +98,43 @@ export default function ProfilePage() {
 
     fetchProfile();
   }, [currentUser]);
+
+  async function loadCredits(pid = profile?.id) {
+    if (!pid) return;
+
+    const { data } = await supabase
+      .from("credits")
+      .select("balance")
+      .eq("user_id", pid)
+      .single();
+
+    if (data) {
+      const newBalance = data.balance;
+
+      setCredits(newBalance);
+
+      // Low credit warning
+      if (
+        !lowCreditWarningShown &&
+        newBalance > 0 &&
+        newBalance < lowCreditThreshold
+      ) {
+        setShowLowCreditModal(true);
+        setLowCreditWarningShown(true);
+      }
+
+      // Reset warning flag
+      if (newBalance >= lowCreditThreshold) {
+        setLowCreditWarningShown(false);
+      }
+    }
+  }
+
+  useEffect(() => {
+    if (profile?.id) {
+      loadCredits(profile.id);
+    }
+  }, [profile]);
 
   // --------------------------------------------------------------------
   // 1. Fetch current user on mount
@@ -369,6 +416,8 @@ export default function ProfilePage() {
           last_message_preview: text,
         })
         .eq("id", conversationId);
+
+      await loadCredits(profile.id);
 
       // Optional:
       navigate(`/chat/${conversationId}`);
