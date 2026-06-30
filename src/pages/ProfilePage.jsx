@@ -332,6 +332,9 @@ export default function ProfilePage() {
     "🔥 Ready for fun?",
     "💕 You look amazing",
     "😉 Want to chat?",
+    "🍆 Let's get naughty?",
+    "💋 Can't stop thinking about you",
+    "😏 You caught my eye",
   ];
 
   const sendQuickFlirt = async (text) => {
@@ -426,6 +429,13 @@ export default function ProfilePage() {
     }
   };
 
+  // Navigate to credits page and close modals
+  function goToCredits() {
+    setShowLowCreditModal(false);
+    setShowOutOfCreditsModal(false);
+    navigate("/credits");
+  }
+
   // --------------------------------------------------------------------
   // Loading & Error States
   // --------------------------------------------------------------------
@@ -487,11 +497,19 @@ export default function ProfilePage() {
           </button>
 
           <div className="flex flex-wrap gap-2 mt-4">
+            <h2 className="text-3xl text-white font-semibold mb-2">
+              Quick Flirt
+            </h2>
+
             {flirtMessages.map((msg, idx) => (
               <button
                 key={idx}
                 onClick={() => sendQuickFlirt(msg)}
                 className="px-4 py-2 rounded-full bg-pink-600 text-white text-sm hover:bg-pink-700 transition"
+                style={{
+                  backgroundImage:
+                    "linear-gradient(to right, #8b4b6b, #d4a574)",
+                }}
               >
                 {msg}
               </button>
@@ -606,6 +624,111 @@ export default function ProfilePage() {
           </div>
         </div>
       </section>
+
+      {/* Low Credit Warning Modal */}
+      {showLowCreditModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-red-50 rounded-2xl max-w-md w-full p-6 shadow-xl">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg
+                  className="w-8 h-8 text-orange-500"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                  />
+                </svg>
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">
+                Low Credits!
+              </h3>
+              <p className="text-gray-600 mb-4">
+                You only have{" "}
+                <span className="font-bold text-orange-600">{credits}</span>{" "}
+                credits left.
+                {lowCreditThreshold - credits === 1
+                  ? " This is your last credit!"
+                  : ` You need at least 1 credit to send a message.`}
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowLowCreditModal(false)}
+                  className="flex-1 px-4 py-2 border border-primary rounded-lg text-gray-700 hover:bg-gray-50 transition"
+                >
+                  Dismiss
+                </button>
+                <button
+                  onClick={goToCredits}
+                  className="flex-1 px-4 py-2 bg-primary text-white rounded-lg hover:opacity-90 transition"
+                >
+                  Buy Credits
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Out of Credits Modal */}
+      {showOutOfCreditsModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-red-50 rounded-2xl max-w-md w-full p-6 shadow-xl">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg
+                  className="w-8 h-8 text-red-500"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2-1.343-2-3-2z"
+                  />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M12 8V4M8 4h8M4 4h16v12H4V4z"
+                  />
+                </svg>
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">
+                Out of Credits!
+              </h3>
+              <p className="text-gray-600 mb-2">
+                You don't have enough credits to send a message.
+              </p>
+              <p className="text-sm text-gray-500 mb-6">
+                Each message costs <span className="font-medium">1 credit</span>
+                .
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowOutOfCreditsModal(false)}
+                  className="flex-1 px-4 py-2 border border-primary rounded-lg text-gray-700 hover:bg-gray-50 transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={goToCredits}
+                  className="flex-1 px-4 py-2 bg-primary text-white rounded-lg hover:opacity-90 transition"
+                >
+                  Buy Credits
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Related Profiles – below the two columns */}
       <div className="bg-black px-6 py-16">
