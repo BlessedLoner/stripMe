@@ -532,7 +532,7 @@ export default function ProfilePage() {
                 {sendingFlirt === msg ? (
                   <>
                     <svg
-                      className="w-4 h-4 animate-spin"
+                      className="w-4 h-4 items-center animate-spin"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -682,14 +682,18 @@ export default function ProfilePage() {
             <div className="flex gap-3">
               <button
                 onClick={() => setShowFlirtSuccess(false)}
-                className="flex-1 py-2 rounded-lg bg-zinc-700 text-white hover:bg-zinc-600"
+                className="flex-1 py-2 rounded-lg  text-white hover:opacity-90 transition"
+                style={{
+                  backgroundImage:
+                    "linear-gradient(to right, #8b4b6b, #d4a574)",
+                }}
               >
                 Continue Browsing
               </button>
 
               <button
                 onClick={() => navigate(`/chat/${lastFlirtConversationId}`)}
-                className="flex-1 py-2 rounded-lg bg-pink-500 text-white hover:bg-pink-600"
+                className="flex-1 py-2 rounded-lg bg-primary text-white hover:opacity-90 transition"
               >
                 View Chat
               </button>

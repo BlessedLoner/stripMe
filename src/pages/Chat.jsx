@@ -1003,7 +1003,6 @@ export default function Chat() {
                   min-h-[44px]
                   max-h-[120px]
                   leading-5
-                  overflow-hidden
                 "
               />
 
