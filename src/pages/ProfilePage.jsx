@@ -339,6 +339,7 @@ export default function ProfilePage() {
     "🍆 Let's get naughty?",
     "💋 Can't stop thinking about you",
     "😏 You caught my eye",
+    "💦 Let's cum together",
   ];
 
   const sendQuickFlirt = async (text) => {
@@ -810,7 +811,8 @@ export default function ProfilePage() {
       {/* Related Profiles – below the two columns */}
       <div className="bg-black px-6 pt-16">
         <h2 className="text-3xl text-white font-semibold mb-6">
-          You might also like
+          {" "}
+          m You might also like
         </h2>
 
         {loadingRelated ? (

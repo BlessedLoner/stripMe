@@ -258,26 +258,6 @@ export default function ChatLayout() {
   }, [currentUser, loadConversations]);
 
   /* ============================= */
-  /* Polling for conversation updates (fixes last message preview) */
-  /* ============================= */
-  // useEffect(() => {
-  //   if (!currentUser) return;
-
-  //   // Poll every 3 seconds to refresh conversations
-  //   pollingIntervalRef.current = setInterval(() => {
-  //     console.log("🔄 Polling for conversation updates...");
-  //     loadConversations();
-  //     fetchFlirtConversations();
-  //   }, 3000);
-
-  //   return () => {
-  //     if (pollingIntervalRef.current) {
-  //       clearInterval(pollingIntervalRef.current);
-  //     }
-  //   };
-  // }, [currentUser, loadConversations, fetchFlirtConversations]);
-
-  /* ============================= */
   /* 3️⃣ Real-Time Subscription */
   /* ============================= */
   useEffect(() => {
