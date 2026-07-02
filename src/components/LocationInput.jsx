@@ -7,70 +7,45 @@ export default function LocationInput({ onSelect, countryCode }) {
   const fetchLocations = async (value) => {
     setQuery(value);
 
-    if (value.length < 1) {
+    if (!value.trim()) {
       setResults([]);
       return;
     }
 
     try {
       const res = await fetch(
-        `https://api.locationiq.com/v1/autocomplete?key=${
-          import.meta.env.VITE_LOCATIONIQ_KEY
-        }&q=${value}&countrycodes=${countryCode}&limit=5&normalizecity=1&addressdetails=1`,
+        `https://api.geoapify.com/v1/geocode/autocomplete?text=${encodeURIComponent(
+          value,
+        )}&filter=countrycode:${countryCode.toLowerCase()}&limit=8&apiKey=${
+          import.meta.env.VITE_GEOAPIFY_KEY
+        }`,
       );
 
       const data = await res.json();
 
-      const filtered = data.filter((place) => {
-        const type = place.type;
-
-        return ["city", "town", "village", "hamlet", "administrative"].includes(
-          type,
-        );
-      });
-      setResults(filtered);
+      setResults(data.features || []);
     } catch (err) {
-      console.error("LocationIQ error:", err);
+      console.error("Location fetch error:", err);
     }
   };
+  const handleSelect = (place) => {
+    const props = place.properties;
 
-  const handleSelect = async (place) => {
-    setQuery(place.display_name);
+    const cleanLocation = {
+      city: props.city || "",
+      state: props.state || "",
+      country: props.country || "",
+      lat: props.lat,
+      lng: props.lon,
+    };
+
+    setQuery(
+      [props.city, props.state, props.country].filter(Boolean).join(", "),
+    );
+
     setResults([]);
 
-    try {
-      const res = await fetch(
-        `https://api.locationiq.com/v1/reverse?key=${import.meta.env.VITE_LOCATIONIQ_KEY}&lat=${place.lat}&lon=${place.lon}&format=json`,
-      );
-
-      const data = await res.json();
-
-      console.log("FULL LOCATIONIQ RESPONSE:", data);
-
-      const address = data.address || {};
-
-      const cleanLocation = {
-        city:
-          address.city ||
-          address.town ||
-          address.village ||
-          address.hamlet ||
-          "",
-
-        state: address.state_code || address.state || "",
-
-        country: address.country || "",
-
-        lat: parseFloat(place.lat),
-        lng: parseFloat(place.lon),
-      };
-
-      console.log("FINAL CLEAN LOCATION:", cleanLocation);
-
-      onSelect(cleanLocation);
-    } catch (err) {
-      console.error("Reverse geocode error:", err);
-    }
+    onSelect(cleanLocation);
   };
 
   return (
@@ -83,38 +58,21 @@ export default function LocationInput({ onSelect, countryCode }) {
         className="w-full border border-white/20 rounded-lg py-3 px-4 bg-black text-white focus:ring-2 focus:ring-primary/20"
       />
 
-      {results.length > 0 && (
-        <ul className="absolute bg-white border w-full mt-1 rounded-lg shadow-lg z-50 max-h-72 overflow-y-auto">
-          {results.map((place, index) => {
-            const address = place.address || {};
+      {results.map((place, index) => {
+        const props = place.properties;
 
-            const city =
-              address.city ||
-              address.town ||
-              address.village ||
-              address.hamlet ||
-              "";
-
-            const state = address.state_code || address.state || "";
-
-            const country = address.country_code?.toUpperCase() || "";
-
-            return (
-              <li
-                key={`${place.place_id}-${index}`}
-                onClick={() => handleSelect(place)}
-                className="w-full border border-black rounded-lg py-3 px-4 bg-white text-black focus:border-primary focus:ring-2 focus:ring-primary/20"
-              >
-                <div className="font-medium">
-                  {city}
-                  {state ? ` ${state}` : ""}
-                  {country ? `, ${country}` : ""}
-                </div>
-              </li>
-            );
-          })}
-        </ul>
-      )}
+        return (
+          <li
+            key={index}
+            onClick={() => handleSelect(place)}
+            className="p-3 hover:bg-gray-100 cursor-pointer text-black"
+          >
+            {[props.city, props.state, props.country]
+              .filter(Boolean)
+              .join(", ")}
+          </li>
+        );
+      })}
     </div>
   );
 }
