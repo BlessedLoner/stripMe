@@ -442,6 +442,15 @@ export default function ProfilePage() {
     }
   };
 
+  const formatHeight = (height) => {
+    if (!height) return null;
+
+    const feet = Math.floor(height / 12);
+    const inches = height % 12;
+
+    return `${feet}' ${inches}"`;
+  };
+
   // Navigate to credits page and close modals
   function goToCredits() {
     setShowLowCreditModal(false);
@@ -615,7 +624,9 @@ export default function ProfilePage() {
                 </li>
                 <li>
                   <span className="font-semibold text-white">Height:</span>{" "}
-                  <span className="text-white/80">{member.height || "—"}</span>
+                  <span className="text-white/80">
+                    {formatHeight(member.height) || "—"}
+                  </span>
                 </li>
                 <li>
                   <span className="font-semibold text-white">Body Type:</span>{" "}
@@ -812,7 +823,7 @@ export default function ProfilePage() {
       <div className="bg-black px-6 pt-16">
         <h2 className="text-3xl text-white font-semibold mb-6">
           {" "}
-          m You might also like
+          You might also like
         </h2>
 
         {loadingRelated ? (

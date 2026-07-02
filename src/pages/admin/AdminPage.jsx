@@ -1002,18 +1002,28 @@ export default function AdminPage() {
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Height (cm)
-                    </label>
-                    <input
-                      type="number"
-                      name="height"
-                      value={formData.height}
-                      onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
+
+                  <select
+                    name="height"
+                    value={formData.height || ""}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  >
+                    <option value="">Select height</option>
+
+                    {Array.from({ length: 31 }, (_, i) => {
+                      const totalInches = i + 60; // 5'0 = 60 inches
+
+                      const feet = Math.floor(totalInches / 12);
+                      const inches = totalInches % 12;
+
+                      return (
+                        <option key={totalInches} value={totalInches}>
+                          {feet}' {inches}"
+                        </option>
+                      );
+                    })}
+                  </select>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Hair Color
