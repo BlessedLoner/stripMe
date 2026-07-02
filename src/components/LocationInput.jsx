@@ -58,21 +58,25 @@ export default function LocationInput({ onSelect, countryCode }) {
         className="w-full border border-white/20 rounded-lg py-3 px-4 bg-black text-white focus:ring-2 focus:ring-primary/20"
       />
 
-      {results.map((place, index) => {
-        const props = place.properties;
+      {results.length > 0 && (
+        <ul className="absolute bg-white border w-full mt-1 rounded-lg shadow-lg z-50 max-h-72 overflow-y-auto">
+          {results.map((place, index) => {
+            const props = place.properties;
 
-        return (
-          <li
-            key={index}
-            onClick={() => handleSelect(place)}
-            className="w-full border border-black rounded-lg py-3 px-4 bg-white text-black focus:border-primary focus:ring-2 focus:ring-primary/20"
-          >
-            {[props.city, props.state, props.country]
-              .filter(Boolean)
-              .join(", ")}
-          </li>
-        );
-      })}
+            return (
+              <li
+                key={index}
+                onClick={() => handleSelect(place)}
+                className="w-full border border-black rounded-lg py-3 px-4 bg-white text-black focus:border-primary focus:ring-2 focus:ring-primary/20"
+              >
+                {[props.city, props.state, props.country]
+                  .filter(Boolean)
+                  .join(", ")}
+              </li>
+            );
+          })}
+        </ul>
+      )}
     </div>
   );
 }
