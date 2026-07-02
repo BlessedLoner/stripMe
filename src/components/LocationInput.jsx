@@ -7,7 +7,7 @@ export default function LocationInput({ onSelect, countryCode }) {
   const fetchLocations = async (value) => {
     setQuery(value);
 
-    if (!value.length < 1) {
+    if (value.length < 1) {
       setResults([]);
       return;
     }
