@@ -1008,8 +1008,11 @@ export default function AdminPage() {
 
                           setFormData((prev) => ({
                             ...prev,
-                            city: e.target.value,
 
+                            // save REAL city name
+                            city: selectedCity?.city_name || "",
+
+                            // save lat/lng
                             location_latitude: selectedCity?.latitude || "",
 
                             location_longitude: selectedCity?.longitude || "",
