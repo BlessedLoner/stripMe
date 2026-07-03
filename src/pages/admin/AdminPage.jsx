@@ -34,6 +34,9 @@ export default function AdminPage() {
   const [showLikesCountryModal, setShowLikesCountryModal] = useState(false);
   const [showLikesDetailsModal, setShowLikesDetailsModal] = useState(false);
 
+  const [states, setStates] = useState([]);
+  const [cities, setCities] = useState([]);
+
   // Private photos state
   const [privatePhotos, setPrivatePhotos] = useState([]);
   const [privatePhotosInput, setPrivatePhotosInput] = useState("");
@@ -74,6 +77,50 @@ export default function AdminPage() {
   useEffect(() => {
     fetchProfiles();
   }, []);
+
+  useEffect(() => {
+    async function loadStates() {
+      const { data, error } = await supabase
+        .from("states")
+        .select("*")
+        .eq("country_code", formData.country)
+        .order("state_name");
+
+      if (!error) {
+        setStates(data || []);
+      }
+    }
+
+    if (formData.country) {
+      loadStates();
+    } else {
+      setStates([]);
+    }
+  }, [formData.country]);
+
+  useEffect(() => {
+    async function loadCities() {
+      const selectedState = states.find((s) => s.state_name === formData.state);
+
+      if (!selectedState) return;
+
+      const { data, error } = await supabase
+        .from("cities")
+        .select("*")
+        .eq("state_id", selectedState.id)
+        .order("city_name");
+
+      if (!error) {
+        setCities(data || []);
+      }
+    }
+
+    if (formData.state) {
+      loadCities();
+    } else {
+      setCities([]);
+    }
+  }, [formData.state, states]);
 
   // Load all profiles (including deleted) from Supabase
   async function fetchProfiles() {
@@ -890,7 +937,17 @@ export default function AdminPage() {
                     <select
                       name="country"
                       value={formData.country}
-                      onChange={handleInputChange}
+                      onChange={(e) => {
+                        handleInputChange(e);
+
+                        setFormData((prev) => ({
+                          ...prev,
+                          state: "",
+                          city: "",
+                          location_latitude: "",
+                          location_longitude: "",
+                        }));
+                      }}
                       required
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
@@ -904,33 +961,74 @@ export default function AdminPage() {
                     </select>
                   </div>
 
-                  {/* LocationIQ Search */}
+                  {/* State */}
                   {formData.country && (
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Search Location
+                        State
                       </label>
 
-                      <LocationInput
-                        countryCode={formData.country.toLowerCase()}
-                        onSelect={(location) => {
+                      <select
+                        value={formData.state || ""}
+                        onChange={(e) => {
                           setFormData((prev) => ({
                             ...prev,
-
-                            city: location.city || "",
-
-                            state: location.state || "",
-
-                            location_latitude: location.lat || "",
-
-                            location_longitude: location.lng || "",
+                            state: e.target.value,
+                            city: "",
+                            location_latitude: "",
+                            location_longitude: "",
                           }));
                         }}
-                      />
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="">Select state</option>
+
+                        {states.map((state) => (
+                          <option key={state.id} value={state.state_name}>
+                            {state.state_name}
+                          </option>
+                        ))}
+                      </select>
                     </div>
                   )}
 
-                  {/* Auto-filled Preview */}
+                  {/* City */}
+                  {formData.state && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        City
+                      </label>
+
+                      <select
+                        value={formData.city || ""}
+                        onChange={(e) => {
+                          const selectedCity = cities.find(
+                            (c) => c.id === e.target.value,
+                          );
+
+                          setFormData((prev) => ({
+                            ...prev,
+                            city: e.target.value,
+
+                            location_latitude: selectedCity?.latitude || "",
+
+                            location_longitude: selectedCity?.longitude || "",
+                          }));
+                        }}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="">Select city</option>
+
+                        {cities.map((city) => (
+                          <option key={city.id} value={city.id}>
+                            {city.city_name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+
+                  {/* Preview */}
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
