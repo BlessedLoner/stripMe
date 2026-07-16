@@ -39,19 +39,13 @@ export default function AdminPage() {
 
   // State Neighbors state
   const [showStateNeighborsModal, setShowStateNeighborsModal] = useState(false);
+  const [neighborCountryStates, setNeighborCountryStates] = useState([]);
 
   const [neighborCountry, setNeighborCountry] = useState("");
-
   const [neighborState, setNeighborState] = useState("");
-
-  const [states, setStates] = useState([]);
-
   const [neighborStates, setNeighborStates] = useState([]);
-
   const [selectedNeighbors, setSelectedNeighbors] = useState([]);
-
   const [searchNeighbor, setSearchNeighbor] = useState("");
-
   const [savingNeighbors, setSavingNeighbors] = useState(false);
 
   // Private photos state
@@ -139,23 +133,24 @@ export default function AdminPage() {
     }
   }, [formData.state, states]);
 
+  // Load neighbor states when country changes
   useEffect(() => {
     if (!neighborCountry) {
-      setStates([]);
+      setNeighborCountryStates([]);
       return;
     }
 
-    loadStates();
+    loadNeighborCountryStates();
   }, [neighborCountry]);
 
-  async function loadStates() {
+  async function loadNeighborCountryStates() {
     const { data } = await supabase
       .from("states")
       .select("*")
       .eq("country_code", neighborCountry)
       .order("state_name");
 
-    setStates(data || []);
+    setNeighborCountryStates(data || []);
   }
 
   async function loadNeighborStates() {
@@ -172,7 +167,7 @@ export default function AdminPage() {
     }
 
     // Remove the selected state itself
-    const availableStates = allStates.filter(
+    const availableStates = neighborCountryStates.filter(
       (state) => state.id !== neighborState,
     );
 
@@ -198,6 +193,7 @@ export default function AdminPage() {
 
     loadNeighborStates();
   }, [neighborState]);
+  // Not ended yet
 
   // Load all profiles (including deleted) from Supabase
   async function fetchProfiles() {
@@ -1480,7 +1476,7 @@ export default function AdminPage() {
         </div>
       )}
 
-      {/* State Neighbors Modal */}
+      {/* Modal: State Neighbors */}
       {showStateNeighborsModal && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
           <div className="bg-white rounded-xl w-full max-w-3xl p-6 max-h-[90vh] overflow-y-auto">
@@ -1533,7 +1529,7 @@ export default function AdminPage() {
                 >
                   <option value="">Select State</option>
 
-                  {states.map((state) => (
+                  {neighborCountryStates.map((state) => (
                     <option key={state.id} value={state.id}>
                       {state.state_name}
                     </option>
