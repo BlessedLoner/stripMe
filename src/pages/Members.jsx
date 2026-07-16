@@ -26,7 +26,10 @@ export default function MembersFromDB({ limit = 200 }) {
   const [currentUser, setCurrentUser] = useState(null);
   const [userProfileId, setUserProfileId] = useState(null);
   const [toast, setToast] = useState(null);
+
   const [regions, setRegions] = useState([]);
+  const [showFallbackMessage, setShowFallbackMessage] = useState(false);
+  const [selectedState, setSelectedState] = useState("");
 
   const [currentPage, setCurrentPage] = useState(1);
   const [loadingPage, setLoadingPage] = useState(false);
@@ -178,11 +181,19 @@ export default function MembersFromDB({ limit = 200 }) {
           return 0;
         });
 
+        if (filters.state && results.length === 0) {
+          setShowFallbackMessage(true);
+          setSelectedState(filters.state);
+        } else {
+          setShowFallbackMessage(false);
+        }
+
         setFilteredMembers(results || []);
       } catch (err) {
         if (mounted) {
           setError(err);
           setFilteredMembers([]);
+          setShowFallbackMessage(false);
         }
       } finally {
         if (mounted) setLoading(false);
@@ -480,6 +491,18 @@ export default function MembersFromDB({ limit = 200 }) {
             <>
               {/* Responsive Grid - Mobile: 1, Tablet: 2, Desktop: 3-4, Large: 5 */}
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
+                {showFallbackMessage && (
+                  <div className="mb-6 rounded-xl border border-amber-300 bg-amber-50 p-5">
+                    <h3 className="text-lg font-semibold text-amber-900">
+                      📍 No members available in {selectedState} yet
+                    </h3>
+
+                    <p className="mt-2 text-sm text-amber-700">
+                      We're growing every day. While we add more members in this
+                      region, we'll recommend other members you may also like.
+                    </p>
+                  </div>
+                )}
                 {filteredMembers.map((m) => {
                   let imgSrc = null;
                   if (m.image_url && m.image_url.startsWith("http"))

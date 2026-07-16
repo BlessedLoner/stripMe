@@ -37,6 +37,23 @@ export default function AdminPage() {
   const [states, setStates] = useState([]);
   const [cities, setCities] = useState([]);
 
+  // State Neighbors state
+  const [showStateNeighborsModal, setShowStateNeighborsModal] = useState(false);
+
+  const [neighborCountry, setNeighborCountry] = useState("");
+
+  const [neighborState, setNeighborState] = useState("");
+
+  const [states, setStates] = useState([]);
+
+  const [neighborStates, setNeighborStates] = useState([]);
+
+  const [selectedNeighbors, setSelectedNeighbors] = useState([]);
+
+  const [searchNeighbor, setSearchNeighbor] = useState("");
+
+  const [savingNeighbors, setSavingNeighbors] = useState(false);
+
   // Private photos state
   const [privatePhotos, setPrivatePhotos] = useState([]);
   const [privatePhotosInput, setPrivatePhotosInput] = useState("");
@@ -121,6 +138,66 @@ export default function AdminPage() {
       setCities([]);
     }
   }, [formData.state, states]);
+
+  useEffect(() => {
+    if (!neighborCountry) {
+      setStates([]);
+      return;
+    }
+
+    loadStates();
+  }, [neighborCountry]);
+
+  async function loadStates() {
+    const { data } = await supabase
+      .from("states")
+      .select("*")
+      .eq("country_code", neighborCountry)
+      .order("state_name");
+
+    setStates(data || []);
+  }
+
+  async function loadNeighborStates() {
+    // Load every state in this country
+    const { data: allStates, error } = await supabase
+      .from("states")
+      .select("*")
+      .eq("country_code", neighborCountry)
+      .order("state_name");
+
+    if (error) {
+      console.error(error);
+      return;
+    }
+
+    // Remove the selected state itself
+    const availableStates = allStates.filter(
+      (state) => state.id !== neighborState,
+    );
+
+    setNeighborStates(availableStates);
+
+    // Load existing neighbors
+    const { data: existing } = await supabase
+      .from("state_neighbors")
+      .select("neighbor_state_id")
+      .eq("state_id", neighborState);
+
+    setSelectedNeighbors(
+      existing ? existing.map((row) => row.neighbor_state_id) : [],
+    );
+  }
+
+  useEffect(() => {
+    if (!neighborState) {
+      setNeighborStates([]);
+      setSelectedNeighbors([]);
+      return;
+    }
+
+    loadNeighborStates();
+  }, [neighborState]);
 
   // Load all profiles (including deleted) from Supabase
   async function fetchProfiles() {
@@ -707,6 +784,14 @@ export default function AdminPage() {
               >
                 ❤️ View Likes
               </button>
+
+              <button
+                onClick={() => setShowStateNeighborsModal(true)}
+                className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg shadow transition duration-200"
+              >
+                🌎 State Neighbors
+              </button>
+
               <button
                 onClick={openCreateModal}
                 className="bg-primary hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg shadow transition duration-200"
@@ -1389,6 +1474,138 @@ export default function AdminPage() {
                 className="px-4 py-2 bg-gray-200 rounded-md hover:bg-gray-300"
               >
                 Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* State Neighbors Modal */}
+      {showStateNeighborsModal && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl w-full max-w-3xl p-6 max-h-[90vh] overflow-y-auto">
+            {/* Header */}
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold">
+                🌎 Configure State Neighbors
+              </h2>
+
+              <button
+                onClick={() => setShowStateNeighborsModal(false)}
+                className="text-gray-500 hover:text-red-600 text-2xl"
+              >
+                ×
+              </button>
+            </div>
+
+            {/* Country */}
+            <div className="mb-5">
+              <label className="block text-sm font-medium mb-2">Country</label>
+
+              <select
+                value={neighborCountry}
+                onChange={(e) => {
+                  setNeighborCountry(e.target.value);
+                  setNeighborState("");
+                  setSearchNeighbor("");
+                }}
+                className="w-full border rounded-lg p-3"
+              >
+                <option value="">Select Country</option>
+
+                {COUNTRIES.map((country) => (
+                  <option key={country.code} value={country.code}>
+                    {country.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* State */}
+            {neighborCountry && (
+              <div className="mb-5">
+                <label className="block text-sm font-medium mb-2">State</label>
+
+                <select
+                  value={neighborState}
+                  onChange={(e) => setNeighborState(e.target.value)}
+                  className="w-full border rounded-lg p-3"
+                >
+                  <option value="">Select State</option>
+
+                  {states.map((state) => (
+                    <option key={state.id} value={state.id}>
+                      {state.state_name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {/* Search */}
+            {neighborState && (
+              <div className="mb-5">
+                <input
+                  type="text"
+                  placeholder="Search state..."
+                  value={searchNeighbor}
+                  onChange={(e) => setSearchNeighbor(e.target.value)}
+                  className="w-full border rounded-lg p-3"
+                />
+              </div>
+            )}
+
+            {/* Checkbox List */}
+
+            {neighborState && (
+              <div className="border rounded-lg p-4 max-h-80 overflow-y-auto">
+                {neighborStates
+                  .filter((state) =>
+                    state.state_name
+                      .toLowerCase()
+                      .includes(searchNeighbor.toLowerCase()),
+                  )
+                  .map((state) => (
+                    <label
+                      key={state.id}
+                      className="flex items-center gap-3 py-2"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedNeighbors.includes(state.id)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSelectedNeighbors((prev) => [...prev, state.id]);
+                          } else {
+                            setSelectedNeighbors((prev) =>
+                              prev.filter((id) => id !== state.id),
+                            );
+                          }
+                        }}
+                      />
+
+                      {state.state_name}
+                    </label>
+                  ))}
+              </div>
+            )}
+
+            {/* Footer */}
+
+            <div className="flex justify-end gap-3 mt-6">
+              <button
+                onClick={() => setShowStateNeighborsModal(false)}
+                className="px-5 py-2 rounded-lg bg-gray-200 hover:bg-gray-300"
+              >
+                Cancel
+              </button>
+
+              <button
+                onClick={saveNeighbors}
+                disabled={savingNeighbors}
+                className="px-5 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700"
+              >
+                {savingNeighbors ? "Saving..." : "Save"}
               </button>
             </div>
           </div>
