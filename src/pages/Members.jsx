@@ -26,7 +26,7 @@ export default function MembersFromDB({ limit = 200 }) {
   const [currentUser, setCurrentUser] = useState(null);
   const [userProfileId, setUserProfileId] = useState(null);
   const [toast, setToast] = useState(null);
-  const [allStates, setAllStates] = useState([]);
+  const [regions, setRegions] = useState([]);
 
   const [currentPage, setCurrentPage] = useState(1);
   const [loadingPage, setLoadingPage] = useState(false);
@@ -54,8 +54,6 @@ export default function MembersFromDB({ limit = 200 }) {
       setLoadingPage(false);
     }, 300);
   };
-
-  setAllStates([...new Set(data.map((m) => m.state).filter(Boolean))].sort());
 
   const [debouncedQuery, setDebouncedQuery] = useState(filters.searchQuery);
   useEffect(() => {
@@ -91,6 +89,27 @@ export default function MembersFromDB({ limit = 200 }) {
 
     getCurrentUser();
   }, []);
+
+  useEffect(() => {
+    if (!currentUser?.country) return;
+
+    async function loadStates() {
+      const { data, error } = await supabase
+        .from("states")
+        .select("state_name")
+        .eq("country_code", currentUser.country)
+        .order("state_name");
+
+      if (error) {
+        console.error("Failed loading states:", error);
+        return;
+      }
+
+      setRegions(data || []);
+    }
+
+    loadStates();
+  }, [currentUser?.country]);
 
   useEffect(() => {
     if (!currentUser) return;
@@ -181,6 +200,7 @@ export default function MembersFromDB({ limit = 200 }) {
     filters.maxAge,
     debouncedQuery,
     filters.state,
+    debouncedQuery,
     currentPage,
   ]);
 
@@ -402,9 +422,10 @@ export default function MembersFromDB({ limit = 200 }) {
                 onChange={(e) => handleFilterChange("state", e.target.value)}
               >
                 <option value="">All regions</option>
-                {allStates.map((state) => (
-                  <option key={state} value={state}>
-                    {state}
+
+                {regions.map((state) => (
+                  <option key={state.state_name} value={state.state_name}>
+                    {state.state_name}
                   </option>
                 ))}
               </select>
