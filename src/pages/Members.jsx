@@ -16,7 +16,7 @@ export default function MembersFromDB({ limit = 200 }) {
     maxAge: 90,
     distance: "50",
     lookingFor: "",
-    city: "",
+    state: "",
     searchQuery: "",
   });
 
@@ -26,6 +26,7 @@ export default function MembersFromDB({ limit = 200 }) {
   const [currentUser, setCurrentUser] = useState(null);
   const [userProfileId, setUserProfileId] = useState(null);
   const [toast, setToast] = useState(null);
+  const [allStates, setAllStates] = useState([]);
 
   const [currentPage, setCurrentPage] = useState(1);
   const [loadingPage, setLoadingPage] = useState(false);
@@ -54,9 +55,7 @@ export default function MembersFromDB({ limit = 200 }) {
     }, 300);
   };
 
-  const regions = [
-    ...new Set(filteredMembers.map((m) => m.state).filter(Boolean)),
-  ];
+  setAllStates([...new Set(data.map((m) => m.state).filter(Boolean))].sort());
 
   const [debouncedQuery, setDebouncedQuery] = useState(filters.searchQuery);
   useEffect(() => {
@@ -122,9 +121,7 @@ export default function MembersFromDB({ limit = 200 }) {
         }
 
         if (filters.state) {
-          q = q.or(
-            `state.ilike.%${filters.state}%,state.ilike.%${filters.state}%`,
-          );
+          q = q.eq("state", filters.state);
         }
 
         const from = (currentPage - 1) * membersPerPage;
@@ -183,7 +180,7 @@ export default function MembersFromDB({ limit = 200 }) {
     filters.minAge,
     filters.maxAge,
     debouncedQuery,
-    filters.city,
+    filters.state,
     currentPage,
   ]);
 
@@ -405,9 +402,9 @@ export default function MembersFromDB({ limit = 200 }) {
                 onChange={(e) => handleFilterChange("state", e.target.value)}
               >
                 <option value="">All regions</option>
-                {regions.map((region) => (
-                  <option key={region} value={region}>
-                    {region}
+                {allStates.map((state) => (
+                  <option key={state} value={state}>
+                    {state}
                   </option>
                 ))}
               </select>
