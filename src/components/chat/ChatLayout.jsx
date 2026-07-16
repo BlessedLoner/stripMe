@@ -585,7 +585,7 @@ export default function ChatLayout() {
   const isLoading = filter === "flirts" ? loadingFlirts : loading;
 
   return (
-    <main className="pt-16 flex flex-col md:flex-row h-screen overflow-hidden bg-primary/10">
+    <main className="pt-16 flex flex-col md:flex-row h-screen bg-primary/10">
       <div
         className={`
               md:w-[360px] border-r flex flex-col

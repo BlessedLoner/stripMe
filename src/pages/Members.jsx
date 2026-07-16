@@ -55,7 +55,7 @@ export default function MembersFromDB({ limit = 200 }) {
   };
 
   const regions = [
-    ...new Set(filteredMembers.map((m) => m.city).filter(Boolean)),
+    ...new Set(filteredMembers.map((m) => m.state).filter(Boolean)),
   ];
 
   const [debouncedQuery, setDebouncedQuery] = useState(filters.searchQuery);
@@ -121,9 +121,9 @@ export default function MembersFromDB({ limit = 200 }) {
           q = q.or(`display_name.ilike.${like},bio.ilike.${like}`);
         }
 
-        if (filters.city) {
+        if (filters.state) {
           q = q.or(
-            `city.ilike.%${filters.city}%,state.ilike.%${filters.city}%`,
+            `state.ilike.%${filters.state}%,state.ilike.%${filters.state}%`,
           );
         }
 
@@ -394,15 +394,15 @@ export default function MembersFromDB({ limit = 200 }) {
               </select>
             </div>
 
-            {/* City */}
+            {/* State */}
             <div>
               <label className="block text-sm font-semibold text-text-primary mb-3">
                 Location
               </label>
               <select
                 className="w-full form-input bg-gray-100 border-0 rounded-xl py-3 px-4 focus:ring-2 focus:ring-purple-500 focus:bg-white transition-all duration-200"
-                value={filters.city}
-                onChange={(e) => handleFilterChange("city", e.target.value)}
+                value={filters.state}
+                onChange={(e) => handleFilterChange("state", e.target.value)}
               >
                 <option value="">All regions</option>
                 {regions.map((region) => (

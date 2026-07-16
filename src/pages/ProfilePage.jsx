@@ -265,8 +265,8 @@ export default function ProfilePage() {
         profiles = profiles.sort(() => Math.random() - 0.5);
 
         // STEP 4:
-        // Show only 6
-        profiles = profiles.slice(0, 6);
+        // Show only 12
+        profiles = profiles.slice(0, 12);
 
         if (active) {
           setRelatedProfiles(profiles);
