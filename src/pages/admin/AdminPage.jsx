@@ -25,6 +25,7 @@ export default function AdminPage() {
   const [actionLoading, setActionLoading] = useState(false);
   const [selectedCountry, setSelectedCountry] = useState("US");
   const [showDeleted, setShowDeleted] = useState(false);
+  const [searchQuery, setSearchQuery] = useState(""); // NEW: Search state
   const navigate = useNavigate();
 
   // Likes state
@@ -303,13 +304,34 @@ export default function AdminPage() {
     }
   }
 
-  // Filter profiles: by country + active/deleted status
+  // Filter profiles: by country + active/deleted status + search query
   const filteredProfiles = profiles.filter((profile) => {
     const countryMatch = profile.country === selectedCountry;
     const statusMatch = showDeleted
       ? profile.is_deleted === true
       : !profile.is_deleted;
-    return countryMatch && statusMatch;
+
+    // Search match: check display_name, name, bio, about, city, state
+    let searchMatch = true;
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase().trim();
+      const displayName = (profile.display_name || "").toLowerCase();
+      const name = (profile.name || "").toLowerCase();
+      const bio = (profile.bio || "").toLowerCase();
+      const about = (profile.about || "").toLowerCase();
+      const city = (profile.city || "").toLowerCase();
+      const state = (profile.state || "").toLowerCase();
+
+      searchMatch =
+        displayName.includes(query) ||
+        name.includes(query) ||
+        bio.includes(query) ||
+        about.includes(query) ||
+        city.includes(query) ||
+        state.includes(query);
+    }
+
+    return countryMatch && statusMatch && searchMatch;
   });
 
   // Handle form input changes
@@ -830,38 +852,80 @@ export default function AdminPage() {
           </div>
         </div>
 
-        {/* Header with Add button */}
+        {/* Header with Add button and Search */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
             Admin Panel —{" "}
             {COUNTRIES.find((c) => c.code === selectedCountry)?.name}
             {showDeleted && " (Deleted Profiles)"}
           </h1>
-          {!showDeleted && (
-            <div className="flex gap-3">
-              <button
-                onClick={openLikesCountryModal}
-                className="bg-primary hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg shadow transition duration-200"
+          <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+            {/* NEW: Search Input */}
+            <div className="relative w-full sm:w-64">
+              <input
+                type="text"
+                placeholder="Search profiles..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full px-4 py-2 pl-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+              <svg
+                className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
               >
-                ❤️ View Likes
-              </button>
-
-              <button
-                onClick={() => setShowStateNeighborsModal(true)}
-                className="bg-indigo-600 hover:bg-indigo-700 text-black font-semibold py-2 px-4 rounded-lg shadow transition duration-200"
-              >
-                🌎 State Neighbors
-              </button>
-
-              <button
-                onClick={openCreateModal}
-                className="bg-primary hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg shadow transition duration-200"
-              >
-                + Add Profile
-              </button>
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                />
+              </svg>
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  ×
+                </button>
+              )}
             </div>
-          )}
+
+            {!showDeleted && (
+              <div className="flex gap-3">
+                <button
+                  onClick={openLikesCountryModal}
+                  className="bg-primary hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg shadow transition duration-200"
+                >
+                  ❤️ View Likes
+                </button>
+
+                <button
+                  onClick={() => setShowStateNeighborsModal(true)}
+                  className="bg-indigo-600 hover:bg-indigo-700 text-black font-semibold py-2 px-4 rounded-lg shadow transition duration-200"
+                >
+                  🌎 State Neighbors
+                </button>
+
+                <button
+                  onClick={openCreateModal}
+                  className="bg-primary hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg shadow transition duration-200"
+                >
+                  + Add Profile
+                </button>
+              </div>
+            )}
+          </div>
         </div>
+
+        {/* Search results count */}
+        {searchQuery && (
+          <div className="mb-4 text-sm text-gray-600">
+            Found {filteredProfiles.length} profile
+            {filteredProfiles.length !== 1 ? "s" : ""} matching "{searchQuery}"
+          </div>
+        )}
 
         {/* Error message */}
         {error && (
@@ -888,9 +952,11 @@ export default function AdminPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {filteredProfiles.length === 0 ? (
               <div className="col-span-full text-center py-12 text-gray-500">
-                {showDeleted
-                  ? `No deleted profiles for ${COUNTRIES.find((c) => c.code === selectedCountry)?.name}.`
-                  : `No active profiles found. Click "Add Profile" to create one.`}
+                {searchQuery
+                  ? `No profiles found matching "${searchQuery}"`
+                  : showDeleted
+                    ? `No deleted profiles for ${COUNTRIES.find((c) => c.code === selectedCountry)?.name}.`
+                    : `No active profiles found. Click "Add Profile" to create one.`}
               </div>
             ) : (
               filteredProfiles.map((profile) => (
