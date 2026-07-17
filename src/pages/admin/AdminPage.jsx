@@ -193,6 +193,71 @@ export default function AdminPage() {
 
     loadNeighborStates();
   }, [neighborState]);
+
+  async function saveNeighbors() {
+    if (!neighborState) {
+      alert("Please select a state.");
+      return;
+    }
+
+    try {
+      setSavingNeighbors(true);
+
+      // Delete current neighbors
+      const { error: deleteError } = await supabase
+        .from("state_neighbors")
+        .delete()
+        .eq("state_id", neighborState);
+
+      if (deleteError) throw deleteError;
+
+      if (selectedNeighbors.length > 0) {
+        const rows = [];
+
+        for (const neighborId of selectedNeighbors) {
+          // Texas -> Oklahoma
+          rows.push({
+            state_id: neighborState,
+            neighbor_state_id: neighborId,
+          });
+
+          // Oklahoma -> Texas
+          rows.push({
+            state_id: neighborId,
+            neighbor_state_id: neighborState,
+          });
+        }
+
+        const uniqueRows = [
+          ...new Map(
+            rows.map((row) => [
+              `${row.state_id}-${row.neighbor_state_id}`,
+              row,
+            ]),
+          ).values(),
+        ];
+
+        const { error: insertError } = await supabase
+          .from("state_neighbors")
+          .upsert(uniqueRows);
+
+        if (insertError) throw insertError;
+      }
+
+      setShowStateNeighborsModal(false);
+
+      setNeighborState("");
+      setSelectedNeighbors([]);
+      setSearchNeighbor("");
+
+      alert("State neighbors saved successfully.");
+    } catch (err) {
+      console.error("Save neighbors failed:", err);
+      alert("Unable to save state neighbors.");
+    } finally {
+      setSavingNeighbors(false);
+    }
+  }
   // Not ended yet
 
   // Load all profiles (including deleted) from Supabase
