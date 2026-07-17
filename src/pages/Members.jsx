@@ -212,27 +212,32 @@ export default function MembersFromDB({ limit = 200 }) {
 
         let results = Array.isArray(data) ? data : [];
 
-        const normalize = (v) => v?.toLowerCase()?.trim();
+        const selectedProfiles = [];
+        const neighborProfiles = [];
+        const otherProfiles = [];
 
-        results = results.sort((a, b) => {
-          const aCity = normalize(a.city);
-          const bCity = normalize(b.city);
-          const userCity = normalize(currentUser.city);
+        for (const profile of results) {
+          if (!filters.state) {
+            otherProfiles.push(profile);
+            continue;
+          }
 
-          const aState = normalize(a.state);
-          const bState = normalize(b.state);
-          const userState = normalize(currentUser.state);
+          if (profile.state === filters.state) {
+            selectedProfiles.push(profile);
+          } else if (neighborStateNames.includes(profile.state)) {
+            neighborProfiles.push(profile);
+          } else {
+            otherProfiles.push(profile);
+          }
+        }
 
-          if (aCity === userCity && bCity !== userCity) return -1;
-          if (bCity === userCity && aCity !== userCity) return 1;
+        // Final ordering:
+        // 1. Selected state
+        // 2. Neighbor states
+        // 3. Everyone else
+        results = [...selectedProfiles, ...neighborProfiles, ...otherProfiles];
 
-          if (aState === userState && bState !== userState) return -1;
-          if (bState === userState && aState !== userState) return 1;
-
-          return 0;
-        });
-
-        if (filters.state && results.length === 0) {
+        if (filters.state && selectedProfiles.length === 0) {
           setShowFallbackMessage(true);
           setSelectedState(filters.state);
         } else {
