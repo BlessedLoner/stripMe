@@ -30,6 +30,7 @@ export default function MembersFromDB({ limit = 200 }) {
   const [regions, setRegions] = useState([]);
   const [showFallbackMessage, setShowFallbackMessage] = useState(false);
   const [selectedState, setSelectedState] = useState("");
+  const [neighborStateNames, setNeighborStateNames] = useState([]);
 
   const [currentPage, setCurrentPage] = useState(1);
   const [loadingPage, setLoadingPage] = useState(false);
@@ -113,6 +114,52 @@ export default function MembersFromDB({ limit = 200 }) {
 
     loadStates();
   }, [currentUser?.country]);
+
+  // Adding chnages
+  useEffect(() => {
+    if (!filters.state || !currentUser?.country) {
+      setNeighborStateNames([]);
+      return;
+    }
+
+    async function loadNeighbors() {
+      // Find selected state
+      const { data: selectedState } = await supabase
+        .from("states")
+        .select("id")
+        .eq("country_code", currentUser.country)
+        .eq("state_name", filters.state)
+        .single();
+
+      if (!selectedState) {
+        setNeighborStateNames([]);
+        return;
+      }
+
+      // Get neighbor ids
+      const { data: neighbors } = await supabase
+        .from("state_neighbors")
+        .select("neighbor_state_id")
+        .eq("state_id", selectedState.id);
+
+      if (!neighbors?.length) {
+        setNeighborStateNames([]);
+        return;
+      }
+
+      // Convert ids → names
+      const ids = neighbors.map((n) => n.neighbor_state_id);
+
+      const { data: states } = await supabase
+        .from("states")
+        .select("state_name")
+        .in("id", ids);
+
+      setNeighborStateNames(states ? states.map((s) => s.state_name) : []);
+    }
+
+    loadNeighbors();
+  }, [filters.state, currentUser?.country]);
 
   useEffect(() => {
     if (!currentUser) return;
