@@ -1,3 +1,4 @@
+// *************************MembersPage.jsx*************************
 // src/components/MembersFromDB.jsx
 import React, { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
@@ -30,23 +31,14 @@ export default function MembersFromDB({ limit = 200 }) {
   const [regions, setRegions] = useState([]);
   const [showFallbackMessage, setShowFallbackMessage] = useState(false);
   const [selectedState, setSelectedState] = useState("");
-  const [neighborStateNames, setNeighborStateNames] = useState([]);
+  const [neighborStates, setNeighborStates] = useState([]);
 
   const [currentPage, setCurrentPage] = useState(1);
   const [loadingPage, setLoadingPage] = useState(false);
   const [totalCount, setTotalCount] = useState(0);
   const membersPerPage = 20;
 
-  // const totalPages = Math.ceil(filteredMembers.length / membersPerPage);
   const totalPages = Math.ceil(totalCount / membersPerPage);
-
-  // const indexOfLastMember = currentPage * membersPerPage;
-  // const indexOfFirstMember = indexOfLastMember - membersPerPage;
-
-  // const currentMembers = filteredMembers.slice(
-  //   indexOfFirstMember,
-  //   indexOfLastMember,
-  // );
 
   const changePage = (page) => {
     if (page < 1 || page > totalPages) return;
@@ -65,6 +57,7 @@ export default function MembersFromDB({ limit = 200 }) {
     return () => clearTimeout(t);
   }, [filters.searchQuery]);
 
+  // Get current user
   useEffect(() => {
     const getCurrentUser = async () => {
       const {
@@ -94,6 +87,7 @@ export default function MembersFromDB({ limit = 200 }) {
     getCurrentUser();
   }, []);
 
+  // Load states for dropdown
   useEffect(() => {
     if (!currentUser?.country) return;
 
@@ -115,52 +109,32 @@ export default function MembersFromDB({ limit = 200 }) {
     loadStates();
   }, [currentUser?.country]);
 
-  // Adding chnages
+  // Load neighbor states when a state is selected
   useEffect(() => {
     if (!filters.state || !currentUser?.country) {
-      setNeighborStateNames([]);
+      setNeighborStates([]);
       return;
     }
 
     async function loadNeighbors() {
-      // Find selected state
-      const { data: selectedState } = await supabase
-        .from("states")
-        .select("id")
-        .eq("country_code", currentUser.country)
-        .eq("state_name", filters.state)
-        .single();
-
-      if (!selectedState) {
-        setNeighborStateNames([]);
-        return;
-      }
-
-      // Get neighbor ids
-      const { data: neighbors } = await supabase
+      const { data, error } = await supabase
         .from("state_neighbors")
-        .select("neighbor_state_id")
-        .eq("state_id", selectedState.id);
+        .select("neighbor_state_name")
+        .eq("state_name", filters.state)
+        .eq("country_code", currentUser.country);
 
-      if (!neighbors?.length) {
-        setNeighborStateNames([]);
+      if (error) {
+        console.error("Failed loading neighbors:", error);
         return;
       }
 
-      // Convert ids → names
-      const ids = neighbors.map((n) => n.neighbor_state_id);
-
-      const { data: states } = await supabase
-        .from("states")
-        .select("state_name")
-        .in("id", ids);
-
-      setNeighborStateNames(states ? states.map((s) => s.state_name) : []);
+      setNeighborStates(data.map((item) => item.neighbor_state_name) || []);
     }
 
     loadNeighbors();
   }, [filters.state, currentUser?.country]);
 
+  // Main filtering logic
   useEffect(() => {
     if (!currentUser) return;
 
@@ -168,109 +142,87 @@ export default function MembersFromDB({ limit = 200 }) {
     setLoading(true);
     setError(null);
 
-    // New adding
-
-    // End
-
     async function fetchFiltered() {
       try {
-        // let q = supabase.from("fictional_profiles").select("*");
+        // Step 1: Get ALL profiles for the user's country
         let q = supabase
           .from("fictional_profiles")
           .select("*", { count: "exact" });
 
+        // Always filter by country
         if (currentUser?.country) {
           q = q.eq("country", currentUser.country);
         }
 
+        // Exclude deleted profiles
         q = q.eq("is_deleted", false);
 
+        // Apply age filter
         if (filters.minAge != null) q = q.gte("age", filters.minAge);
         if (filters.maxAge != null) q = q.lte("age", filters.maxAge);
 
+        // Apply search filter
         if (debouncedQuery) {
           const like = `%${debouncedQuery}%`;
           q = q.or(`display_name.ilike.${like},bio.ilike.${like}`);
         }
 
-        if (filters.state) {
-          q = q.eq("state", filters.state);
-        }
-
-        const from = (currentPage - 1) * membersPerPage;
-        const to = from + membersPerPage - 1;
-
-        q = q.order("shuffle_order", { ascending: true }).range(from, to);
-
+        // Execute the query
         const { data, count, error: qErr } = await q;
 
         if (!mounted) return;
-
         if (qErr) throw qErr;
 
+        let results = Array.isArray(data) ? data : [];
         setTotalCount(count || 0);
 
-        let results = Array.isArray(data) ? data : [];
-
+        // Step 2: Apply state-based sorting
         const normalize = (v) => v?.toLowerCase()?.trim();
+        const userState = normalize(currentUser.state);
+        const userCity = normalize(currentUser.city);
+        const selectedState = normalize(filters.state);
 
-        if (!filters.state) {
-          // Normal homepage ordering
-          results = results.sort((a, b) => {
-            const aCity = normalize(a.city);
-            const bCity = normalize(b.city);
-            const userCity = normalize(currentUser.city);
+        // Priority levels
+        const getPriority = (profile) => {
+          const profileState = normalize(profile.state);
+          const profileCity = normalize(profile.city);
 
-            const aState = normalize(a.state);
-            const bState = normalize(b.state);
-            const userState = normalize(currentUser.state);
-
-            if (aCity === userCity && bCity !== userCity) return -1;
-            if (bCity === userCity && aCity !== userCity) return 1;
-
-            if (aState === userState && bState !== userState) return -1;
-            if (bState === userState && aState !== userState) return 1;
-
-            return 0;
-          });
-        } else {
-          // State filter ordering
-          const selectedProfiles = [];
-          const neighborProfiles = [];
-          const otherProfiles = [];
-
-          results.forEach((profile) => {
-            if (profile.state === filters.state) {
-              selectedProfiles.push(profile);
-            } else if (neighborStateNames.includes(profile.state)) {
-              neighborProfiles.push(profile);
-            } else {
-              otherProfiles.push(profile);
-            }
-          });
-
-          if (selectedProfiles.length === 0) {
-            setShowFallbackMessage(true);
-            setSelectedState(filters.state);
-          } else {
-            setShowFallbackMessage(false);
+          // If NO state is selected
+          if (!selectedState) {
+            if (profileCity === userCity) return 1; // Same city - highest
+            if (profileState === userState) return 2; // Same state
+            return 3; // Other states in country
           }
 
-          results = [
-            ...selectedProfiles,
-            ...neighborProfiles,
-            ...otherProfiles,
-          ];
-        }
+          // If a state IS selected
+          if (profileState === selectedState) return 1; // Selected state - highest
+          if (neighborStates.includes(profileState)) return 2; // Neighbor state
+          return 3; // Other states in country
+        };
 
-        if (filters.state && selectedProfiles.length === 0) {
-          setShowFallbackMessage(true);
+        // Sort by priority
+        results.sort((a, b) => getPriority(a) - getPriority(b));
+
+        // Step 3: Check if selected state has profiles (for fallback message)
+        if (selectedState) {
+          const hasProfilesInSelectedState = results.some(
+            (profile) => normalize(profile.state) === selectedState,
+          );
+          setShowFallbackMessage(!hasProfilesInSelectedState);
           setSelectedState(filters.state);
         } else {
           setShowFallbackMessage(false);
         }
 
-        setFilteredMembers(results || []);
+        // Step 4: Pagination (after sorting)
+        const from = (currentPage - 1) * membersPerPage;
+        const to = from + membersPerPage;
+        const paginatedResults = results.slice(from, to);
+
+        setFilteredMembers(paginatedResults || []);
+
+        // Update total count for pagination
+        setTotalCount(results.length);
       } catch (err) {
         if (mounted) {
           setError(err);
@@ -294,6 +246,7 @@ export default function MembersFromDB({ limit = 200 }) {
     filters.state,
     debouncedQuery,
     currentPage,
+    neighborStates, // Important: re-run when neighbors change
   ]);
 
   const handleFilterChange = (key, value) => {
@@ -311,7 +264,7 @@ export default function MembersFromDB({ limit = 200 }) {
 
   return (
     <div className="pt-16 min-h-screen bg-background">
-      {/* Hero Section */}
+      {/* Hero Section - same as before */}
       <section className="relative min-h-[60vh] flex items-center justify-center overflow-hidden pt-16">
         <div className="absolute inset-0 z-0">
           <img
@@ -337,10 +290,10 @@ export default function MembersFromDB({ limit = 200 }) {
             that go beyond small talk. Every message is a chance to uncover
             laughter, share dreams, and build something genuine. Your next
             connection is waiting someone who truly gets you, who values your
-            words and your time. Don’t just scroll through profiles; open the
+            words and your time. Don't just scroll through profiles; open the
             door to meaningful chats that could turn into unforgettable bonds.
             The right person may only be one message away, and the journey
-            begins right here, with you."{" "}
+            begins right here, with you.
           </p>
 
           <div className="max-w-2xl mx-auto">
@@ -400,14 +353,14 @@ export default function MembersFromDB({ limit = 200 }) {
                 <input
                   type="text"
                   placeholder="Search by name or interests..."
-                  className=" search-input w-full pl-10 pr-4 py-3 bg-gray-100 border-0 rounded-xl focus:ring-2 focus:ring-purple-500 focus:bg-white transition-all duration-200"
+                  className="search-input w-full pl-10 pr-4 py-3 bg-gray-100 border-0 rounded-xl focus:ring-2 focus:ring-purple-500 focus:bg-white transition-all duration-200"
                   value={filters.searchQuery}
                   onChange={(e) =>
                     handleFilterChange("searchQuery", e.target.value)
                   }
                 />
                 <svg
-                  className="absolute left-3 top-2/3  transform -translate-y-1/2 w-5 h-5 text-gray-400"
+                  className="absolute left-3 top-2/3 transform -translate-y-1/2 w-5 h-5 text-gray-400"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -464,7 +417,7 @@ export default function MembersFromDB({ limit = 200 }) {
 
             {/* Distance */}
             <div>
-              <label className="block tex-sm font-semibold text-gray-900 mb-3">
+              <label className="block text-sm font-semibold text-gray-900 mb-3">
                 Distance
               </label>
               <select
@@ -486,7 +439,7 @@ export default function MembersFromDB({ limit = 200 }) {
                 Looking For
               </label>
               <select
-                className="w-full form-input bg-gray-100 border-0 rounded-x2 py-3 px-4 focus:ring-2 focus:ring-purple-500 focus:bg-white transition-all duration-200"
+                className="w-full form-input bg-gray-100 border-0 rounded-xl py-3 px-4 focus:ring-2 focus:ring-purple-500 focus:bg-white transition-all duration-200"
                 value={filters.lookingFor}
                 onChange={(e) =>
                   handleFilterChange("lookingFor", e.target.value)
@@ -514,7 +467,6 @@ export default function MembersFromDB({ limit = 200 }) {
                 onChange={(e) => handleFilterChange("state", e.target.value)}
               >
                 <option value="">All regions</option>
-
                 {regions.map((state) => (
                   <option key={state.state_name} value={state.state_name}>
                     {state.state_name}
@@ -570,20 +522,27 @@ export default function MembersFromDB({ limit = 200 }) {
             </div>
           ) : (
             <>
+              {/* Fallback Message - Shows when selected state has 0 profiles */}
+              {showFallbackMessage && (
+                <div className="mb-6 rounded-xl border border-amber-300 bg-amber-50 p-5">
+                  <h3 className="text-lg font-semibold text-amber-900">
+                    📍 No members available in {selectedState} yet
+                  </h3>
+                  <p className="mt-2 text-sm text-amber-700">
+                    We're growing every day. While we add more members in this
+                    region, here are members from neighboring states you may
+                    also like.
+                  </p>
+                  {neighborStates.length > 0 && (
+                    <p className="mt-1 text-sm text-amber-700">
+                      Showing profiles from: {neighborStates.join(", ")}
+                    </p>
+                  )}
+                </div>
+              )}
+
               {/* Responsive Grid - Mobile: 1, Tablet: 2, Desktop: 3-4, Large: 5 */}
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
-                {showFallbackMessage && (
-                  <div className="mb-6 rounded-xl border border-amber-300 bg-amber-50 p-5">
-                    <h3 className="text-lg font-semibold text-amber-900">
-                      📍 No members available in {selectedState} yet
-                    </h3>
-
-                    <p className="mt-2 text-sm text-amber-700">
-                      We're growing every day. While we add more members in this
-                      region, we'll recommend other members you may also like.
-                    </p>
-                  </div>
-                )}
                 {filteredMembers.map((m) => {
                   let imgSrc = null;
                   if (m.image_url && m.image_url.startsWith("http"))
@@ -604,7 +563,7 @@ export default function MembersFromDB({ limit = 200 }) {
                   return (
                     <div
                       key={m.id}
-                      className="bg-white rounded-2xl overflow-hidden  cursor-pointer hover:scale-105 transition-transform duration-200 border border-primary/20 flex flex-col"
+                      className="bg-white rounded-2xl overflow-hidden cursor-pointer hover:scale-105 transition-transform duration-200 border border-primary/20 flex flex-col"
                     >
                       {/* Image Section */}
                       <div className="relative w-full aspect-10/5 overflow-hidden">
