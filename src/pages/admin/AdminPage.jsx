@@ -848,7 +848,7 @@ export default function AdminPage() {
 
               <button
                 onClick={() => setShowStateNeighborsModal(true)}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg shadow transition duration-200"
+                className="bg-indigo-600 hover:bg-indigo-700 text-black font-semibold py-2 px-4 rounded-lg shadow transition duration-200"
               >
                 🌎 State Neighbors
               </button>
@@ -1664,7 +1664,7 @@ export default function AdminPage() {
               <button
                 onClick={saveNeighbors}
                 disabled={savingNeighbors}
-                className="px-5 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700"
+                className="px-5 py-2 rounded-lg bg-primary text-white hover:bg-blue-700"
               >
                 {savingNeighbors ? "Saving..." : "Save"}
               </button>

@@ -121,6 +121,51 @@ export default function MembersFromDB({ limit = 200 }) {
     setLoading(true);
     setError(null);
 
+    // New adding
+    async function getNeighborProfiles(stateName, countryCode) {
+      // Get selected state
+      const { data: state } = await supabase
+        .from("states")
+        .select("id")
+        .eq("country_code", countryCode)
+        .eq("state_name", stateName)
+        .single();
+
+      if (!state) return [];
+
+      // Get neighbor ids
+      const { data: neighbors } = await supabase
+        .from("state_neighbors")
+        .select("neighbor_state_id")
+        .eq("state_id", state.id);
+
+      if (!neighbors?.length) return [];
+
+      const ids = neighbors.map((n) => n.neighbor_state_id);
+
+      // Resolve neighbor names
+      const { data: neighborStates } = await supabase
+        .from("states")
+        .select("state_name")
+        .in("id", ids);
+
+      if (!neighborStates?.length) return [];
+
+      const names = neighborStates.map((s) => s.state_name);
+
+      // Fetch neighboring profiles
+      const { data: profiles } = await supabase
+        .from("fictional_profiles")
+        .select("*")
+        .eq("country", countryCode)
+        .eq("is_deleted", false)
+        .in("state", names)
+        .order("shuffle_order");
+
+      return profiles || [];
+    }
+    // End adding
+
     async function fetchFiltered() {
       try {
         // let q = supabase.from("fictional_profiles").select("*");
@@ -180,15 +225,22 @@ export default function MembersFromDB({ limit = 200 }) {
 
           return 0;
         });
-
         if (filters.state && results.length === 0) {
           setShowFallbackMessage(true);
           setSelectedState(filters.state);
+
+          // Load neighboring state profiles
+          const neighborProfiles = await getNeighborProfiles(
+            filters.state,
+            currentUser.country,
+          );
+
+          results = neighborProfiles;
         } else {
           setShowFallbackMessage(false);
         }
 
-        setFilteredMembers(results || []);
+        setFilteredMembers(results);
       } catch (err) {
         if (mounted) {
           setError(err);
@@ -209,7 +261,6 @@ export default function MembersFromDB({ limit = 200 }) {
     currentUser,
     filters.minAge,
     filters.maxAge,
-    debouncedQuery,
     filters.state,
     debouncedQuery,
     currentPage,
