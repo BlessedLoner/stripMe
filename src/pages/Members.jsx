@@ -146,10 +146,7 @@ export default function MembersFromDB({ limit = 200 }) {
           q = q.or(`display_name.ilike.${like},bio.ilike.${like}`);
         }
 
-        const from = (currentPage - 1) * membersPerPage;
-        const to = from + membersPerPage - 1;
-
-        q = q.order("shuffle_order", { ascending: true }).range(from, to);
+        q = q.order("shuffle_order", { ascending: true });
 
         const { data, count, error: qErr } = await q;
 
@@ -157,17 +154,16 @@ export default function MembersFromDB({ limit = 200 }) {
 
         if (qErr) throw qErr;
 
-        setTotalCount(count || 0);
+        // setTotalCount(count || 0);
 
         let results = Array.isArray(data) ? data : [];
 
-        const selectedProfiles = [];
-        const neighborProfiles = [];
-        const otherProfiles = [];
-
-        let neighborStateNames = [];
+        // Added start
+        // Default: no fallback
+        setShowFallbackMessage(false);
 
         if (filters.state) {
+          // Find selected state
           const { data: stateRow } = await supabase
             .from("states")
             .select("id")
@@ -175,38 +171,47 @@ export default function MembersFromDB({ limit = 200 }) {
             .eq("state_name", filters.state)
             .single();
 
+          let neighborNames = [];
+
           if (stateRow) {
             const { data: neighborRows } = await supabase
               .from("state_neighbors")
-              .select(
-                `
-        neighbor_state_id,
-        states!state_neighbors_neighbor_state_id_fkey(state_name)
-      `,
-              )
+              .select("neighbor_state_id")
               .eq("state_id", stateRow.id);
 
-            neighborStateNames =
-              neighborRows?.map((n) => n.states.state_name) || [];
+            const ids = neighborRows?.map((r) => r.neighbor_state_id) || [];
+
+            if (ids.length) {
+              const { data: states } = await supabase
+                .from("states")
+                .select("state_name")
+                .in("id", ids);
+
+              neighborNames = states?.map((s) => s.state_name) || [];
+            }
           }
+
+          const selected = [];
+          const neighbors = [];
+          const others = [];
+
+          for (const profile of results) {
+            if (profile.state === filters.state) {
+              selected.push(profile);
+            } else if (neighborNames.includes(profile.state)) {
+              neighbors.push(profile);
+            } else {
+              others.push(profile);
+            }
+          }
+
+          if (selected.length === 0) {
+            setShowFallbackMessage(true);
+            setSelectedState(filters.state);
+          }
+
+          results = [...selected, ...neighbors, ...others];
         }
-
-        results.forEach((profile) => {
-          if (!filters.state) {
-            otherProfiles.push(profile);
-            return;
-          }
-
-          if (profile.state === filters.state) {
-            selectedProfiles.push(profile);
-          } else if (neighborStateNames.includes(profile.state)) {
-            neighborProfiles.push(profile);
-          } else {
-            otherProfiles.push(profile);
-          }
-        });
-
-        results = [...selectedProfiles, ...neighborProfiles, ...otherProfiles];
 
         if (filters.state && results.length === 0) {
           setShowFallbackMessage(true);
@@ -215,7 +220,11 @@ export default function MembersFromDB({ limit = 200 }) {
           setShowFallbackMessage(false);
         }
 
-        setFilteredMembers(results || []);
+        const start = (currentPage - 1) * membersPerPage;
+        const end = start + membersPerPage;
+
+        setTotalCount(results.length);
+        setFilteredMembers(results.slice(start, end));
       } catch (err) {
         if (mounted) {
           setError(err);
