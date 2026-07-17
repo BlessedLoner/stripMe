@@ -146,7 +146,14 @@ export default function MembersFromDB({ limit = 200 }) {
           q = q.or(`display_name.ilike.${like},bio.ilike.${like}`);
         }
 
-        q = q.order("shuffle_order", { ascending: true });
+        if (filters.state) {
+          q = q.eq("state", filters.state);
+        }
+
+        const from = (currentPage - 1) * membersPerPage;
+        const to = from + membersPerPage - 1;
+
+        q = q.order("shuffle_order", { ascending: true }).range(from, to);
 
         const { data, count, error: qErr } = await q;
 
@@ -154,64 +161,29 @@ export default function MembersFromDB({ limit = 200 }) {
 
         if (qErr) throw qErr;
 
-        // setTotalCount(count || 0);
+        setTotalCount(count || 0);
 
         let results = Array.isArray(data) ? data : [];
 
-        // Added start
-        // Default: no fallback
-        setShowFallbackMessage(false);
+        const normalize = (v) => v?.toLowerCase()?.trim();
 
-        if (filters.state) {
-          // Find selected state
-          const { data: stateRow } = await supabase
-            .from("states")
-            .select("id")
-            .eq("country_code", currentUser.country)
-            .eq("state_name", filters.state)
-            .single();
+        results = results.sort((a, b) => {
+          const aCity = normalize(a.city);
+          const bCity = normalize(b.city);
+          const userCity = normalize(currentUser.city);
 
-          let neighborNames = [];
+          const aState = normalize(a.state);
+          const bState = normalize(b.state);
+          const userState = normalize(currentUser.state);
 
-          if (stateRow) {
-            const { data: neighborRows } = await supabase
-              .from("state_neighbors")
-              .select("neighbor_state_id")
-              .eq("state_id", stateRow.id);
+          if (aCity === userCity && bCity !== userCity) return -1;
+          if (bCity === userCity && aCity !== userCity) return 1;
 
-            const ids = neighborRows?.map((r) => r.neighbor_state_id) || [];
+          if (aState === userState && bState !== userState) return -1;
+          if (bState === userState && aState !== userState) return 1;
 
-            if (ids.length) {
-              const { data: states } = await supabase
-                .from("states")
-                .select("state_name")
-                .in("id", ids);
-
-              neighborNames = states?.map((s) => s.state_name) || [];
-            }
-          }
-
-          const selected = [];
-          const neighbors = [];
-          const others = [];
-
-          for (const profile of results) {
-            if (profile.state === filters.state) {
-              selected.push(profile);
-            } else if (neighborNames.includes(profile.state)) {
-              neighbors.push(profile);
-            } else {
-              others.push(profile);
-            }
-          }
-
-          if (selected.length === 0) {
-            setShowFallbackMessage(true);
-            setSelectedState(filters.state);
-          }
-
-          results = [...selected, ...neighbors, ...others];
-        }
+          return 0;
+        });
 
         if (filters.state && results.length === 0) {
           setShowFallbackMessage(true);
@@ -220,11 +192,7 @@ export default function MembersFromDB({ limit = 200 }) {
           setShowFallbackMessage(false);
         }
 
-        const start = (currentPage - 1) * membersPerPage;
-        const end = start + membersPerPage;
-
-        setTotalCount(results.length);
-        setFilteredMembers(results.slice(start, end));
+        setFilteredMembers(results || []);
       } catch (err) {
         if (mounted) {
           setError(err);
