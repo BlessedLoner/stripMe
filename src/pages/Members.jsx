@@ -122,49 +122,8 @@ export default function MembersFromDB({ limit = 200 }) {
     setError(null);
 
     // New adding
-    async function getNeighborProfiles(stateName, countryCode) {
-      // Get selected state
-      const { data: state } = await supabase
-        .from("states")
-        .select("id")
-        .eq("country_code", countryCode)
-        .eq("state_name", stateName)
-        .single();
 
-      if (!state) return [];
-
-      // Get neighbor ids
-      const { data: neighbors } = await supabase
-        .from("state_neighbors")
-        .select("neighbor_state_id")
-        .eq("state_id", state.id);
-
-      if (!neighbors?.length) return [];
-
-      const ids = neighbors.map((n) => n.neighbor_state_id);
-
-      // Resolve neighbor names
-      const { data: neighborStates } = await supabase
-        .from("states")
-        .select("state_name")
-        .in("id", ids);
-
-      if (!neighborStates?.length) return [];
-
-      const names = neighborStates.map((s) => s.state_name);
-
-      // Fetch neighboring profiles
-      const { data: profiles } = await supabase
-        .from("fictional_profiles")
-        .select("*")
-        .eq("country", countryCode)
-        .eq("is_deleted", false)
-        .in("state", names)
-        .order("shuffle_order");
-
-      return profiles || [];
-    }
-    // End adding
+    // End
 
     async function fetchFiltered() {
       try {
@@ -187,10 +146,6 @@ export default function MembersFromDB({ limit = 200 }) {
           q = q.or(`display_name.ilike.${like},bio.ilike.${like}`);
         }
 
-        if (filters.state) {
-          q = q.eq("state", filters.state);
-        }
-
         const from = (currentPage - 1) * membersPerPage;
         const to = from + membersPerPage - 1;
 
@@ -206,41 +161,61 @@ export default function MembersFromDB({ limit = 200 }) {
 
         let results = Array.isArray(data) ? data : [];
 
-        const normalize = (v) => v?.toLowerCase()?.trim();
+        const selectedProfiles = [];
+        const neighborProfiles = [];
+        const otherProfiles = [];
 
-        results = results.sort((a, b) => {
-          const aCity = normalize(a.city);
-          const bCity = normalize(b.city);
-          const userCity = normalize(currentUser.city);
+        let neighborStateNames = [];
 
-          const aState = normalize(a.state);
-          const bState = normalize(b.state);
-          const userState = normalize(currentUser.state);
+        if (filters.state) {
+          const { data: stateRow } = await supabase
+            .from("states")
+            .select("id")
+            .eq("country_code", currentUser.country)
+            .eq("state_name", filters.state)
+            .single();
 
-          if (aCity === userCity && bCity !== userCity) return -1;
-          if (bCity === userCity && aCity !== userCity) return 1;
+          if (stateRow) {
+            const { data: neighborRows } = await supabase
+              .from("state_neighbors")
+              .select(
+                `
+        neighbor_state_id,
+        states!state_neighbors_neighbor_state_id_fkey(state_name)
+      `,
+              )
+              .eq("state_id", stateRow.id);
 
-          if (aState === userState && bState !== userState) return -1;
-          if (bState === userState && aState !== userState) return 1;
+            neighborStateNames =
+              neighborRows?.map((n) => n.states.state_name) || [];
+          }
+        }
 
-          return 0;
+        results.forEach((profile) => {
+          if (!filters.state) {
+            otherProfiles.push(profile);
+            return;
+          }
+
+          if (profile.state === filters.state) {
+            selectedProfiles.push(profile);
+          } else if (neighborStateNames.includes(profile.state)) {
+            neighborProfiles.push(profile);
+          } else {
+            otherProfiles.push(profile);
+          }
         });
+
+        results = [...selectedProfiles, ...neighborProfiles, ...otherProfiles];
+
         if (filters.state && results.length === 0) {
           setShowFallbackMessage(true);
           setSelectedState(filters.state);
-
-          // Load neighboring state profiles
-          const neighborProfiles = await getNeighborProfiles(
-            filters.state,
-            currentUser.country,
-          );
-
-          results = neighborProfiles;
         } else {
           setShowFallbackMessage(false);
         }
 
-        setFilteredMembers(results);
+        setFilteredMembers(results || []);
       } catch (err) {
         if (mounted) {
           setError(err);
