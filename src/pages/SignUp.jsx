@@ -53,39 +53,6 @@ export default function SignUpPage() {
     return () => clearInterval(id);
   }, [slides.length]);
 
-  // // Auto-detect country on mount
-  // useEffect(() => {
-  //   const detectCountry = async () => {
-  //     setIsDetectingCountry(true);
-  //     try {
-  //       const result = await detectUserCountry();
-  //       console.log("📍 Detected country:", result);
-
-  //       setDetectedCountry(result.countryCode);
-  //       setDetectedCountryName(result.countryName);
-
-  //       if (result.isSupported) {
-  //         // User is from a supported country - lock their country
-  //         setCountry(result.countryCode);
-  //         setCountryLocked(true);
-  //         setShowUnsupportedModal(false);
-  //       } else {
-  //         // User is from an unsupported country - show modal
-  //         setShowUnsupportedModal(true);
-  //         // Don't set country yet, let them choose
-  //       }
-  //     } catch (err) {
-  //       console.error("Country detection failed:", err);
-  //       // Fallback: allow manual selection
-  //       setCountryLocked(false);
-  //     } finally {
-  //       setIsDetectingCountry(false);
-  //     }
-  //   };
-
-  //   detectCountry();
-  // }, []);
-
   // signup form states
   const [signupEmail, setSignupEmail] = useState("");
   const [signupPassword, setSignupPassword] = useState("");
@@ -127,7 +94,7 @@ export default function SignUpPage() {
     };
   }, []);
 
-  // Handle unsupported country modal - user selects a country
+  // ✅ SINGLE FUNCTION - Handle unsupported country selection
   const handleUnsupportedCountrySelect = (selectedCountryCode) => {
     setCountry(selectedCountryCode);
     setCountryLocked(true);
@@ -139,7 +106,7 @@ export default function SignUpPage() {
     setTimeout(() => setAuthMessage(null), 5000);
   };
 
-  // Auto-detect country on mount - UPDATED
+  // Auto-detect country on mount
   useEffect(() => {
     const detectCountry = async () => {
       setIsDetectingCountry(true);
@@ -170,18 +137,6 @@ export default function SignUpPage() {
 
     detectCountry();
   }, []);
-
-  // Handle unsupported country selection - UPDATED (no close handler needed)
-  const handleUnsupportedCountrySelect = (selectedCountryCode) => {
-    setCountry(selectedCountryCode);
-    setCountryLocked(true);
-    setShowUnsupportedModal(false);
-    // Show a success message
-    setAuthMessage(
-      `Welcome! You'll be exploring ${SUPPORTED_COUNTRIES[selectedCountryCode]?.name} profiles.`,
-    );
-    setTimeout(() => setAuthMessage(null), 5000);
-  };
 
   // helper handlers
   const handleUserDetailsChange = (field, value) => {
@@ -456,8 +411,6 @@ export default function SignUpPage() {
         <CountryUnsupportedModal
           detectedCountry={detectedCountryName}
           onSelectCountry={handleUnsupportedCountrySelect}
-          onClose={handleUnsupportedModalClose}
-          onContinue={handleUnsupportedCountrySelect}
         />
       )}
 
