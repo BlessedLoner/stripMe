@@ -31,12 +31,6 @@ export default function SignUpPage() {
   const [detectedCountryName, setDetectedCountryName] = useState("");
   const [countryLocked, setCountryLocked] = useState(false);
 
-  // Add these states
-  const [showUnsupportedModal, setShowUnsupportedModal] = useState(false);
-  const [detectedCountryName, setDetectedCountryName] = useState("");
-  const [countryLocked, setCountryLocked] = useState(false);
-  const [isDetectingCountry, setIsDetectingCountry] = useState(true);
-
   // user details modal fields
   const [userDetails, setUserDetails] = useState({
     displayName: "",
@@ -59,38 +53,38 @@ export default function SignUpPage() {
     return () => clearInterval(id);
   }, [slides.length]);
 
-  // Auto-detect country on mount
-  useEffect(() => {
-    const detectCountry = async () => {
-      setIsDetectingCountry(true);
-      try {
-        const result = await detectUserCountry();
-        console.log("📍 Detected country:", result);
+  // // Auto-detect country on mount
+  // useEffect(() => {
+  //   const detectCountry = async () => {
+  //     setIsDetectingCountry(true);
+  //     try {
+  //       const result = await detectUserCountry();
+  //       console.log("📍 Detected country:", result);
 
-        setDetectedCountry(result.countryCode);
-        setDetectedCountryName(result.countryName);
+  //       setDetectedCountry(result.countryCode);
+  //       setDetectedCountryName(result.countryName);
 
-        if (result.isSupported) {
-          // User is from a supported country - lock their country
-          setCountry(result.countryCode);
-          setCountryLocked(true);
-          setShowUnsupportedModal(false);
-        } else {
-          // User is from an unsupported country - show modal
-          setShowUnsupportedModal(true);
-          // Don't set country yet, let them choose
-        }
-      } catch (err) {
-        console.error("Country detection failed:", err);
-        // Fallback: allow manual selection
-        setCountryLocked(false);
-      } finally {
-        setIsDetectingCountry(false);
-      }
-    };
+  //       if (result.isSupported) {
+  //         // User is from a supported country - lock their country
+  //         setCountry(result.countryCode);
+  //         setCountryLocked(true);
+  //         setShowUnsupportedModal(false);
+  //       } else {
+  //         // User is from an unsupported country - show modal
+  //         setShowUnsupportedModal(true);
+  //         // Don't set country yet, let them choose
+  //       }
+  //     } catch (err) {
+  //       console.error("Country detection failed:", err);
+  //       // Fallback: allow manual selection
+  //       setCountryLocked(false);
+  //     } finally {
+  //       setIsDetectingCountry(false);
+  //     }
+  //   };
 
-    detectCountry();
-  }, []);
+  //   detectCountry();
+  // }, []);
 
   // signup form states
   const [signupEmail, setSignupEmail] = useState("");
