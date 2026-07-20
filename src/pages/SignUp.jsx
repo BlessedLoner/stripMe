@@ -8,6 +8,12 @@ import home3 from "../assets/home_img/home3.jpg";
 import { supabase } from "../lib/supabaseClient";
 import { COUNTRIES } from "../components/countries";
 import LocationInput from "../components/LocationInput";
+import {
+  detectUserCountry,
+  SUPPORTED_COUNTRY_CODES,
+  SUPPORTED_COUNTRIES,
+} from "../utils/countryDetection";
+import CountryUnsupportedModal from "../components/CountryUnsupportedModal";
 
 export default function SignUpPage() {
   const navigate = useNavigate();
@@ -18,9 +24,22 @@ export default function SignUpPage() {
   const [location, setLocation] = useState(null);
   const [user, setUser] = useState(null);
 
-  // user details modal fields - ADDED displayName
+  // NEW: Country detection states
+  const [detectedCountry, setDetectedCountry] = useState(null);
+  const [isDetectingCountry, setIsDetectingCountry] = useState(true);
+  const [showUnsupportedModal, setShowUnsupportedModal] = useState(false);
+  const [detectedCountryName, setDetectedCountryName] = useState("");
+  const [countryLocked, setCountryLocked] = useState(false);
+
+  // Add these states
+  const [showUnsupportedModal, setShowUnsupportedModal] = useState(false);
+  const [detectedCountryName, setDetectedCountryName] = useState("");
+  const [countryLocked, setCountryLocked] = useState(false);
+  const [isDetectingCountry, setIsDetectingCountry] = useState(true);
+
+  // user details modal fields
   const [userDetails, setUserDetails] = useState({
-    displayName: "", // ✅ NEW FIELD
+    displayName: "",
     gender: "",
     lookingFor: "",
     age: "",
@@ -40,6 +59,39 @@ export default function SignUpPage() {
     return () => clearInterval(id);
   }, [slides.length]);
 
+  // Auto-detect country on mount
+  useEffect(() => {
+    const detectCountry = async () => {
+      setIsDetectingCountry(true);
+      try {
+        const result = await detectUserCountry();
+        console.log("📍 Detected country:", result);
+
+        setDetectedCountry(result.countryCode);
+        setDetectedCountryName(result.countryName);
+
+        if (result.isSupported) {
+          // User is from a supported country - lock their country
+          setCountry(result.countryCode);
+          setCountryLocked(true);
+          setShowUnsupportedModal(false);
+        } else {
+          // User is from an unsupported country - show modal
+          setShowUnsupportedModal(true);
+          // Don't set country yet, let them choose
+        }
+      } catch (err) {
+        console.error("Country detection failed:", err);
+        // Fallback: allow manual selection
+        setCountryLocked(false);
+      } finally {
+        setIsDetectingCountry(false);
+      }
+    };
+
+    detectCountry();
+  }, []);
+
   // signup form states
   const [signupEmail, setSignupEmail] = useState("");
   const [signupPassword, setSignupPassword] = useState("");
@@ -57,38 +109,85 @@ export default function SignUpPage() {
   // Auth Message
   useEffect(() => {
     const message = sessionStorage.getItem("auth_message");
-
     if (message) {
       setAuthMessage(message);
       sessionStorage.removeItem("auth_message");
-
-      setTimeout(() => {
-        setAuthMessage(null);
-      }, 5000);
+      setTimeout(() => setAuthMessage(null), 5000);
     }
   }, []);
 
   // general auth listener to redirect if already signed in
   useEffect(() => {
     let isMounted = true;
-
     const checkUser = async () => {
       const {
         data: { user },
       } = await supabase.auth.getUser();
-
       if (!isMounted || !user) return;
-
       console.log("User detected on signup page:", user.id);
       setShowUserDetailsModal(true);
     };
-
     checkUser();
-
     return () => {
       isMounted = false;
     };
   }, []);
+
+  // Handle unsupported country modal - user selects a country
+  const handleUnsupportedCountrySelect = (selectedCountryCode) => {
+    setCountry(selectedCountryCode);
+    setCountryLocked(true);
+    setShowUnsupportedModal(false);
+    // Show a success message
+    setAuthMessage(
+      `Welcome! You'll be exploring ${SUPPORTED_COUNTRIES[selectedCountryCode]?.name} profiles.`,
+    );
+    setTimeout(() => setAuthMessage(null), 5000);
+  };
+
+  // Auto-detect country on mount - UPDATED
+  useEffect(() => {
+    const detectCountry = async () => {
+      setIsDetectingCountry(true);
+      try {
+        const result = await detectUserCountry();
+        console.log("📍 Detected country:", result);
+
+        setDetectedCountryName(result.countryName);
+
+        if (result.isSupported) {
+          // User is from a supported country - lock their country
+          setCountry(result.countryCode);
+          setCountryLocked(true);
+          setShowUnsupportedModal(false);
+        } else {
+          // User is from an unsupported country - show modal
+          setShowUnsupportedModal(true);
+          // Don't set country yet, let them choose
+        }
+      } catch (err) {
+        console.error("Country detection failed:", err);
+        // Fallback: allow manual selection
+        setCountryLocked(false);
+      } finally {
+        setIsDetectingCountry(false);
+      }
+    };
+
+    detectCountry();
+  }, []);
+
+  // Handle unsupported country selection - UPDATED (no close handler needed)
+  const handleUnsupportedCountrySelect = (selectedCountryCode) => {
+    setCountry(selectedCountryCode);
+    setCountryLocked(true);
+    setShowUnsupportedModal(false);
+    // Show a success message
+    setAuthMessage(
+      `Welcome! You'll be exploring ${SUPPORTED_COUNTRIES[selectedCountryCode]?.name} profiles.`,
+    );
+    setTimeout(() => setAuthMessage(null), 5000);
+  };
 
   // helper handlers
   const handleUserDetailsChange = (field, value) => {
@@ -109,7 +208,6 @@ export default function SignUpPage() {
 
   const handleUserDetailsSubmit = (e) => {
     e.preventDefault();
-
     if (!isUserDetailsComplete) return;
 
     const dataToSave = {
@@ -123,21 +221,16 @@ export default function SignUpPage() {
       country: country,
       city: location?.city || null,
       state: location?.state || null,
-      location: location, // Keep for compatibility
+      location: location,
     };
 
     localStorage.setItem("signup_data", JSON.stringify(dataToSave));
     console.log("✅ Saved:", dataToSave);
-
     setShowUserDetailsModal(false);
   };
 
-  // Add this function BEFORE handleEmailSignUp (at the top of your component, near other functions)
   const handleEmailSignUp = async (e) => {
     e.preventDefault();
-
-    // ... validation checks ...
-
     setSignupLoading(true);
     setSignupMessage(null);
 
@@ -149,61 +242,51 @@ export default function SignUpPage() {
         options: {
           data: {
             display_name: userDetails.displayName,
+            country: country, // ✅ Store the selected country
           },
         },
       });
 
       if (error) {
-        // ✅ User already exists
         if (error.message.includes("User already registered")) {
-          // Try login automatically
           const { error: loginError } = await supabase.auth.signInWithPassword({
             email: signupEmail,
             password: signupPassword,
           });
-
-          // Wrong password
           if (loginError) {
             setSignupMessage({
               type: "error",
               text: "Email already exists. Try logging in instead.",
             });
-
             return;
           }
-
-          // Logged in successfully
           window.location.replace("/members");
-
           return;
         }
-
         throw error;
       }
 
-      // Step 2: Manually sign in (THIS IS THE KEY FIX)
+      // Step 2: Manually sign in
       const { error: signInError } = await supabase.auth.signInWithPassword({
         email: signupEmail,
         password: signupPassword,
       });
-
       if (signInError) throw signInError;
 
-      // Step 3: Get the authenticated user
+      // Step 3: Get authenticated user
       const {
         data: { user },
         error: userError,
       } = await supabase.auth.getUser();
-
       if (userError || !user) throw new Error("Could not get user");
 
-      // Step 4: Now insert profile (user is authenticated)
+      // Step 4: Insert profile with country
       const { error: profileError } = await supabase
         .from("user_profiles")
         .insert({
           user_id: user.id,
           display_name: userDetails.displayName,
-          country: location?.country || country,
+          country: country, // ✅ Use the detected/selected country
           city: location?.city || null,
           state: location?.state || null,
           location_latitude: location?.lat || null,
@@ -217,7 +300,7 @@ export default function SignUpPage() {
 
       if (profileError) throw profileError;
 
-      // Step 5: Redirect to members
+      // Step 5: Redirect
       setSignupMessage({ type: "success", text: "Account created!" });
       setTimeout(() => navigate("/members"), 1500);
     } catch (err) {
@@ -228,7 +311,7 @@ export default function SignUpPage() {
     }
   };
 
-  // SIGN IN with email & password (modal)
+  // SIGN IN with email & password
   const handleEmailSignIn = async (e) => {
     e && e.preventDefault();
     setSigninLoading(true);
@@ -261,9 +344,7 @@ export default function SignUpPage() {
   // SIGN IN with Google
   const handleGoogleSignIn = async () => {
     try {
-      // Show loading immediately
       setGoogleLoading(true);
-
       localStorage.setItem(
         "signup_data",
         JSON.stringify({
@@ -272,36 +353,23 @@ export default function SignUpPage() {
           country,
         }),
       );
-
-      // ✅ IMPORTANT
       sessionStorage.setItem("auth_intent", "signup");
-
-      const redirectTo = `${window.location.origin}/auth/callback`;
 
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
           redirectTo: window.location.origin,
-          queryParams: {
-            prompt: "select_account",
-          },
+          queryParams: { prompt: "select_account" },
         },
       });
 
       if (error) {
         setGoogleLoading(false);
-
-        setSignupMessage({
-          type: "error",
-          text: error.message,
-        });
+        setSignupMessage({ type: "error", text: error.message });
       }
     } catch (err) {
       setGoogleLoading(false);
-      setSignupMessage({
-        type: "error",
-        text: "Google sign-in failed.",
-      });
+      setSignupMessage({ type: "error", text: "Google sign-in failed." });
     }
   };
 
@@ -321,7 +389,7 @@ export default function SignUpPage() {
   ];
 
   const isUserDetailsComplete =
-    userDetails.displayName && // ✅ Added displayName check
+    userDetails.displayName &&
     userDetails.gender &&
     userDetails.lookingFor &&
     userDetails.age &&
@@ -333,7 +401,6 @@ export default function SignUpPage() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const isNewUser = params.get("newUser");
-
     if (isNewUser) {
       setShowUserDetailsModal(true);
     }
@@ -341,7 +408,7 @@ export default function SignUpPage() {
 
   return (
     <div className="relative min-h-screen overflow-x-hidden bg-transparent text-text-primary z-10">
-      {/* Background slider */}
+      {/* Background slider - unchanged */}
       <div
         className="bg-slider"
         aria-hidden="true"
@@ -376,7 +443,7 @@ export default function SignUpPage() {
         ))}
       </div>
 
-      {/* Overlay */}
+      {/* Overlay - unchanged */}
       <div
         className="bg-overlay"
         aria-hidden="true"
@@ -390,14 +457,30 @@ export default function SignUpPage() {
         }}
       />
 
-      {/* User Details Modal - ADDED Display Name field */}
-      {showUserDetailsModal && (
+      {/* Unsupported Country Modal */}
+      {showUnsupportedModal && (
+        <CountryUnsupportedModal
+          detectedCountry={detectedCountryName}
+          onSelectCountry={handleUnsupportedCountrySelect}
+          onClose={handleUnsupportedModalClose}
+          onContinue={handleUnsupportedCountrySelect}
+        />
+      )}
+
+      {/* User Details Modal - UPDATED with country detection */}
+      {showUserDetailsModal && !showUnsupportedModal && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-black/90 backdrop-blur-sm rounded-2xl max-w-2xl w-full relative p-8 border border-white/20 max-h-[90vh] overflow-y-auto">
             <div className="text-center mb-6">
               {authMessage && (
                 <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 transition-opacity duration-500">
-                  <div className="bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg">
+                  <div
+                    className={`px-6 py-3 rounded-lg shadow-lg ${
+                      authMessage.includes("Welcome")
+                        ? "bg-green-500"
+                        : "bg-red-500"
+                    } text-white`}
+                  >
                     {authMessage}
                   </div>
                 </div>
@@ -427,7 +510,7 @@ export default function SignUpPage() {
             </div>
 
             <form onSubmit={handleUserDetailsSubmit} className="space-y-6">
-              {/* ✅ NEW: Display Name Field */}
+              {/* Display Name */}
               <div>
                 <label className="block text-white font-medium mb-2">
                   Display Name *
@@ -483,25 +566,63 @@ export default function SignUpPage() {
                 </div>
               </div>
 
-              {/* Country and City */}
+              {/* Country and City - UPDATED with detection */}
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-white font-medium mb-2">
                     Country *
                   </label>
-                  <select
-                    value={country}
-                    onChange={(e) => setCountry(e.target.value)}
-                    className="w-full border border-white/20 rounded-lg py-3 px-4 bg-black text-white focus:border-primary focus:ring-2 focus:ring-primary/20"
-                    required
-                  >
-                    <option value="">Select Country</option>
-                    {COUNTRIES.map((c) => (
-                      <option key={c.code} value={c.code}>
-                        {c.name}
+
+                  {/* If country is detected and locked (supported) */}
+                  {countryLocked && country ? (
+                    <div className="w-full border border-white/20 rounded-lg py-3 px-4 bg-white/10 text-white flex items-center justify-between">
+                      <span>
+                        {SUPPORTED_COUNTRIES[country]?.name || country}
+                      </span>
+                      <span className="text-xs text-green-400 flex items-center gap-1">
+                        <svg
+                          className="w-4 h-4"
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                        Auto-detected
+                      </span>
+                    </div>
+                  ) : (
+                    /* Manual selection fallback (if detection failed) */
+                    <select
+                      value={country}
+                      onChange={(e) => setCountry(e.target.value)}
+                      className="w-full border border-white/20 rounded-lg py-3 px-4 bg-black text-white focus:border-primary focus:ring-2 focus:ring-primary/20"
+                      required
+                      disabled={isDetectingCountry}
+                    >
+                      <option value="">
+                        {isDetectingCountry
+                          ? "Detecting your country..."
+                          : "Select Country"}
                       </option>
-                    ))}
-                  </select>
+                      {COUNTRIES.map((c) => (
+                        <option key={c.code} value={c.code}>
+                          {c.name}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+
+                  {countryLocked && country && (
+                    <p className="text-xs text-gray-400 mt-1">
+                      {isDetectingCountry
+                        ? "Detecting..."
+                        : "✅ Your country was auto-detected"}
+                    </p>
+                  )}
                 </div>
 
                 <div>
@@ -520,7 +641,7 @@ export default function SignUpPage() {
                 </div>
               </div>
 
-              {/* Age and Date of birth */}
+              {/* Age and Date of birth - unchanged */}
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-white font-medium mb-2">
@@ -556,7 +677,7 @@ export default function SignUpPage() {
                 </div>
               </div>
 
-              {/* Interests */}
+              {/* Interests - unchanged */}
               <div>
                 <label className="block text-white font-medium mb-3">
                   Interests (Select up to 5)
@@ -621,11 +742,10 @@ export default function SignUpPage() {
         </div>
       )}
 
-      {/* Rest of your component remains exactly the same */}
-      {/* Content */}
+      {/* Rest of the component remains the same... */}
+      {/* Header */}
       <div className="relative z-10">
-        {/* Header */}
-        <header className="fixed top-0 left-0 right-0 z-50 ">
+        <header className="fixed top-0 left-0 right-0 z-50">
           <nav className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between items-center h-16">
               <div className="flex items-center">
@@ -660,10 +780,10 @@ export default function SignUpPage() {
           </nav>
         </header>
 
+        {/* Google Loading Overlay - unchanged */}
         {googleLoading && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
             <div className="bg-black rounded-2xl p-8 text-center shadow-2xl max-w-sm w-full mx-4 border border-white/20">
-              {/* Google Logo Animation */}
               <div className="w-16 h-16 mx-auto mb-4 relative">
                 <div className="absolute inset-0 rounded-full bg-white/20 animate-ping"></div>
                 <div className="relative bg-white rounded-full p-3">
@@ -687,13 +807,9 @@ export default function SignUpPage() {
                   </svg>
                 </div>
               </div>
-
-              {/* Spinner */}
               <div className="flex justify-center mb-4">
                 <div className="w-10 h-10 border-4 border-white border-t-white rounded-full animate-spin"></div>
               </div>
-
-              {/* Text */}
               <h3 className="text-xl font-semibold text-white mb-2">
                 Redirecting to Google
               </h3>
@@ -702,13 +818,13 @@ export default function SignUpPage() {
           </div>
         )}
 
-        {/* Main */}
+        {/* Main - unchanged */}
         <main className="min-h-screen pt-16">
           <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div className="flex justify-center">
               <div className="w-full max-w-6xl">
                 <div className="grid lg:grid-cols-2 gap-8 items-center">
-                  {/* Left benefits (hidden on mobile) */}
+                  {/* Left benefits - unchanged */}
                   <div className="hidden lg:block">
                     <div className="max-w-lg">
                       <h1 className="text-4xl md:text-5xl font-serif font-semibold text-white mb-6 leading-tight">
@@ -722,14 +838,12 @@ export default function SignUpPage() {
                         through our intelligent matching system and authentic
                         community.
                       </p>
-
                       <div className="space-y-4 mb-8">
                         <Benefit label="Advanced compatibility matching" />
                         <Benefit label="Verified profiles for authentic connections" />
                         <Benefit label="Safe & secure messaging platform" />
                         <Benefit label="Interactive icebreakers & conversation starters" />
                       </div>
-
                       <div className="grid grid-cols-2 gap-6">
                         <div className="text-center">
                           <div className="text-3xl font-bold text-primary mb-1">
@@ -751,7 +865,7 @@ export default function SignUpPage() {
                     </div>
                   </div>
 
-                  {/* Right: Registration Card */}
+                  {/* Right: Registration Card - unchanged */}
                   <div className="w-full flex justify-center">
                     <div className="w-full max-w-md">
                       <div className="mb-6">
@@ -772,7 +886,6 @@ export default function SignUpPage() {
                       </div>
 
                       <div className="lg:p-6 bg-black/40 backdrop-blur-sm rounded-2xl border border-white/20 w-full">
-                        {/* Mobile heading */}
                         <div className="lg:hidden text-center mb-6">
                           <h1 className="text-3xl font-serif pt-6 font-semibold text-white mb-2">
                             Join StripPals Today
@@ -782,7 +895,6 @@ export default function SignUpPage() {
                           </p>
                         </div>
 
-                        {/* Custom SignUp (Supabase) */}
                         <div className="w-full">
                           <form
                             onSubmit={handleEmailSignUp}
@@ -877,7 +989,6 @@ export default function SignUpPage() {
                           </form>
                         </div>
 
-                        {/* Custom sign in link */}
                         <div className="text-center mt-6 pt-6 border-t border-white/20">
                           <p className="text-gray-200">
                             Already have an account?{" "}
@@ -917,10 +1028,9 @@ export default function SignUpPage() {
           </div>
         </main>
 
-        {/* Footer */}
+        {/* Footer - unchanged */}
         <footer className="bg-text-primary text-white py-10">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            {/* Logo & Name - Centered */}
             <div className="flex justify-center mb-8">
               <div className="flex items-center">
                 <img src={Logo} alt="StripPals" className="w-12 h-12" />
@@ -930,7 +1040,6 @@ export default function SignUpPage() {
               </div>
             </div>
 
-            {/* Legal Links Row */}
             <div className="flex flex-wrap justify-center items-center gap-x-4 gap-y-2 text-xs sm:text-sm text-white/70 mb-8">
               <Link to="/protect" className="hover:text-white transition">
                 Protect our children!
@@ -973,7 +1082,6 @@ export default function SignUpPage() {
               </Link>
             </div>
 
-            {/* Informational Text */}
             <div className="text-center text-white/60 text-xs leading-relaxed max-w-4xl mx-auto mb-6">
               <p>
                 The minimum age for participation on stripPals.com is 18 years.
@@ -990,7 +1098,6 @@ export default function SignUpPage() {
               </p>
             </div>
 
-            {/* Copyright */}
             <div className="border-t border-white/10 pt-6 text-center">
               <p className="text-white/50 text-xs">
                 stripPals.com © 2026 All rights reserved.
@@ -999,7 +1106,7 @@ export default function SignUpPage() {
           </div>
         </footer>
 
-        {/* Sign In Modal (custom) */}
+        {/* Sign In Modal - unchanged */}
         {showSignIn && (
           <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
             <div className="bg-black/80 backdrop-blur-sm rounded-2xl max-w-md w-full relative p-6 border border-white/20">
@@ -1073,7 +1180,6 @@ export default function SignUpPage() {
                       type="button"
                       onClick={() => {
                         setSigninLoading(true);
-                        // trigger magic link sign in
                         supabase.auth
                           .signInWithOtp({ email: signinEmail })
                           .then(({ error }) => {
@@ -1098,7 +1204,6 @@ export default function SignUpPage() {
                   <div className="mt-3">
                     <button
                       onClick={() => {
-                        // google OAuth from modal too
                         setShowSignIn(false);
                         handleGoogleSignIn();
                       }}
@@ -1135,7 +1240,7 @@ export default function SignUpPage() {
   );
 }
 
-/* Small helper component */
+/* Small helper component - unchanged */
 function Benefit({ label = "" }) {
   return (
     <div className="flex items-center space-x-3">
