@@ -476,14 +476,14 @@ export default function MembersFromDB({ limit = 200 }) {
             </div>
 
             {/* Results Count */}
-            <div className="flex items-end">
+            {/* <div className="flex items-end">
               <div className="text-center lg:text-right w-full">
                 <div className="text-2xl font-bold text-red-300">
                   {filteredMembers.length}
                 </div>
                 <div className="text-sm text-primary">matches found</div>
               </div>
-            </div>
+            </div> */}
           </div>
         </div>
       </section>

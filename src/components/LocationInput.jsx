@@ -55,7 +55,7 @@ export default function LocationInput({ onSelect, countryCode }) {
         value={query}
         onChange={(e) => fetchLocations(e.target.value)}
         placeholder="Enter your location..."
-        className="border border-white/20 rounded-lg py-3 px-4 bg-black text-white focus:ring-2 focus:ring-primary/20"
+        className="w-full border border-white/20 rounded-lg py-3 px-4 bg-white/10 text-white flex items-center justify-between"
       />
 
       {results.length > 0 && (
