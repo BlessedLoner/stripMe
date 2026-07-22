@@ -71,6 +71,7 @@ function AppRoutes() {
     "/",
     "/home",
     "/sign-up",
+    "/complete-profile", // ✅ Add this
     "/admin",
     "/terms",
     "/privacy",
