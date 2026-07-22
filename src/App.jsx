@@ -39,6 +39,8 @@ import DMCA from "./pages/DMCA";
 import Pricing from "./pages/Pricing";
 import Contact from "./pages/Contact";
 import ProtectOurChildren from "./pages/ProtectOurChildren";
+// In App.jsx, add the new route
+import CompleteProfile from "./pages/CompleteProfile"; // Add this import
 
 function AppRoutes() {
   const location = useLocation();
@@ -112,6 +114,7 @@ function AppRoutes() {
 
         <Route path="/home" element={<Home />} />
         <Route path="/sign-up" element={<SignUpPage />} />
+        <Route path="/complete-profile" element={<CompleteProfile />} />
         <Route path="/redirect" element={<RedirectPage />} />
 
         {/* Legal */}

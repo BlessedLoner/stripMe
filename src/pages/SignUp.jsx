@@ -294,23 +294,26 @@ export default function SignUpPage() {
   const handleGoogleSignIn = async () => {
     try {
       setGoogleLoading(true);
-      localStorage.setItem(
-        "signup_data",
-        JSON.stringify({
-          ...userDetails,
-          location,
-          country,
-        }),
-      );
-      sessionStorage.setItem("auth_intent", "signup");
 
-      const redirectTo = `${window.location.origin}/auth/callback`;
+      // ✅ Save data to BOTH localStorage and sessionStorage
+      const signupData = {
+        ...userDetails,
+        location,
+        country,
+      };
+
+      localStorage.setItem("signup_data", JSON.stringify(signupData));
+      sessionStorage.setItem("signup_data", JSON.stringify(signupData));
+      sessionStorage.setItem("auth_intent", "signup");
 
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: window.location.origin,
-          queryParams: { prompt: "select_account" },
+          redirectTo: `${window.location.origin}/auth/callback`,
+          queryParams: {
+            prompt: "select_account",
+            access_type: "offline",
+          },
         },
       });
 
