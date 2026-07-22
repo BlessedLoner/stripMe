@@ -106,6 +106,7 @@ function AppRoutes() {
 
         {/* ✅ IMPORTANT: OAuth callback OUTSIDE AuthGate */}
         <Route path="/auth/callback" element={<AuthCallback />} />
+        <Route path="/complete-profile" element={<CompleteProfile />} />
 
         <Route
           path="/"
@@ -114,7 +115,6 @@ function AppRoutes() {
 
         <Route path="/home" element={<Home />} />
         <Route path="/sign-up" element={<SignUpPage />} />
-        <Route path="/complete-profile" element={<CompleteProfile />} />
         <Route path="/redirect" element={<RedirectPage />} />
 
         {/* Legal */}
