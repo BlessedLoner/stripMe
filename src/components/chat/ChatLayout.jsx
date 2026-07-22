@@ -72,7 +72,6 @@ export default function ChatLayout() {
 
     setLoadingFlirts(true);
     try {
-      // Get conversations that have flirt messages
       const { data, error } = await supabase
         .from("conversations")
         .select(
@@ -99,7 +98,6 @@ export default function ChatLayout() {
 
       if (error) throw error;
 
-      // Format flirt conversations
       const formatted = (data || []).map((conv) => ({
         id: conv.id,
         last_message_at: conv.last_message_at,
@@ -258,7 +256,7 @@ export default function ChatLayout() {
   }, [currentUser, loadConversations]);
 
   /* ============================= */
-  /* 3️⃣ Real-Time Subscription */
+  /* 3️⃣ Real-Time Conversation Updates
   /* ============================= */
   useEffect(() => {
     if (!currentUser) return;
@@ -308,10 +306,7 @@ export default function ChatLayout() {
 
                 return {
                   ...c,
-
-                  // merge ALL updated fields
                   ...updated,
-
                   unread_count: isUnread ? 1 : 0,
                 };
               })
@@ -335,12 +330,71 @@ export default function ChatLayout() {
     };
   }, [currentUser]);
 
-  // *************************
-  const notificationSoundRef = useRef(null);
+  /* ============================= */
+  /* 4️⃣ Real-Time Message Subscription (NEW - FIXES THE ISSUE) */
+  /* ============================= */
+  useEffect(() => {
+    if (!currentUser) return;
 
-  // useEffect(() => {
-  //   notificationSoundRef.current = new Audio("/notification.mp3");
-  // }, []);
+    const messageChannel = supabase
+      .channel("message-updates")
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "messages",
+        },
+        async (payload) => {
+          const newMessage = payload.new;
+
+          // Only care about messages from this user
+          if (newMessage.sender_user_id !== currentUser.id) return;
+
+          // Ignore if it's not a user message
+          if (newMessage.sender_type !== "real_user") return;
+
+          console.log(
+            "📨 User sent a new message, updating conversation:",
+            newMessage,
+          );
+
+          // ✅ Optimistically update the conversation in the list
+          setConversations((prev) =>
+            prev.map((conv) => {
+              if (conv.id !== newMessage.conversation_id) return conv;
+
+              return {
+                ...conv,
+                last_message_at: newMessage.created_at,
+                last_message_sender_id: currentUser.id,
+                last_message_preview:
+                  newMessage.content?.substring(0, 50) || "[Image]",
+                unread_count: 0, // ✅ User sent it, so it's read
+              };
+            }),
+          );
+
+          // ✅ Also refresh the conversation list to get any other updates
+          // (silent refresh without showing loading state)
+          try {
+            await loadConversations();
+          } catch (err) {
+            console.error("Silent refresh failed:", err);
+          }
+        },
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(messageChannel);
+    };
+  }, [currentUser, loadConversations]);
+
+  /* ============================= */
+  /* 5️⃣ Real-Time Notification Subscription */
+  /* ============================= */
+  const notificationSoundRef = useRef(null);
 
   useEffect(() => {
     try {
@@ -349,12 +403,6 @@ export default function ChatLayout() {
       console.error("Audio init failed:", err);
     }
   }, []);
-
-  // useEffect(() => {
-  //   if (Notification.permission === "default") {
-  //     Notification.requestPermission();
-  //   }
-  // }, []);
 
   useEffect(() => {
     if (
@@ -365,9 +413,6 @@ export default function ChatLayout() {
     }
   }, []);
 
-  /* ============================= */
-  /* Real-Time Notification Subscription */
-  /* ============================= */
   useEffect(() => {
     if (!currentUser) return;
 
@@ -455,7 +500,7 @@ export default function ChatLayout() {
   }, [currentUser, conversationId]);
 
   /* ============================= */
-  /* 4️⃣ Filters */
+  /* 6️⃣ Filters */
   /* ============================= */
 
   const filteredConversations = useMemo(() => {
@@ -466,7 +511,6 @@ export default function ChatLayout() {
         result = result.filter((c) => c.unread_count > 0);
         break;
       case "flirts":
-        // When "Flirts" tab is selected, show flirt conversations
         return flirtConversations;
       case "favorites":
         result = result.filter((c) => c.is_favorite);
@@ -488,14 +532,13 @@ export default function ChatLayout() {
     return result;
   }, [conversations, flirtConversations, filter, searchTerm]);
 
-  // const totalUnread = conversations.reduce((sum, c) => sum + c.unread_count, 0);
   const totalUnread = conversations.reduce(
     (sum, c) => sum + (c.unread_count || 0),
     0,
   );
 
   /* ============================= */
-  /* 5️⃣ Mark As Read */
+  /* 7️⃣ Mark As Read */
   /* ============================= */
 
   const handleConversationSelect = async (id) => {
@@ -514,7 +557,7 @@ export default function ChatLayout() {
   };
 
   /* ============================= */
-  /* 6️⃣ UI */
+  /* 8️⃣ UI Helpers */
   /* ============================= */
 
   const getInitials = (name = "") => {
