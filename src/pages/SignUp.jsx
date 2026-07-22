@@ -304,6 +304,8 @@ export default function SignUpPage() {
       );
       sessionStorage.setItem("auth_intent", "signup");
 
+      const redirectTo = `${window.location.origin}/auth/callback`;
+
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
@@ -1081,6 +1083,38 @@ export default function SignUpPage() {
               </button>
 
               <div className="w-full">
+                <div className="mt-3">
+                  <button
+                    onClick={() => {
+                      setShowSignIn(false);
+                      handleGoogleSignIn();
+                    }}
+                    className="w-full flex items-center justify-center space-x-3 py-3 border border-white/20 rounded-lg bg-white/90 hover:bg-white/100 transition-all duration-300 text-black"
+                  >
+                    <svg className="w-5 h-5 mr-2" viewBox="0 0 533.5 544.3">
+                      <path
+                        fill="#4285f4"
+                        d="M533.5 278.4c0-17.4-1.6-34.3-4.6-50.7H272v95.9h147.1c-6.4 34.8-25.8 64.3-55 84.1v69.8h88.8c51.9-47.8 82.6-118.1 82.6-198.9z"
+                      />
+                      <path
+                        fill="#34a853"
+                        d="M272 544.3c73.7 0 135.6-24.4 180.8-66.2l-88.8-69.8c-24.7 16.6-56.6 26.5-92 26.5-70.8 0-130.9-47.8-152.4-112.1H28.6v70.7C73.8 486.2 167.9 544.3 272 544.3z"
+                      />
+                      <path
+                        fill="#fbbc04"
+                        d="M119.6 325.7c-10.2-30.7-10.2-63.7 0-94.4V160.6H28.6c-39.6 78.7-39.6 174.9 0 253.6l91-88.5z"
+                      />
+                      <path
+                        fill="#ea4335"
+                        d="M272 108.4c39.9 0 75.8 13.7 104.1 40.6l78-78C406.9 24.2 344.9 0 272 0 167.9 0 73.8 58.1 28.6 160.6l91 88.5C141.1 156.2 201.2 108.4 272 108.4z"
+                      />
+                    </svg>
+                    Continue with Google
+                  </button>
+                </div>
+
+                <div className="text-center text-sm text-gray-300 mt-2">or</div>
+
                 <h3 className="text-xl text-white mb-4">Sign In</h3>
 
                 <form onSubmit={handleEmailSignIn} className="space-y-4">
@@ -1141,40 +1175,6 @@ export default function SignUpPage() {
                       className="flex-1 py-3 border border-white/20 rounded-lg text-white"
                     >
                       Send Magic Link
-                    </button>
-                  </div>
-
-                  <div className="text-center text-sm text-gray-300 mt-2">
-                    or
-                  </div>
-
-                  <div className="mt-3">
-                    <button
-                      onClick={() => {
-                        setShowSignIn(false);
-                        handleGoogleSignIn();
-                      }}
-                      className="w-full flex items-center justify-center space-x-3 py-3 border border-white/20 rounded-lg bg-white/90 hover:bg-white/100 transition-all duration-300 text-black"
-                    >
-                      <svg className="w-5 h-5 mr-2" viewBox="0 0 533.5 544.3">
-                        <path
-                          fill="#4285f4"
-                          d="M533.5 278.4c0-17.4-1.6-34.3-4.6-50.7H272v95.9h147.1c-6.4 34.8-25.8 64.3-55 84.1v69.8h88.8c51.9-47.8 82.6-118.1 82.6-198.9z"
-                        />
-                        <path
-                          fill="#34a853"
-                          d="M272 544.3c73.7 0 135.6-24.4 180.8-66.2l-88.8-69.8c-24.7 16.6-56.6 26.5-92 26.5-70.8 0-130.9-47.8-152.4-112.1H28.6v70.7C73.8 486.2 167.9 544.3 272 544.3z"
-                        />
-                        <path
-                          fill="#fbbc04"
-                          d="M119.6 325.7c-10.2-30.7-10.2-63.7 0-94.4V160.6H28.6c-39.6 78.7-39.6 174.9 0 253.6l91-88.5z"
-                        />
-                        <path
-                          fill="#ea4335"
-                          d="M272 108.4c39.9 0 75.8 13.7 104.1 40.6l78-78C406.9 24.2 344.9 0 272 0 167.9 0 73.8 58.1 28.6 160.6l91 88.5C141.1 156.2 201.2 108.4 272 108.4z"
-                        />
-                      </svg>
-                      Continue with Google
                     </button>
                   </div>
                 </form>
