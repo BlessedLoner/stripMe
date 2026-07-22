@@ -5,10 +5,6 @@ import { supabase } from "../lib/supabaseClient";
 import Logo from "../assets/Logo.png";
 import { COUNTRIES } from "../components/countries";
 import LocationInput from "../components/LocationInput";
-import {
-  SUPPORTED_COUNTRY_CODES,
-  SUPPORTED_COUNTRIES,
-} from "../utils/countryDetection";
 
 export default function CompleteProfile() {
   const navigate = useNavigate();
@@ -18,7 +14,6 @@ export default function CompleteProfile() {
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
   const [user, setUser] = useState(null);
-  const [recoveryData, setRecoveryData] = useState(null);
   const [formData, setFormData] = useState({
     displayName: "",
     gender: "",
@@ -40,7 +35,7 @@ export default function CompleteProfile() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        // Get the current user
+        // ✅ Get the current user directly from supabase (not from context)
         const {
           data: { user },
           error: userError,
@@ -48,11 +43,13 @@ export default function CompleteProfile() {
 
         if (userError || !user) {
           console.error("No user found:", userError);
+          // If no user, go to sign-up page
           navigate("/sign-up");
           return;
         }
 
         setUser(user);
+        console.log("✅ User loaded in CompleteProfile:", user.id);
 
         // Check if profile already exists
         const { data: existingProfile } = await supabase
@@ -63,6 +60,7 @@ export default function CompleteProfile() {
 
         // If profile exists, redirect to members
         if (existingProfile) {
+          console.log("✅ Profile already exists, redirecting to members");
           navigate("/members");
           return;
         }
@@ -98,7 +96,6 @@ export default function CompleteProfile() {
               const recovery = JSON.parse(rawData);
               if (recovery.user_id === user.id) {
                 savedData = recovery.data;
-                setRecoveryData(recovery);
               }
             }
           } catch (e) {
@@ -107,6 +104,7 @@ export default function CompleteProfile() {
         }
 
         if (savedData) {
+          console.log("📦 Recovered data:", savedData);
           setFormData({
             displayName: savedData.displayName || "",
             gender: savedData.gender || "",
@@ -120,6 +118,13 @@ export default function CompleteProfile() {
             state: savedData.state || "",
             location: savedData.location || null,
           });
+        } else {
+          console.warn(
+            "⚠️ No saved data found, user may need to go back to signup",
+          );
+          // If no data, go back to signup
+          navigate("/sign-up");
+          return;
         }
 
         if (errorParam) {
@@ -133,6 +138,8 @@ export default function CompleteProfile() {
           "Failed to load your profile data. Please try signing up again.",
         );
         setLoading(false);
+        // After a moment, redirect to signup
+        setTimeout(() => navigate("/sign-up"), 3000);
       }
     };
 
@@ -246,10 +253,14 @@ export default function CompleteProfile() {
     "Group sex",
   ];
 
+  // Show loading state
   if (loading) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-white/70">Loading your profile...</p>
+        </div>
       </div>
     );
   }
@@ -462,20 +473,6 @@ export default function CompleteProfile() {
                 ? "✅ Profile Complete!"
                 : "Complete Profile"}
           </button>
-
-          {/* Sign In Link */}
-          <div className="text-center mt-4">
-            <p className="text-gray-400 text-sm">
-              Already have an account?{" "}
-              <button
-                type="button"
-                onClick={() => navigate("/sign-up")}
-                className="text-primary hover:text-primary-400 transition"
-              >
-                Sign In
-              </button>
-            </p>
-          </div>
         </form>
       </div>
     </div>
