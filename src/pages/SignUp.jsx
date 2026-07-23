@@ -281,8 +281,7 @@ export default function SignUpPage() {
       !lookingForError &&
       !dobError &&
       !cityError &&
-      country &&
-      location;
+      country;
 
     console.log("Form valid:", isValid, {
       displayNameError,

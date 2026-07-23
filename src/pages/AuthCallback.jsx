@@ -88,8 +88,7 @@ export default function AuthCallback() {
           !savedData.gender ||
           !savedData.lookingFor ||
           !savedData.dateOfBirth ||
-          !savedData.country ||
-          !savedData.location
+          !savedData.country
         ) {
           console.log(
             "❌ Incomplete signup data, redirecting to complete profile",
@@ -106,7 +105,9 @@ export default function AuthCallback() {
             }),
           );
 
-          window.location.replace("/complete-profile?error=incomplete_data");
+          window.location.replace(
+            "/sign-up?error=Please complete the registration form before continuing.",
+          );
           return;
         }
 
