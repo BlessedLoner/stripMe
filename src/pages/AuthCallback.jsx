@@ -146,7 +146,7 @@ export default function AuthCallback() {
               user.user_metadata?.full_name ||
               user.email?.split("@")[0] ||
               "User",
-            country: savedData.location?.country || savedData.country,
+            country: savedData.country,
             city: savedData.location?.city || savedData.location?.town || null,
             state:
               savedData.location?.state || savedData.location?.region || null,

@@ -13,7 +13,6 @@ import {
   SUPPORTED_COUNTRY_CODES,
   SUPPORTED_COUNTRIES,
 } from "../utils/countryDetection";
-import CountryUnsupportedModal from "../components/CountryUnsupportedModal";
 
 export default function SignUpPage() {
   const navigate = useNavigate();
@@ -26,9 +25,10 @@ export default function SignUpPage() {
   // Country detection states
   const [detectedCountry, setDetectedCountry] = useState(null);
   const [isDetectingCountry, setIsDetectingCountry] = useState(true);
-  const [showUnsupportedModal, setShowUnsupportedModal] = useState(false);
   const [detectedCountryName, setDetectedCountryName] = useState("");
   const [countryLocked, setCountryLocked] = useState(false);
+  const [isUnsupportedCountry, setIsUnsupportedCountry] = useState(false);
+  const [unsupportedBanner, setUnsupportedBanner] = useState("");
 
   // Form state - Directly on the page now
   const [formData, setFormData] = useState({
@@ -119,17 +119,6 @@ export default function SignUpPage() {
     };
   }, [navigate]);
 
-  // Handle unsupported country selection
-  const handleUnsupportedCountrySelect = (selectedCountryCode) => {
-    setCountry(selectedCountryCode);
-    setCountryLocked(true);
-    setShowUnsupportedModal(false);
-    setAuthMessage(
-      `Welcome! You'll be exploring ${SUPPORTED_COUNTRIES[selectedCountryCode]?.name} profiles.`,
-    );
-    setTimeout(() => setAuthMessage(null), 5000);
-  };
-
   // Auto-detect country on mount
   useEffect(() => {
     const detectCountry = async () => {
@@ -141,15 +130,26 @@ export default function SignUpPage() {
         setDetectedCountryName(result.countryName);
 
         if (result.isSupported) {
+          // ✅ Supported country - use their actual country
           setCountry(result.countryCode);
           setCountryLocked(true);
-          setShowUnsupportedModal(false);
+          setIsUnsupportedCountry(false);
+          setUnsupportedBanner("");
         } else {
-          setShowUnsupportedModal(true);
+          // ❌ Unsupported country - default to US
+          setIsUnsupportedCountry(true);
+          setCountry("US");
+          setCountryLocked(true);
+          setUnsupportedBanner(
+            `We detected that you're in ${result.countryName}. While we're working on bringing our platform to your region, you can still explore our community in the United States.`,
+          );
         }
       } catch (err) {
         console.error("Country detection failed:", err);
-        setCountryLocked(false);
+        // Fallback: default to US
+        setCountry("US");
+        setCountryLocked(true);
+        setIsUnsupportedCountry(false);
       } finally {
         setIsDetectingCountry(false);
       }
@@ -187,7 +187,6 @@ export default function SignUpPage() {
         }
         return "";
       case "city":
-        // ✅ FIX: Check if location exists AND has a city or name
         if (!value && !location) {
           return "Please select city from dropdown.";
         }
@@ -237,7 +236,6 @@ export default function SignUpPage() {
   const handleLocationSelect = (place) => {
     console.log("📍 Location selected:", place);
 
-    // ✅ FIX: Store the location data properly
     const locationData = {
       city: place?.city || place?.town || place?.name || "",
       state: place?.state || place?.region || "",
@@ -575,7 +573,6 @@ export default function SignUpPage() {
     try {
       setGoogleLoading(true);
 
-      // This is NOT a signup
       sessionStorage.setItem("auth_intent", "signin");
 
       localStorage.removeItem("signup_data");
@@ -663,14 +660,6 @@ export default function SignUpPage() {
             "linear-gradient(180deg, rgba(6,8,15,0.35), rgba(6,8,15,0.5))",
         }}
       />
-
-      {/* Unsupported Country Modal */}
-      {showUnsupportedModal && (
-        <CountryUnsupportedModal
-          detectedCountry={detectedCountryName}
-          onSelectCountry={handleUnsupportedCountrySelect}
-        />
-      )}
 
       {/* Header */}
       <div className="relative z-10">
@@ -783,8 +772,25 @@ export default function SignUpPage() {
                   </div>
 
                   {/* Sign Up Form */}
-                  <div className="w-full flex justify-center">
+                  <div className="w-full flex justify-center py-6 px-4 sm:px-6 lg:px-8">
                     <div className="w-full max-w-md">
+                      {/* Unsupported Country Banner */}
+                      {isUnsupportedCountry && unsupportedBanner && (
+                        <div className="mb-4 p-4 rounded-lg bg-amber-500/20 border border-amber-500/30">
+                          <div className="flex items-start gap-3">
+                            <span className="text-2xl">🌍</span>
+                            <div>
+                              <p className="text-amber-400 font-semibold text-sm">
+                                We're Expanding to Your Country!
+                              </p>
+                              <p className="text-amber-300/80 text-xs mt-1">
+                                {unsupportedBanner}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
                       {/* Auth Message */}
                       {authMessage && (
                         <div className="mb-4 p-3 rounded-lg bg-green-500/20 border border-green-500/30 text-green-400 text-sm text-center">
@@ -807,14 +813,6 @@ export default function SignUpPage() {
 
                       <div className="lg:p-6 bg-black/40 backdrop-blur-sm rounded-2xl border border-white/20 w-full">
                         {/* Mobile heading */}
-                        <div className="lg:hidden text-center mb-6">
-                          <h1 className="text-3xl font-serif pt-6 font-semibold text-white mb-2">
-                            Join StripPals Today
-                          </h1>
-                          <p className="text-gray-200">
-                            Start your journey to meaningful connections
-                          </p>
-                        </div>
 
                         {/* Logo & Title - Centered */}
                         <div className="text-center mb-8">
@@ -825,16 +823,22 @@ export default function SignUpPage() {
                               className="w-16 h-16"
                             />
                           </div>
-                          <h2 className="text-2xl font-serif font-semibold text-white">
-                            Log in
-                          </h2>
+                        </div>
+
+                        <div className="lg:hidden text-center mb-6">
+                          <h1 className="text-3xl font-serif pt-6 font-semibold text-white mb-2">
+                            Join StripPals Today
+                          </h1>
+                          <p className="text-gray-200">
+                            Start your journey to meaningful connections
+                          </p>
                         </div>
 
                         {/* Form Fields */}
-                        <div className="space-y-4">
+                        <div className="space-y-6">
                           {/* I am (Gender) */}
                           <div>
-                            <label className="block text-white/80 text-sm font-medium mb-1.5">
+                            <label className="block text-white font-medium mb-2">
                               I am a
                             </label>
                             <select
@@ -843,7 +847,7 @@ export default function SignUpPage() {
                                 handleFieldChange("gender", e.target.value)
                               }
                               onBlur={() => handleFieldBlur("gender")}
-                              className={`w-full border rounded-lg py-3 px-4 bg-white/10 text-white focus:border-primary focus:ring-2 focus:ring-primary/20 ${
+                              className={`w-full border border-white/20 rounded-lg py-3 px-4 bg-black text-white focus:border-primary focus:ring-2 focus:ring-primary/20 ${
                                 touched.gender && errors.gender
                                   ? "border-red-500"
                                   : "border-white/20"
@@ -868,7 +872,7 @@ export default function SignUpPage() {
 
                           {/* Looking for */}
                           <div>
-                            <label className="block text-white/80 text-sm font-medium mb-1.5">
+                            <label className="block text-white font-medium mb-2">
                               Looking for
                             </label>
                             <select
@@ -877,7 +881,7 @@ export default function SignUpPage() {
                                 handleFieldChange("lookingFor", e.target.value)
                               }
                               onBlur={() => handleFieldBlur("lookingFor")}
-                              className={`w-full border rounded-lg py-3 px-4 bg-white/10 text-white focus:border-primary focus:ring-2 focus:ring-primary/20 ${
+                              className={`w-full border border-white/20 rounded-lg py-3 px-4 bg-black text-white focus:border-primary focus:ring-2 focus:ring-primary/20 ${
                                 touched.lookingFor && errors.lookingFor
                                   ? "border-red-500"
                                   : "border-white/20"
@@ -902,7 +906,7 @@ export default function SignUpPage() {
 
                           {/* Date of Birth */}
                           <div>
-                            <label className="block text-white/80 text-sm font-medium mb-1.5">
+                            <label className="block text-white font-medium mb-2">
                               Date of birth
                             </label>
                             <input
@@ -912,7 +916,7 @@ export default function SignUpPage() {
                                 handleFieldChange("dateOfBirth", e.target.value)
                               }
                               onBlur={() => handleFieldBlur("dateOfBirth")}
-                              className={`w-full border rounded-lg py-3 px-4 bg-white/10 text-white focus:border-primary focus:ring-2 focus:ring-primary/20 ${
+                              className={`w-full border border-white/20 rounded-lg py-3 px-4 bg-black text-white focus:border-primary focus:ring-2 focus:ring-primary/20 ${
                                 touched.dateOfBirth && errors.dateOfBirth
                                   ? "border-red-500"
                                   : "border-white/20"
@@ -927,7 +931,7 @@ export default function SignUpPage() {
 
                           {/* City */}
                           <div>
-                            <label className="block text-white/80 text-sm font-medium mb-1.5">
+                            <label className="block text-white font-medium mb-2">
                               City
                             </label>
                             {country && (
@@ -946,7 +950,7 @@ export default function SignUpPage() {
 
                           {/* Username */}
                           <div>
-                            <label className="block text-white/80 text-sm font-medium mb-1.5">
+                            <label className="block text-white font-medium mb-2">
                               Username
                             </label>
                             <input
@@ -956,7 +960,7 @@ export default function SignUpPage() {
                                 handleFieldChange("displayName", e.target.value)
                               }
                               onBlur={() => handleFieldBlur("displayName")}
-                              className={`w-full border rounded-lg py-3 px-4 bg-white/10 text-white focus:border-primary focus:ring-2 focus:ring-primary/20 ${
+                              className={`w-full border border-white/20 rounded-lg py-3 px-4 bg-black text-white focus:border-primary focus:ring-2 focus:ring-primary/20 ${
                                 touched.displayName && errors.displayName
                                   ? "border-red-500"
                                   : "border-white/20"
@@ -1153,7 +1157,7 @@ export default function SignUpPage() {
                 onClick={() => {
                   setShowSignIn(false);
                 }}
-                className="absolute top-4 right-4 text-white hover:text-primary"
+                className="absolute top-4 right-4 mb-4 text-white hover:text-primary"
                 aria-label="Close sign in"
               >
                 <svg
@@ -1172,7 +1176,7 @@ export default function SignUpPage() {
               </button>
 
               <div className="w-full">
-                <div className="mt-3">
+                <div className="mt-6 mb-4">
                   <button
                     onClick={() => {
                       setShowSignIn(false);
