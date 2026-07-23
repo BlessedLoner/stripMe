@@ -57,6 +57,13 @@ export default function SignUpPage() {
     city: false,
   });
 
+  // Email Sign-Up Modal states
+  const [showEmailModal, setShowEmailModal] = useState(false);
+  const [emailModalEmail, setEmailModalEmail] = useState("");
+  const [emailModalPassword, setEmailModalPassword] = useState("");
+  const [emailModalLoading, setEmailModalLoading] = useState(false);
+  const [emailModalError, setEmailModalError] = useState(null);
+
   // slider
   const slides = [home1, home2, home3];
   const [index, setIndex] = useState(0);
@@ -66,12 +73,6 @@ export default function SignUpPage() {
     }, 6000);
     return () => clearInterval(id);
   }, [slides.length]);
-
-  // signup form states
-  const [signupEmail, setSignupEmail] = useState("");
-  const [signupPassword, setSignupPassword] = useState("");
-  const [signupLoading, setSignupLoading] = useState(false);
-  const [signupMessage, setSignupMessage] = useState(null);
 
   // signin modal states
   const [signinEmail, setSigninEmail] = useState("");
@@ -294,12 +295,10 @@ export default function SignUpPage() {
     return isValid;
   };
 
-  // SIGN UP with Email
-  const handleEmailSignUp = async (e) => {
-    e.preventDefault();
-
+  // Open Email Sign-Up Modal
+  const handleOpenEmailModal = () => {
+    // Validate main form first
     if (!isFormValid()) {
-      // Mark all fields as touched to show errors
       setTouched({
         displayName: true,
         gender: true,
@@ -310,14 +309,35 @@ export default function SignUpPage() {
       return;
     }
 
-    setSignupLoading(true);
-    setSignupMessage(null);
+    // Clear previous modal state
+    setEmailModalEmail("");
+    setEmailModalPassword("");
+    setEmailModalError(null);
+    setShowEmailModal(true);
+  };
+
+  // SIGN UP with Email (from modal)
+  const handleEmailSignUp = async (e) => {
+    e.preventDefault();
+
+    // Validate email and password
+    if (!emailModalEmail.trim()) {
+      setEmailModalError("Email is required.");
+      return;
+    }
+    if (!emailModalPassword || emailModalPassword.length < 6) {
+      setEmailModalError("Password must be at least 6 characters.");
+      return;
+    }
+
+    setEmailModalLoading(true);
+    setEmailModalError(null);
 
     try {
       const age = calculateAge(formData.dateOfBirth);
 
       console.log("📝 Creating account with:", {
-        email: signupEmail,
+        email: emailModalEmail,
         displayName: formData.displayName,
         country: country,
         location: location,
@@ -325,8 +345,8 @@ export default function SignUpPage() {
 
       // Step 1: Sign up
       const { data, error } = await supabase.auth.signUp({
-        email: signupEmail,
-        password: signupPassword,
+        email: emailModalEmail,
+        password: emailModalPassword,
         options: {
           data: {
             display_name: formData.displayName,
@@ -340,14 +360,14 @@ export default function SignUpPage() {
         if (error.message.includes("User already registered")) {
           // Try to sign in instead
           const { error: loginError } = await supabase.auth.signInWithPassword({
-            email: signupEmail,
-            password: signupPassword,
+            email: emailModalEmail,
+            password: emailModalPassword,
           });
           if (loginError) {
-            setSignupMessage({
-              type: "error",
-              text: "Email already exists. Please try logging in instead.",
-            });
+            setEmailModalError(
+              "Email already exists. Please try logging in instead.",
+            );
+            setEmailModalLoading(false);
             return;
           }
           // Login successful - check if profile exists
@@ -362,6 +382,7 @@ export default function SignUpPage() {
               .maybeSingle();
 
             if (existingProfile) {
+              setShowEmailModal(false);
               window.location.replace("/members");
               return;
             }
@@ -386,12 +407,11 @@ export default function SignUpPage() {
 
             if (profileError) {
               console.error("❌ Profile creation error:", profileError);
-              setSignupMessage({
-                type: "error",
-                text: "Failed to create profile. Please try again.",
-              });
+              setEmailModalError("Failed to create profile. Please try again.");
+              setEmailModalLoading(false);
               return;
             }
+            setShowEmailModal(false);
             window.location.replace("/members");
             return;
           }
@@ -403,8 +423,8 @@ export default function SignUpPage() {
 
       // Step 2: Manually sign in
       const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: signupEmail,
-        password: signupPassword,
+        email: emailModalEmail,
+        password: emailModalPassword,
       });
       if (signInError) {
         console.error("❌ Sign in error:", signInError);
@@ -448,23 +468,21 @@ export default function SignUpPage() {
 
       if (profileError) {
         console.error("❌ Profile creation error:", profileError);
-        setSignupMessage({
-          type: "error",
-          text: "Failed to create profile: " + profileError.message,
-        });
+        setEmailModalError("Failed to create profile: " + profileError.message);
+        setEmailModalLoading(false);
         return;
       }
 
       console.log("✅ Profile created successfully!");
 
-      // Step 5: Redirect
-      setSignupMessage({ type: "success", text: "Account created!" });
-      setTimeout(() => navigate("/members"), 1500);
+      // Step 5: Close modal and redirect
+      setShowEmailModal(false);
+      setTimeout(() => navigate("/members"), 1000);
     } catch (err) {
       console.error("❌ Signup error:", err);
-      setSignupMessage({ type: "error", text: err.message });
+      setEmailModalError(err.message);
     } finally {
-      setSignupLoading(false);
+      setEmailModalLoading(false);
     }
   };
 
@@ -560,11 +578,11 @@ export default function SignUpPage() {
 
       if (error) {
         setGoogleLoading(false);
-        setSignupMessage({ type: "error", text: error.message });
+        setAuthMessage({ type: "error", text: error.message });
       }
     } catch (err) {
       setGoogleLoading(false);
-      setSignupMessage({ type: "error", text: "Google sign-in failed." });
+      setAuthMessage({ type: "error", text: "Google sign-in failed." });
     }
   };
 
@@ -603,10 +621,7 @@ export default function SignUpPage() {
     const params = new URLSearchParams(window.location.search);
     const error = params.get("error");
     if (error) {
-      setSignupMessage({
-        type: "error",
-        text: decodeURIComponent(error),
-      });
+      setAuthMessage({ type: "error", text: decodeURIComponent(error) });
     }
   }, []);
 
@@ -724,6 +739,125 @@ export default function SignUpPage() {
           </div>
         )}
 
+        {/* Email Sign-Up Modal */}
+        {showEmailModal && (
+          <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+            <div className="bg-black/90 backdrop-blur-sm rounded-2xl max-w-md w-full relative p-8 border border-white/20">
+              {/* Close button */}
+              <button
+                onClick={() => {
+                  setShowEmailModal(false);
+                  setEmailModalError(null);
+                }}
+                className="absolute top-4 right-4 text-gray-400 hover:text-white transition"
+                aria-label="Close modal"
+              >
+                <svg
+                  className="w-6 h-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+
+              {/* Modal Content */}
+              <div className="text-center mb-6">
+                <div className="flex justify-center mb-4">
+                  <img src={Logo} alt="StripPals" className="w-16 h-16" />
+                </div>
+                <h2 className="text-2xl font-serif font-semibold text-white">
+                  Join StripPals
+                </h2>
+                <p className="text-gray-400 text-sm mt-1">
+                  Create your account to start connecting
+                </p>
+              </div>
+
+              {/* Modal Error */}
+              {emailModalError && (
+                <div className="mb-4 p-3 rounded-lg bg-red-500/20 border border-red-500/30 text-red-400 text-sm text-center">
+                  {emailModalError}
+                </div>
+              )}
+
+              <form onSubmit={handleEmailSignUp} className="space-y-4">
+                {/* Email */}
+                <div>
+                  <label className="block text-white/80 text-sm font-medium mb-1.5">
+                    Email
+                  </label>
+                  <input
+                    type="email"
+                    value={emailModalEmail}
+                    onChange={(e) => {
+                      setEmailModalEmail(e.target.value);
+                      setEmailModalError(null);
+                    }}
+                    className="w-full border border-white/20 rounded-lg py-3 px-4 bg-black text-white focus:border-primary focus:ring-2 focus:ring-primary/20"
+                    placeholder="Enter your email"
+                    required
+                  />
+                </div>
+
+                {/* Password */}
+                <div>
+                  <label className="block text-white/80 text-sm font-medium mb-1.5">
+                    Password
+                  </label>
+                  <input
+                    type="password"
+                    value={emailModalPassword}
+                    onChange={(e) => {
+                      setEmailModalPassword(e.target.value);
+                      setEmailModalError(null);
+                    }}
+                    className="w-full border border-white/20 rounded-lg py-3 px-4 bg-black text-white focus:border-primary focus:ring-2 focus:ring-primary/20"
+                    placeholder="Create a password (min 6 characters)"
+                    required
+                    minLength="6"
+                  />
+                  <p className="text-gray-500 text-xs mt-1">
+                    Must be at least 6 characters
+                  </p>
+                </div>
+
+                {/* Submit Button */}
+                <button
+                  type="submit"
+                  disabled={emailModalLoading}
+                  className="w-full py-3 bg-primary hover:bg-primary-600 text-white font-medium rounded-lg transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {emailModalLoading ? "Creating account..." : "Join Now!"}
+                </button>
+              </form>
+
+              {/* Sign In Link inside modal */}
+              <div className="text-center mt-4">
+                <p className="text-gray-400 text-sm">
+                  Already have an account?{" "}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowEmailModal(false);
+                      setShowSignIn(true);
+                    }}
+                    className="text-primary hover:text-primary-400 transition"
+                  >
+                    Sign In
+                  </button>
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Main Content */}
         <main className="min-h-screen pt-16">
           <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -772,7 +906,7 @@ export default function SignUpPage() {
                   </div>
 
                   {/* Sign Up Form */}
-                  <div className="w-full flex justify-center py-6 px-4 sm:px-6 lg:px-8">
+                  <div className="w-full flex justify-center p-6">
                     <div className="w-full max-w-md">
                       {/* Unsupported Country Banner */}
                       {isUnsupportedCountry && unsupportedBanner && (
@@ -793,38 +927,18 @@ export default function SignUpPage() {
 
                       {/* Auth Message */}
                       {authMessage && (
-                        <div className="mb-4 p-3 rounded-lg bg-green-500/20 border border-green-500/30 text-green-400 text-sm text-center">
-                          {authMessage}
-                        </div>
-                      )}
-
-                      {/* Signup Message */}
-                      {signupMessage && (
                         <div
                           className={`mb-4 p-3 rounded-lg text-sm text-center ${
-                            signupMessage.type === "error"
+                            authMessage.type === "error"
                               ? "bg-red-500/20 border border-red-500/30 text-red-400"
                               : "bg-green-500/20 border border-green-500/30 text-green-400"
                           }`}
                         >
-                          {signupMessage.text}
+                          {authMessage.text}
                         </div>
                       )}
 
                       <div className="lg:p-6 bg-black/40 backdrop-blur-sm rounded-2xl border border-white/20 w-full">
-                        {/* Mobile heading */}
-
-                        {/* Logo & Title - Centered */}
-                        <div className="text-center mb-8">
-                          <div className="flex justify-center mb-3">
-                            <img
-                              src={Logo}
-                              alt="StripPals"
-                              className="w-16 h-16"
-                            />
-                          </div>
-                        </div>
-
                         <div className="lg:hidden text-center mb-6">
                           <h1 className="text-3xl font-serif pt-6 font-semibold text-white mb-2">
                             Join StripPals Today
@@ -1019,13 +1133,10 @@ export default function SignUpPage() {
 
                             <button
                               type="button"
-                              onClick={handleEmailSignUp}
-                              disabled={signupLoading}
+                              onClick={handleOpenEmailModal}
                               className="w-full py-3 border border-white/20 rounded-lg bg-white/10 hover:bg-white/20 transition-all duration-300 text-white font-medium"
                             >
-                              {signupLoading
-                                ? "Creating account..."
-                                : "Sign up with Email"}
+                              Sign up with Email
                             </button>
                           </div>
 
@@ -1157,7 +1268,7 @@ export default function SignUpPage() {
                 onClick={() => {
                   setShowSignIn(false);
                 }}
-                className="absolute top-4 right-4 mb-4 text-white hover:text-primary"
+                className="absolute top-4 right-4 text-white hover:text-primary"
                 aria-label="Close sign in"
               >
                 <svg
