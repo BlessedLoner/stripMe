@@ -949,15 +949,6 @@ export default function SignUpPage() {
                           </p>
                         </div>
 
-                        {/* Logo for mobile */}
-                        <div className="lg:hidden text-center mb-6">
-                          <img
-                            src={Logo}
-                            alt="StripPals"
-                            className="w-16 h-16 mx-auto"
-                          />
-                        </div>
-
                         {/* Form Fields */}
                         <div className="space-y-5 sm:space-y-6">
                           {/* I am (Gender) */}
