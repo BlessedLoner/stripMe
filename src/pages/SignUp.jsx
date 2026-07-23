@@ -19,28 +19,42 @@ export default function SignUpPage() {
   const navigate = useNavigate();
 
   const [showSignIn, setShowSignIn] = useState(false);
-  const [showUserDetailsModal, setShowUserDetailsModal] = useState(true);
   const [country, setCountry] = useState("");
   const [location, setLocation] = useState(null);
   const [user, setUser] = useState(null);
 
-  // NEW: Country detection states
+  // Country detection states
   const [detectedCountry, setDetectedCountry] = useState(null);
   const [isDetectingCountry, setIsDetectingCountry] = useState(true);
   const [showUnsupportedModal, setShowUnsupportedModal] = useState(false);
   const [detectedCountryName, setDetectedCountryName] = useState("");
   const [countryLocked, setCountryLocked] = useState(false);
 
-  // user details modal fields
-  const [userDetails, setUserDetails] = useState({
+  // Form state - Directly on the page now
+  const [formData, setFormData] = useState({
     displayName: "",
     gender: "",
     lookingFor: "",
-    age: "",
-    city: "",
     dateOfBirth: "",
-    interests: [],
-    relationshipGoal: "",
+    city: "",
+  });
+
+  // Validation errors
+  const [errors, setErrors] = useState({
+    displayName: "",
+    gender: "",
+    lookingFor: "",
+    dateOfBirth: "",
+    city: "",
+  });
+
+  // Touch state for showing errors
+  const [touched, setTouched] = useState({
+    displayName: false,
+    gender: false,
+    lookingFor: false,
+    dateOfBirth: false,
+    city: false,
   });
 
   // slider
@@ -77,7 +91,7 @@ export default function SignUpPage() {
     }
   }, []);
 
-  // general auth listener to redirect if already signed in
+  // Check if user already signed in
   useEffect(() => {
     let isMounted = true;
     const checkUser = async () => {
@@ -86,20 +100,20 @@ export default function SignUpPage() {
       } = await supabase.auth.getUser();
       if (!isMounted || !user) return;
       console.log("User detected on signup page:", user.id);
-      setShowUserDetailsModal(true);
+      // Redirect to members if already signed in
+      navigate("/members");
     };
     checkUser();
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [navigate]);
 
-  // ✅ SINGLE FUNCTION - Handle unsupported country selection
+  // Handle unsupported country selection
   const handleUnsupportedCountrySelect = (selectedCountryCode) => {
     setCountry(selectedCountryCode);
     setCountryLocked(true);
     setShowUnsupportedModal(false);
-    // Show a success message
     setAuthMessage(
       `Welcome! You'll be exploring ${SUPPORTED_COUNTRIES[selectedCountryCode]?.name} profiles.`,
     );
@@ -117,18 +131,14 @@ export default function SignUpPage() {
         setDetectedCountryName(result.countryName);
 
         if (result.isSupported) {
-          // User is from a supported country - lock their country
           setCountry(result.countryCode);
           setCountryLocked(true);
           setShowUnsupportedModal(false);
         } else {
-          // User is from an unsupported country - show modal
           setShowUnsupportedModal(true);
-          // Don't set country yet, let them choose
         }
       } catch (err) {
         console.error("Country detection failed:", err);
-        // Fallback: allow manual selection
         setCountryLocked(false);
       } finally {
         setIsDetectingCountry(false);
@@ -138,60 +148,139 @@ export default function SignUpPage() {
     detectCountry();
   }, []);
 
-  // helper handlers
-  const handleUserDetailsChange = (field, value) => {
-    setUserDetails((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
+  // Validation function
+  const validateField = (field, value) => {
+    switch (field) {
+      case "displayName":
+        if (!value || value.trim().length < 2) {
+          return "The username field is required.";
+        }
+        return "";
+      case "gender":
+        if (!value) {
+          return "Please select your gender.";
+        }
+        return "";
+      case "lookingFor":
+        if (!value) {
+          return "Please select who you're looking for.";
+        }
+        return "";
+      case "dateOfBirth":
+        if (!value) {
+          return "Date of birth required. Select a day.";
+        }
+        // Check if age is at least 18
+        const age = calculateAge(value);
+        if (age < 18) {
+          return "You must be at least 18 years old.";
+        }
+        return "";
+      case "city":
+        if (!value || !location) {
+          return "Please select city from dropdown.";
+        }
+        return "";
+      default:
+        return "";
+    }
   };
 
-  const handleInterestToggle = (interest) => {
-    setUserDetails((prev) => ({
-      ...prev,
-      interests: prev.interests.includes(interest)
-        ? prev.interests.filter((i) => i !== interest)
-        : [...prev.interests, interest],
-    }));
+  // Calculate age from date of birth
+  const calculateAge = (dob) => {
+    const birthDate = new Date(dob);
+    const today = new Date();
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const m = today.getMonth() - birthDate.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    return age;
   };
 
-  const handleUserDetailsSubmit = (e) => {
-    e.preventDefault();
-    if (!isUserDetailsComplete) return;
+  // Handle field change with validation
+  const handleFieldChange = (field, value) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
 
-    const dataToSave = {
-      displayName: userDetails.displayName,
-      gender: userDetails.gender,
-      lookingFor: userDetails.lookingFor,
-      age: userDetails.age,
-      dateOfBirth: userDetails.dateOfBirth,
-      interests: userDetails.interests,
-      relationshipGoal: userDetails.relationshipGoal,
-      country: country,
-      city: location?.city || null,
-      state: location?.state || null,
-      location: location,
-    };
+    // Validate on change
+    const error = validateField(field, value);
+    setErrors((prev) => ({ ...prev, [field]: error }));
 
-    localStorage.setItem("signup_data", JSON.stringify(dataToSave));
-    console.log("✅ Saved:", dataToSave);
-    setShowUserDetailsModal(false);
+    // Mark as touched
+    setTouched((prev) => ({ ...prev, [field]: true }));
   };
 
+  // Handle blur for validation
+  const handleFieldBlur = (field) => {
+    setTouched((prev) => ({ ...prev, [field]: true }));
+    const value = formData[field];
+    const error = validateField(field, value);
+    setErrors((prev) => ({ ...prev, [field]: error }));
+  };
+
+  // Check if form is valid
+  const isFormValid = () => {
+    const displayNameError = validateField("displayName", formData.displayName);
+    const genderError = validateField("gender", formData.gender);
+    const lookingForError = validateField("lookingFor", formData.lookingFor);
+    const dobError = validateField("dateOfBirth", formData.dateOfBirth);
+    const cityError = validateField("city", formData.city);
+
+    setErrors({
+      displayName: displayNameError,
+      gender: genderError,
+      lookingFor: lookingForError,
+      dateOfBirth: dobError,
+      city: cityError,
+    });
+
+    return (
+      !displayNameError &&
+      !genderError &&
+      !lookingForError &&
+      !dobError &&
+      !cityError &&
+      country &&
+      location
+    );
+  };
+
+  // Get age from DOB for profile
+  const getAgeFromDOB = (dob) => {
+    if (!dob) return null;
+    return calculateAge(dob);
+  };
+
+  // SIGN UP with Email
   const handleEmailSignUp = async (e) => {
     e.preventDefault();
+
+    if (!isFormValid()) {
+      // Mark all fields as touched to show errors
+      setTouched({
+        displayName: true,
+        gender: true,
+        lookingFor: true,
+        dateOfBirth: true,
+        city: true,
+      });
+      return;
+    }
+
     setSignupLoading(true);
     setSignupMessage(null);
 
     try {
+      const age = getAgeFromDOB(formData.dateOfBirth);
+
       // Step 1: Sign up
       const { data, error } = await supabase.auth.signUp({
         email: signupEmail,
         password: signupPassword,
         options: {
           data: {
-            display_name: userDetails.displayName,
-            country: country, // ✅ Store the selected country
+            display_name: formData.displayName,
+            country: country,
           },
         },
       });
@@ -229,22 +318,23 @@ export default function SignUpPage() {
       } = await supabase.auth.getUser();
       if (userError || !user) throw new Error("Could not get user");
 
-      // Step 4: Insert profile with country
+      // Step 4: Insert profile
       const { error: profileError } = await supabase
         .from("user_profiles")
         .insert({
           user_id: user.id,
-          display_name: userDetails.displayName,
-          country: country, // ✅ Use the detected/selected country
+          display_name: formData.displayName,
+          country: country,
           city: location?.city || null,
           state: location?.state || null,
           location_latitude: location?.lat || null,
           location_longitude: location?.lng || null,
-          gender: userDetails.gender,
-          looking_gender: userDetails.lookingFor,
-          age: parseInt(userDetails.age),
-          interests: userDetails.interests,
-          date_of_birth: userDetails.dateOfBirth || null,
+          gender: formData.gender,
+          looking_gender: formData.lookingFor,
+          age: age,
+          date_of_birth: formData.dateOfBirth || null,
+          interests: [],
+          email_verified: true,
         });
 
       if (profileError) throw profileError;
@@ -292,14 +382,31 @@ export default function SignUpPage() {
 
   // SIGN IN with Google
   const handleGoogleSignIn = async () => {
+    // Validate form before Google sign-up
+    if (!isFormValid()) {
+      setTouched({
+        displayName: true,
+        gender: true,
+        lookingFor: true,
+        dateOfBirth: true,
+        city: true,
+      });
+      return;
+    }
+
     try {
       setGoogleLoading(true);
 
-      // ✅ Save data to BOTH localStorage and sessionStorage
       const signupData = {
-        ...userDetails,
-        location,
-        country,
+        displayName: formData.displayName,
+        gender: formData.gender,
+        lookingFor: formData.lookingFor,
+        dateOfBirth: formData.dateOfBirth,
+        age: getAgeFromDOB(formData.dateOfBirth),
+        country: country,
+        city: location?.city || null,
+        state: location?.state || null,
+        location: location,
       };
 
       localStorage.setItem("signup_data", JSON.stringify(signupData));
@@ -327,42 +434,20 @@ export default function SignUpPage() {
     }
   };
 
-  const interestsList = [
-    "Kissing",
-    "Safe sex",
-    "Public sex",
-    "Anal sex",
-    "Bondage",
-    "Erotic massage",
-    "Lingerie",
-    "Oral sex",
-    "Exchanging photos",
-    "Threesome",
-    "Sadomasochism",
-    "Group sex",
-  ];
-
-  const isUserDetailsComplete =
-    userDetails.displayName &&
-    userDetails.gender &&
-    userDetails.lookingFor &&
-    userDetails.age &&
-    userDetails.dateOfBirth &&
-    userDetails.interests.length > 0 &&
-    country &&
-    location;
-
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const isNewUser = params.get("newUser");
-    if (isNewUser) {
-      setShowUserDetailsModal(true);
+    const error = params.get("error");
+    if (error) {
+      setSignupMessage({
+        type: "error",
+        text: decodeURIComponent(error),
+      });
     }
   }, []);
 
   return (
     <div className="relative min-h-screen overflow-x-hidden bg-transparent text-text-primary z-10">
-      {/* Background slider - unchanged */}
+      {/* Background slider */}
       <div
         className="bg-slider"
         aria-hidden="true"
@@ -397,7 +482,7 @@ export default function SignUpPage() {
         ))}
       </div>
 
-      {/* Overlay - unchanged */}
+      {/* Overlay */}
       <div
         className="bg-overlay"
         aria-hidden="true"
@@ -419,282 +504,6 @@ export default function SignUpPage() {
         />
       )}
 
-      {/* User Details Modal - UPDATED with country detection */}
-      {showUserDetailsModal && !showUnsupportedModal && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-black/90 backdrop-blur-sm rounded-2xl max-w-2xl w-full relative p-8 border border-white/20 max-h-[90vh] overflow-y-auto">
-            <div className="text-center mb-6">
-              {authMessage && (
-                <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 transition-opacity duration-500">
-                  <div
-                    className={`px-6 py-3 rounded-lg shadow-lg ${
-                      authMessage.includes("Welcome")
-                        ? "bg-green-500"
-                        : "bg-red-500"
-                    } text-white`}
-                  >
-                    {authMessage}
-                  </div>
-                </div>
-              )}
-              <h2 className="text-3xl font-serif font-semibold text-white mb-2">
-                Tell Us About Yourself
-              </h2>
-              <p className="text-gray-200">
-                Help us find your perfect matches by sharing a few details
-              </p>
-            </div>
-
-            {/* Progress */}
-            <div className="mb-6">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium text-gray-200">
-                  Step 1 of 3
-                </span>
-                <span className="text-sm text-gray-200">Preference Setup</span>
-              </div>
-              <div className="w-full bg-white/20 rounded-full h-2">
-                <div
-                  className="bg-primary h-2 rounded-full transition-all duration-300"
-                  style={{ width: "40%" }}
-                />
-              </div>
-            </div>
-
-            <form onSubmit={handleUserDetailsSubmit} className="space-y-6">
-              {/* Display Name */}
-              <div>
-                <label className="block text-white font-medium mb-2">
-                  Display Name *
-                </label>
-                <input
-                  type="text"
-                  value={userDetails.displayName}
-                  onChange={(e) =>
-                    handleUserDetailsChange("displayName", e.target.value)
-                  }
-                  className="w-full border border-white/20 rounded-lg py-3 px-4 bg-black text-white focus:border-primary focus:ring-2 focus:ring-primary/20"
-                  placeholder="How should we call you?"
-                  required
-                />
-              </div>
-
-              {/* Gender and Looking For */}
-              <div className="grid md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-white font-medium mb-2">
-                    I am *
-                  </label>
-                  <select
-                    value={userDetails.gender}
-                    onChange={(e) =>
-                      handleUserDetailsChange("gender", e.target.value)
-                    }
-                    className="w-full border border-white/20 rounded-lg py-3 px-4 bg-black text-white focus:border-primary focus:ring-2 focus:ring-primary/20"
-                    required
-                  >
-                    <option value="">Select gender</option>
-                    <option value="male">Man</option>
-                    <option value="female">Woman</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-white font-medium mb-2">
-                    Looking for *
-                  </label>
-                  <select
-                    value={userDetails.lookingFor}
-                    onChange={(e) =>
-                      handleUserDetailsChange("lookingFor", e.target.value)
-                    }
-                    className="w-full border border-white/20 rounded-lg py-3 px-4 bg-black text-white focus:border-primary focus:ring-2 focus:ring-primary/20"
-                    required
-                  >
-                    <option value="">Select preference</option>
-                    <option value="male">Men</option>
-                    <option value="female">Women</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Country and City - UPDATED with detection */}
-              <div className="grid md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-white font-medium mb-2">
-                    Country *
-                  </label>
-
-                  {/* If country is detected and locked (supported) */}
-                  {countryLocked && country ? (
-                    <div className="w-full border border-white/20 rounded-lg py-3 px-4 bg-white/10 text-white flex items-center justify-between">
-                      <span>
-                        {SUPPORTED_COUNTRIES[country]?.name || country}
-                      </span>
-                      <span className="text-xs text-green-400 flex items-center gap-1">
-                        <svg
-                          className="w-4 h-4"
-                          fill="currentColor"
-                          viewBox="0 0 20 20"
-                        >
-                          <path
-                            fillRule="evenodd"
-                            d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                        Auto-detected
-                      </span>
-                    </div>
-                  ) : (
-                    /* Manual selection fallback (if detection failed) */
-                    <select
-                      value={country}
-                      onChange={(e) => setCountry(e.target.value)}
-                      className="w-full border border-white/20 rounded-lg py-3 px-4 bg-black text-white focus:border-primary focus:ring-2 focus:ring-primary/20"
-                      required
-                      disabled={isDetectingCountry}
-                    >
-                      <option value="">
-                        {isDetectingCountry
-                          ? "Detecting your country..."
-                          : "Select Country"}
-                      </option>
-                      {COUNTRIES.map((c) => (
-                        <option key={c.code} value={c.code}>
-                          {c.name}
-                        </option>
-                      ))}
-                    </select>
-                  )}
-
-                  {countryLocked && country && (
-                    <p className="text-xs text-gray-400 mt-1">
-                      {isDetectingCountry
-                        ? "Detecting..."
-                        : "✅ Your country was auto-detected"}
-                    </p>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-white font-medium mb-2">
-                    City / Region*
-                  </label>
-                  {country && (
-                    <LocationInput
-                      countryCode={country}
-                      onSelect={(place) => {
-                        console.log("PLACE:", place);
-                        setLocation(place);
-                      }}
-                    />
-                  )}
-                </div>
-              </div>
-
-              {/* Age and Date of birth - unchanged */}
-              <div className="grid md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-white font-medium mb-2">
-                    Age *
-                  </label>
-                  <input
-                    type="number"
-                    min="18"
-                    max="100"
-                    value={userDetails.age}
-                    onChange={(e) =>
-                      handleUserDetailsChange("age", e.target.value)
-                    }
-                    className="w-full border border-white/20 rounded-lg py-3 px-4 bg-black text-white focus:border-primary focus:ring-2 focus:ring-primary/20"
-                    placeholder="Enter your age"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-white font-medium mb-2">
-                    Date of Birth *
-                  </label>
-                  <input
-                    type="date"
-                    value={userDetails.dateOfBirth}
-                    onChange={(e) =>
-                      handleUserDetailsChange("dateOfBirth", e.target.value)
-                    }
-                    className="w-full border border-white/20 rounded-lg py-3 px-4 bg-black text-white focus:border-primary focus:ring-2 focus:ring-primary/20"
-                    required
-                  />
-                </div>
-              </div>
-
-              {/* Interests - unchanged */}
-              <div>
-                <label className="block text-white font-medium mb-3">
-                  Interests (Select up to 5)
-                </label>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 max-h-40 overflow-y-auto">
-                  {interestsList.map((interest) => (
-                    <button
-                      key={interest}
-                      type="button"
-                      onClick={() => handleInterestToggle(interest)}
-                      className={`p-2 rounded-lg border transition-all duration-200 ${
-                        userDetails.interests.includes(interest)
-                          ? "bg-primary border-primary text-white"
-                          : "bg-white/10 border-white/20 text-white hover:bg-white/20"
-                      } ${
-                        userDetails.interests.length >= 5 &&
-                        !userDetails.interests.includes(interest)
-                          ? "opacity-50 cursor-not-allowed"
-                          : ""
-                      }`}
-                      disabled={
-                        userDetails.interests.length >= 5 &&
-                        !userDetails.interests.includes(interest)
-                      }
-                    >
-                      {interest}
-                    </button>
-                  ))}
-                </div>
-                <p className="text-gray-400 text-sm mt-2">
-                  Selected: {userDetails.interests.length}/5
-                </p>
-              </div>
-
-              {/* Submit Button */}
-              <div className="flex gap-4 pt-4">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowSignIn(true);
-                    setShowUserDetailsModal(false);
-                  }}
-                  className="flex-1 py-3 px-6 border border-white/20 rounded-lg bg-primary text-white hover:bg-white/10"
-                >
-                  Already have an account? Login
-                </button>
-
-                <button
-                  type="submit"
-                  disabled={!isUserDetailsComplete}
-                  className={`flex-1 py-3 px-6 rounded-lg transition-colors duration-300 ${
-                    isUserDetailsComplete
-                      ? "bg-primary hover:bg-primary-600 text-white"
-                      : "bg-gray-600 text-gray-300 cursor-not-allowed"
-                  }`}
-                >
-                  Continue to Sign Up
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* Rest of the component remains the same... */}
       {/* Header */}
       <div className="relative z-10">
         <header className="fixed top-0 left-0 right-0 z-50">
@@ -702,21 +511,9 @@ export default function SignUpPage() {
             <div className="flex justify-between items-center h-16">
               <div className="flex items-center">
                 <Link to="/" className="flex items-center">
-                  {Logo ? (
-                    <img src={Logo} alt="FlingPals" className="w-10 h-10" />
-                  ) : (
-                    <svg
-                      className="w-10 h-10 text-primary"
-                      viewBox="0 0 40 40"
-                      fill="currentColor"
-                    >
-                      <path d="M20 4C12.268 4 6 10.268 6 18c0 5.523 3.178 10.297 7.8 12.6.4.2.8-.1.8-.5v-2.2c-3.9.8-4.7-1.9-4.7-1.9-.6-1.6-1.5-2-1.5-2-1.2-.8.1-.8.1-.8 1.3.1 2 1.3 2 1.3 1.2 2 3.1 1.4 3.9 1.1.1-.9.5-1.4.9-1.8-2.9-.3-6-1.5-6-6.6 0-1.5.5-2.7 1.3-3.6-.1-.3-.6-1.6.1-3.2 0 0 1.1-.4 3.5 1.3 1-.3 2.1-.4 3.2-.4s2.2.1 3.2.4c2.4-1.7 3.5-1.3 3.5-1.3.7 1.6.2 2.9.1 3.2.8.9 1.3 2.1 1.3 3.6 0 5.1-3.1 6.3-6 6.6.5.4.9 1.2.9 2.4v3.6c0 .4.4.7.8.5C30.822 28.297 34 23.523 34 18c0-7.732-6.268-14-14-14z" />
-                      <circle cx="20" cy="20" r="3" fill="currentColor" />
-                    </svg>
-                  )}
+                  <img src={Logo} alt="FlingPals" className="w-10 h-10" />
                 </Link>
               </div>
-
               <div className="flex items-center">
                 <span className="text-gray-200 text-sm mr-2">
                   Already have an account?
@@ -732,7 +529,7 @@ export default function SignUpPage() {
           </nav>
         </header>
 
-        {/* Google Loading Overlay - unchanged */}
+        {/* Google Loading Overlay */}
         {googleLoading && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
             <div className="bg-black rounded-2xl p-8 text-center shadow-2xl max-w-sm w-full mx-4 border border-white/20">
@@ -770,15 +567,15 @@ export default function SignUpPage() {
           </div>
         )}
 
-        {/* Main - unchanged */}
+        {/* Main Content */}
         <main className="min-h-screen pt-16">
           <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div className="flex justify-center">
               <div className="w-full max-w-6xl">
-                <div className="grid lg:grid-cols-2 gap-8 items-center">
-                  {/* Left benefits - unchanged */}
+                <div className="grid lg:grid-cols-2 gap-8 items-start">
+                  {/* Left benefits */}
                   <div className="hidden lg:block">
-                    <div className="max-w-lg">
+                    <div className="max-w-lg mt-8">
                       <h1 className="text-4xl md:text-5xl font-serif font-semibold text-white mb-6 leading-tight">
                         Your Perfect Match is{" "}
                         <span className="text-primary font-accent italic">
@@ -817,27 +614,31 @@ export default function SignUpPage() {
                     </div>
                   </div>
 
-                  {/* Right: Registration Card - unchanged */}
+                  {/* Sign Up Form */}
                   <div className="w-full flex justify-center">
                     <div className="w-full max-w-md">
-                      <div className="mb-6">
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-sm font-medium text-gray-200">
-                            Step 2 of 3
-                          </span>
-                          <span className="text-sm text-gray-200">
-                            Account Setup
-                          </span>
+                      {/* Auth Message */}
+                      {authMessage && (
+                        <div className="mb-4 p-3 rounded-lg bg-green-500/20 border border-green-500/30 text-green-400 text-sm text-center">
+                          {authMessage}
                         </div>
-                        <div className="w-full bg-white/20 rounded-full h-2">
-                          <div
-                            className="bg-primary h-2 rounded-full transition-all duration-300"
-                            style={{ width: "60%" }}
-                          />
+                      )}
+
+                      {/* Signup Message */}
+                      {signupMessage && (
+                        <div
+                          className={`mb-4 p-3 rounded-lg text-sm text-center ${
+                            signupMessage.type === "error"
+                              ? "bg-red-500/20 border border-red-500/30 text-red-400"
+                              : "bg-green-500/20 border border-green-500/30 text-green-400"
+                          }`}
+                        >
+                          {signupMessage.text}
                         </div>
-                      </div>
+                      )}
 
                       <div className="lg:p-6 bg-black/40 backdrop-blur-sm rounded-2xl border border-white/20 w-full">
+                        {/* Mobile heading */}
                         <div className="lg:hidden text-center mb-6">
                           <h1 className="text-3xl font-serif pt-6 font-semibold text-white mb-2">
                             Join StripPals Today
@@ -847,113 +648,251 @@ export default function SignUpPage() {
                           </p>
                         </div>
 
-                        <div className="w-full">
-                          <form
-                            onSubmit={handleEmailSignUp}
-                            className="space-y-4"
-                          >
-                            <div>
-                              <label className="block text-sm text-gray-200 mb-2">
-                                Email
-                              </label>
-                              <input
-                                type="email"
-                                required
-                                value={signupEmail}
-                                onChange={(e) => setSignupEmail(e.target.value)}
-                                className="w-full border border-white/20 rounded-lg py-3 px-4 bg-white text-black focus:border-primary focus:ring-2 focus:ring-primary/20"
-                                placeholder="you@example.com"
-                              />
-                            </div>
+                        {/* Logo & Title - Centered */}
+                        <div className="text-center mb-8">
+                          <div className="flex justify-center mb-3">
+                            <img
+                              src={Logo}
+                              alt="StripPals"
+                              className="w-16 h-16"
+                            />
+                          </div>
+                          <h2 className="text-2xl font-serif font-semibold text-white">
+                            Log in
+                          </h2>
+                        </div>
 
-                            <div>
-                              <label className="block text-sm text-gray-200 mb-2">
-                                Password
-                              </label>
-                              <input
-                                type="password"
-                                required
-                                value={signupPassword}
-                                onChange={(e) =>
-                                  setSignupPassword(e.target.value)
-                                }
-                                className="w-full border border-white/20 rounded-lg py-3 px-4 bg-white text-black focus:border-primary focus:ring-2 focus:ring-primary/20"
-                                placeholder="Create a password"
+                        {/* Form Fields */}
+                        <div className="space-y-4">
+                          {/* I am (Gender) */}
+                          <div>
+                            <label className="block text-white/80 text-sm font-medium mb-1.5">
+                              I am a
+                            </label>
+                            <select
+                              value={formData.gender}
+                              onChange={(e) =>
+                                handleFieldChange("gender", e.target.value)
+                              }
+                              onBlur={() => handleFieldBlur("gender")}
+                              className={`w-full border rounded-lg py-3 px-4 bg-white/10 text-white focus:border-primary focus:ring-2 focus:ring-primary/20 ${
+                                touched.gender && errors.gender
+                                  ? "border-red-500"
+                                  : "border-white/20"
+                              }`}
+                            >
+                              <option value="" className="text-gray-700">
+                                Select...
+                              </option>
+                              <option value="male" className="text-gray-700">
+                                Man
+                              </option>
+                              <option value="female" className="text-gray-700">
+                                Woman
+                              </option>
+                            </select>
+                            {touched.gender && errors.gender && (
+                              <p className="text-red-400 text-xs mt-1">
+                                {errors.gender}
+                              </p>
+                            )}
+                          </div>
+
+                          {/* Looking for */}
+                          <div>
+                            <label className="block text-white/80 text-sm font-medium mb-1.5">
+                              Looking for
+                            </label>
+                            <select
+                              value={formData.lookingFor}
+                              onChange={(e) =>
+                                handleFieldChange("lookingFor", e.target.value)
+                              }
+                              onBlur={() => handleFieldBlur("lookingFor")}
+                              className={`w-full border rounded-lg py-3 px-4 bg-white/10 text-white focus:border-primary focus:ring-2 focus:ring-primary/20 ${
+                                touched.lookingFor && errors.lookingFor
+                                  ? "border-red-500"
+                                  : "border-white/20"
+                              }`}
+                            >
+                              <option value="" className="text-gray-700">
+                                Select...
+                              </option>
+                              <option value="male" className="text-gray-700">
+                                Men
+                              </option>
+                              <option value="female" className="text-gray-700">
+                                Women
+                              </option>
+                            </select>
+                            {touched.lookingFor && errors.lookingFor && (
+                              <p className="text-red-400 text-xs mt-1">
+                                {errors.lookingFor}
+                              </p>
+                            )}
+                          </div>
+
+                          {/* Date of Birth */}
+                          <div>
+                            <label className="block text-white/80 text-sm font-medium mb-1.5">
+                              Date of birth
+                            </label>
+                            <input
+                              type="date"
+                              value={formData.dateOfBirth}
+                              onChange={(e) =>
+                                handleFieldChange("dateOfBirth", e.target.value)
+                              }
+                              onBlur={() => handleFieldBlur("dateOfBirth")}
+                              className={`w-full border rounded-lg py-3 px-4 bg-white/10 text-white focus:border-primary focus:ring-2 focus:ring-primary/20 ${
+                                touched.dateOfBirth && errors.dateOfBirth
+                                  ? "border-red-500"
+                                  : "border-white/20"
+                              }`}
+                            />
+                            {touched.dateOfBirth && errors.dateOfBirth && (
+                              <p className="text-red-400 text-xs mt-1">
+                                {errors.dateOfBirth}
+                              </p>
+                            )}
+                          </div>
+
+                          {/* City */}
+                          <div>
+                            <label className="block text-white/80 text-sm font-medium mb-1.5">
+                              City
+                            </label>
+                            {country && (
+                              <LocationInput
+                                countryCode={country}
+                                onSelect={(place) => {
+                                  console.log("PLACE:", place);
+                                  setLocation(place);
+                                  setFormData((prev) => ({
+                                    ...prev,
+                                    city: place?.city || "",
+                                  }));
+                                  // Validate city
+                                  const error = validateField(
+                                    "city",
+                                    place?.city || "",
+                                  );
+                                  setErrors((prev) => ({
+                                    ...prev,
+                                    city: error,
+                                  }));
+                                  setTouched((prev) => ({
+                                    ...prev,
+                                    city: true,
+                                  }));
+                                }}
+                                placeholder="Enter a location"
                               />
+                            )}
+                            {touched.city && errors.city && (
+                              <p className="text-red-400 text-xs mt-1">
+                                {errors.city}
+                              </p>
+                            )}
+                          </div>
+
+                          {/* Username */}
+                          <div>
+                            <label className="block text-white/80 text-sm font-medium mb-1.5">
+                              Username
+                            </label>
+                            <input
+                              type="text"
+                              value={formData.displayName}
+                              onChange={(e) =>
+                                handleFieldChange("displayName", e.target.value)
+                              }
+                              onBlur={() => handleFieldBlur("displayName")}
+                              className={`w-full border rounded-lg py-3 px-4 bg-white/10 text-white focus:border-primary focus:ring-2 focus:ring-primary/20 ${
+                                touched.displayName && errors.displayName
+                                  ? "border-red-500"
+                                  : "border-white/20"
+                              }`}
+                              placeholder="Choose a username"
+                            />
+                            {touched.displayName && errors.displayName && (
+                              <p className="text-red-400 text-xs mt-1">
+                                {errors.displayName}
+                              </p>
+                            )}
+                          </div>
+
+                          {/* Divider */}
+                          <div className="relative my-4">
+                            <div className="absolute inset-0 flex items-center">
+                              <div className="w-full border-t border-white/20"></div>
                             </div>
+                            <div className="relative flex justify-center text-sm">
+                              <span className="px-4 bg-black/40 text-gray-400">
+                                Choose how you want to sign up
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Sign Up Buttons */}
+                          <div className="space-y-3">
+                            <button
+                              type="button"
+                              onClick={handleGoogleSignIn}
+                              className="w-full flex items-center justify-center space-x-3 py-3 border border-white/20 rounded-lg bg-white/90 hover:bg-white/100 transition-all duration-300 text-black font-medium"
+                            >
+                              <svg
+                                className="w-5 h-5"
+                                viewBox="0 0 533.5 544.3"
+                              >
+                                <path
+                                  fill="#4285f4"
+                                  d="M533.5 278.4c0-17.4-1.6-34.3-4.6-50.7H272v95.9h147.1c-6.4 34.8-25.8 64.3-55 84.1v69.8h88.8c51.9-47.8 82.6-118.1 82.6-198.9z"
+                                />
+                                <path
+                                  fill="#34a853"
+                                  d="M272 544.3c73.7 0 135.6-24.4 180.8-66.2l-88.8-69.8c-24.7 16.6-56.6 26.5-92 26.5-70.8 0-130.9-47.8-152.4-112.1H28.6v70.7C73.8 486.2 167.9 544.3 272 544.3z"
+                                />
+                                <path
+                                  fill="#fbbc04"
+                                  d="M119.6 325.7c-10.2-30.7-10.2-63.7 0-94.4V160.6H28.6c-39.6 78.7-39.6 174.9 0 253.6l91-88.5z"
+                                />
+                                <path
+                                  fill="#ea4335"
+                                  d="M272 108.4c39.9 0 75.8 13.7 104.1 40.6l78-78C406.9 24.2 344.9 0 272 0 167.9 0 73.8 58.1 28.6 160.6l91 88.5C141.1 156.2 201.2 108.4 272 108.4z"
+                                />
+                              </svg>
+                              Sign up with Google
+                            </button>
 
                             <button
-                              type="submit"
+                              type="button"
+                              onClick={handleEmailSignUp}
                               disabled={signupLoading}
-                              className="w-full bg-primary hover:bg-primary-600 text-white font-medium py-3 rounded-lg transition-colors duration-300"
+                              className="w-full py-3 border border-white/20 rounded-lg bg-white/10 hover:bg-white/20 transition-all duration-300 text-white font-medium"
                             >
                               {signupLoading
                                 ? "Creating account..."
-                                : "Create account"}
+                                : "Sign up with Email"}
                             </button>
+                          </div>
 
-                            <div className="text-center text-sm text-gray-300">
-                              or
-                            </div>
-
-                            <div className="space-y-3">
+                          {/* Sign In Link */}
+                          <div className="text-center mt-6 pt-6 border-t border-white/20">
+                            <p className="text-gray-300 text-sm">
+                              Already have an account?{" "}
                               <button
-                                type="button"
-                                onClick={handleGoogleSignIn}
-                                className="w-full flex items-center justify-center space-x-3 py-3 border border-white/20 rounded-lg bg-white/90 hover:bg-white/100 transition-all duration-300 text-black"
+                                onClick={() => setShowSignIn(true)}
+                                className="text-primary hover:text-primary-400 font-medium transition-colors duration-300"
                               >
-                                <svg
-                                  className="w-5 h-5 mr-2"
-                                  viewBox="0 0 533.5 544.3"
-                                >
-                                  <path
-                                    fill="#4285f4"
-                                    d="M533.5 278.4c0-17.4-1.6-34.3-4.6-50.7H272v95.9h147.1c-6.4 34.8-25.8 64.3-55 84.1v69.8h88.8c51.9-47.8 82.6-118.1 82.6-198.9z"
-                                  />
-                                  <path
-                                    fill="#34a853"
-                                    d="M272 544.3c73.7 0 135.6-24.4 180.8-66.2l-88.8-69.8c-24.7 16.6-56.6 26.5-92 26.5-70.8 0-130.9-47.8-152.4-112.1H28.6v70.7C73.8 486.2 167.9 544.3 272 544.3z"
-                                  />
-                                  <path
-                                    fill="#fbbc04"
-                                    d="M119.6 325.7c-10.2-30.7-10.2-63.7 0-94.4V160.6H28.6c-39.6 78.7-39.6 174.9 0 253.6l91-88.5z"
-                                  />
-                                  <path
-                                    fill="#ea4335"
-                                    d="M272 108.4c39.9 0 75.8 13.7 104.1 40.6l78-78C406.9 24.2 344.9 0 272 0 167.9 0 73.8 58.1 28.6 160.6l91 88.5C141.1 156.2 201.2 108.4 272 108.4z"
-                                  />
-                                </svg>
-                                Continue with Google
+                                Sign In
                               </button>
-
-                              {signupMessage && (
-                                <div
-                                  className={`text-sm mt-2 ${
-                                    signupMessage.type === "error"
-                                      ? "text-red-400"
-                                      : "text-green-400"
-                                  }`}
-                                >
-                                  {signupMessage.text}
-                                </div>
-                              )}
-                            </div>
-                          </form>
-                        </div>
-
-                        <div className="text-center mt-6 pt-6 border-t border-white/20">
-                          <p className="text-gray-200">
-                            Already have an account?{" "}
-                            <button
-                              onClick={() => setShowSignIn(true)}
-                              className="text-primary hover:text-primary-400 font-medium transition-colors duration-300"
-                            >
-                              Sign In
-                            </button>
-                          </p>
+                            </p>
+                          </div>
                         </div>
                       </div>
 
+                      {/* Security badge */}
                       <div className="mt-6 text-center">
                         <div className="flex items-center justify-center space-x-2 text-xs text-gray-300">
                           <svg
@@ -1058,14 +997,13 @@ export default function SignUpPage() {
           </div>
         </footer>
 
-        {/* Sign In Modal - unchanged */}
+        {/* Sign In Modal */}
         {showSignIn && (
           <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
             <div className="bg-black/80 backdrop-blur-sm rounded-2xl max-w-md w-full relative p-6 border border-white/20">
               <button
                 onClick={() => {
                   setShowSignIn(false);
-                  setShowUserDetailsModal(true);
                 }}
                 className="absolute top-4 right-4 text-white hover:text-primary"
                 aria-label="Close sign in"
@@ -1092,7 +1030,7 @@ export default function SignUpPage() {
                       setShowSignIn(false);
                       handleGoogleSignIn();
                     }}
-                    className="w-full flex items-center justify-center space-x-3 py-3 border border-white/20 rounded-lg bg-white/90 hover:bg-white/100 transition-all duration-300 text-black"
+                    className="w-full flex items-center justify-center space-x-3 py-3 border border-white/20 rounded-lg bg-white/90 hover:bg-white/100 transition-all duration-300 text-black font-medium"
                   >
                     <svg className="w-5 h-5 mr-2" viewBox="0 0 533.5 544.3">
                       <path
@@ -1190,7 +1128,7 @@ export default function SignUpPage() {
   );
 }
 
-/* Small helper component - unchanged */
+/* Small helper component */
 function Benefit({ label = "" }) {
   return (
     <div className="flex items-center space-x-3">
