@@ -571,6 +571,38 @@ export default function SignUpPage() {
     }
   };
 
+  // Google sign-in login
+  const handleGoogleLogin = async () => {
+    try {
+      setGoogleLoading(true);
+
+      // This is NOT a signup
+      sessionStorage.setItem("auth_intent", "signin");
+
+      localStorage.removeItem("signup_data");
+      sessionStorage.removeItem("signup_data");
+
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+          queryParams: {
+            prompt: "select_account",
+            access_type: "offline",
+          },
+        },
+      });
+
+      if (error) {
+        setGoogleLoading(false);
+        setSigninError(error.message);
+      }
+    } catch (err) {
+      setGoogleLoading(false);
+      setSigninError("Google sign in failed.");
+    }
+  };
+
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const error = params.get("error");
@@ -1145,7 +1177,7 @@ export default function SignUpPage() {
                   <button
                     onClick={() => {
                       setShowSignIn(false);
-                      handleGoogleSignIn();
+                      handleGoogleLogin();
                     }}
                     className="w-full flex items-center justify-center space-x-3 py-3 border border-white/20 rounded-lg bg-white/90 hover:bg-white/100 transition-all duration-300 text-black font-medium"
                   >

@@ -12,6 +12,8 @@ export default function AuthCallback() {
           data: { user },
         } = await supabase.auth.getUser();
 
+        const authIntent = sessionStorage.getItem("auth_intent");
+
         // ❌ No authenticated user
         if (!user) {
           console.error("No user found in callback");
@@ -34,6 +36,22 @@ export default function AuthCallback() {
           localStorage.removeItem("signup_data");
           sessionStorage.removeItem("signup_data");
           window.location.replace("/members");
+          return;
+        }
+
+        // User tried to SIGN IN but no profile exists
+        if (authIntent === "signin") {
+          await supabase.auth.signOut();
+
+          sessionStorage.removeItem("auth_intent");
+
+          window.location.replace(
+            "/sign-up?error=" +
+              encodeURIComponent(
+                "We couldn't find an account linked to your Google login. Please register to continue.",
+              ),
+          );
+
           return;
         }
 
@@ -155,9 +173,13 @@ export default function AuthCallback() {
 
         // ✅ Success! Cleanup and redirect
         console.log("✅ Profile created successfully!");
+
         localStorage.removeItem("signup_data");
         sessionStorage.removeItem("signup_data");
         sessionStorage.removeItem("auth_recovery");
+
+        // IMPORTANT
+        sessionStorage.removeItem("auth_intent");
 
         window.location.replace("/members");
       } catch (err) {

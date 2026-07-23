@@ -13,44 +13,47 @@ export default function AuthGate({ children }) {
           data: { user },
         } = await supabase.auth.getUser();
 
+        const authIntent = sessionStorage.getItem("auth_intent");
+
         // ✅ Not logged in
         if (!user) {
           setReady(true);
           return;
         }
 
-        // ✅ OAuth signup currently happening
+        // Allow the OAuth callback to finish profile creation
         const currentPath = window.location.pathname;
 
-        if (currentPath === "/auth/callback") {
+        if (
+          currentPath === "/auth/callback" ||
+          authIntent === "signup" ||
+          authIntent === "signin"
+        ) {
           setReady(true);
           return;
         }
 
-        // ✅ Check profile
+        // Check if profile exists
         const { data: profile } = await supabase
           .from("user_profiles")
           .select("id")
           .eq("user_id", user.id)
           .maybeSingle();
 
-        console.log("🔍 AuthGate profile:", profile);
-
-        // ✅ Profile exists → allow access
         if (profile) {
+          sessionStorage.removeItem("auth_intent");
           setReady(true);
           return;
         }
 
-        // ❌ No profile exists
+        // Existing login but profile doesn't exist
         await supabase.auth.signOut();
 
         sessionStorage.setItem(
           "auth_message",
-          "Account not found. Please sign up first.",
+          "We couldn't find an account linked to your Google login. Please register to continue.",
         );
 
-        // ✅ FIX: Redirect to sign-up, not home
         window.location.replace("/sign-up?error=account_not_found");
       } catch (err) {
         console.error("AuthGate error:", err);

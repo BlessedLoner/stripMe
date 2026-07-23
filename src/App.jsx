@@ -111,7 +111,13 @@ function AppRoutes() {
 
         <Route
           path="/"
-          element={<Navigate to={user ? "/members" : "/home"} />}
+          element={
+            user ? (
+              <Navigate to="/members" replace />
+            ) : (
+              <Navigate to="/home" replace />
+            )
+          }
         />
 
         <Route path="/home" element={<Home />} />
