@@ -906,7 +906,7 @@ export default function SignUpPage() {
                   </div>
 
                   {/* Sign Up Form */}
-                  <div className="w-full flex justify-center p-6">
+                  <div className="w-full flex justify-center px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
                     <div className="w-full max-w-md">
                       {/* Unsupported Country Banner */}
                       {isUnsupportedCountry && unsupportedBanner && (
@@ -938,21 +938,31 @@ export default function SignUpPage() {
                         </div>
                       )}
 
-                      <div className="lg:p-6 bg-black/40 backdrop-blur-sm rounded-2xl border border-white/20 w-full">
+                      <div className="p-4 sm:p-6 bg-black/40 backdrop-blur-sm rounded-2xl border border-white/20 w-full">
+                        {/* Mobile heading */}
                         <div className="lg:hidden text-center mb-6">
-                          <h1 className="text-3xl font-serif pt-6 font-semibold text-white mb-2">
+                          <h1 className="text-2xl sm:text-3xl font-serif font-semibold text-white mb-2">
                             Join StripPals Today
                           </h1>
-                          <p className="text-gray-200">
+                          <p className="text-gray-200 text-sm">
                             Start your journey to meaningful connections
                           </p>
                         </div>
 
+                        {/* Logo for mobile */}
+                        <div className="lg:hidden text-center mb-6">
+                          <img
+                            src={Logo}
+                            alt="StripPals"
+                            className="w-16 h-16 mx-auto"
+                          />
+                        </div>
+
                         {/* Form Fields */}
-                        <div className="space-y-6">
+                        <div className="space-y-5 sm:space-y-6">
                           {/* I am (Gender) */}
                           <div>
-                            <label className="block text-white font-medium mb-2">
+                            <label className="block text-white/80 text-sm font-medium mb-1.5">
                               I am a
                             </label>
                             <select
@@ -961,7 +971,7 @@ export default function SignUpPage() {
                                 handleFieldChange("gender", e.target.value)
                               }
                               onBlur={() => handleFieldBlur("gender")}
-                              className={`w-full border border-white/20 rounded-lg py-3 px-4 bg-black text-white focus:border-primary focus:ring-2 focus:ring-primary/20 ${
+                              className={`w-full border rounded-lg py-3 px-4 bg-black text-white focus:border-primary focus:ring-2 focus:ring-primary/20 ${
                                 touched.gender && errors.gender
                                   ? "border-red-500"
                                   : "border-white/20"
@@ -986,7 +996,7 @@ export default function SignUpPage() {
 
                           {/* Looking for */}
                           <div>
-                            <label className="block text-white font-medium mb-2">
+                            <label className="block text-white/80 text-sm font-medium mb-1.5">
                               Looking for
                             </label>
                             <select
@@ -995,7 +1005,7 @@ export default function SignUpPage() {
                                 handleFieldChange("lookingFor", e.target.value)
                               }
                               onBlur={() => handleFieldBlur("lookingFor")}
-                              className={`w-full border border-white/20 rounded-lg py-3 px-4 bg-black text-white focus:border-primary focus:ring-2 focus:ring-primary/20 ${
+                              className={`w-full border rounded-lg py-3 px-4 bg-black text-white focus:border-primary focus:ring-2 focus:ring-primary/20 ${
                                 touched.lookingFor && errors.lookingFor
                                   ? "border-red-500"
                                   : "border-white/20"
@@ -1018,9 +1028,9 @@ export default function SignUpPage() {
                             )}
                           </div>
 
-                          {/* Date of Birth */}
+                          {/* Date of Birth - FIXED for mobile */}
                           <div>
-                            <label className="block text-white font-medium mb-2">
+                            <label className="block text-white/80 text-sm font-medium mb-1.5">
                               Date of birth
                             </label>
                             <input
@@ -1030,7 +1040,7 @@ export default function SignUpPage() {
                                 handleFieldChange("dateOfBirth", e.target.value)
                               }
                               onBlur={() => handleFieldBlur("dateOfBirth")}
-                              className={`w-full border border-white/20 rounded-lg py-3 px-4 bg-black text-white focus:border-primary focus:ring-2 focus:ring-primary/20 ${
+                              className={`w-full border rounded-lg py-3 px-4 bg-black text-white focus:border-primary focus:ring-2 focus:ring-primary/20 ${
                                 touched.dateOfBirth && errors.dateOfBirth
                                   ? "border-red-500"
                                   : "border-white/20"
@@ -1043,16 +1053,16 @@ export default function SignUpPage() {
                             )}
                           </div>
 
-                          {/* City */}
+                          {/* City - FIXED: same width as other inputs */}
                           <div>
-                            <label className="block text-white font-medium mb-2">
+                            <label className="block text-white/80 text-sm font-medium mb-1.5">
                               City
                             </label>
                             {country && (
                               <LocationInput
                                 countryCode={country}
                                 onSelect={handleLocationSelect}
-                                placeholder="Enter a location"
+                                placeholder="Enter a location..."
                               />
                             )}
                             {touched.city && errors.city && (
@@ -1064,7 +1074,7 @@ export default function SignUpPage() {
 
                           {/* Username */}
                           <div>
-                            <label className="block text-white font-medium mb-2">
+                            <label className="block text-white/80 text-sm font-medium mb-1.5">
                               Username
                             </label>
                             <input
@@ -1074,7 +1084,7 @@ export default function SignUpPage() {
                                 handleFieldChange("displayName", e.target.value)
                               }
                               onBlur={() => handleFieldBlur("displayName")}
-                              className={`w-full border border-white/20 rounded-lg py-3 px-4 bg-black text-white focus:border-primary focus:ring-2 focus:ring-primary/20 ${
+                              className={`w-full border rounded-lg py-3 px-4 bg-black text-white focus:border-primary focus:ring-2 focus:ring-primary/20 ${
                                 touched.displayName && errors.displayName
                                   ? "border-red-500"
                                   : "border-white/20"
@@ -1134,7 +1144,7 @@ export default function SignUpPage() {
                             <button
                               type="button"
                               onClick={handleOpenEmailModal}
-                              className="w-full py-3 border border-white/20 rounded-lg bg-white/10 hover:bg-white/20 transition-all duration-300 text-white font-medium"
+                              className="w-full py-3 border border-white/20 rounded-lg bg-black hover:bg-white/20 transition-all duration-300 text-white font-medium"
                             >
                               Sign up with Email
                             </button>
