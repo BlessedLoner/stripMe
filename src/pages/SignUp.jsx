@@ -1028,24 +1028,72 @@ export default function SignUpPage() {
                             )}
                           </div>
 
-                          {/* Date of Birth - FIXED for mobile */}
+                          {/* Date of Birth - Custom iOS-friendly */}
                           <div>
                             <label className="block text-white/80 text-sm font-medium mb-1.5">
                               Date of birth
                             </label>
-                            <input
-                              type="date"
-                              value={formData.dateOfBirth}
-                              onChange={(e) =>
-                                handleFieldChange("dateOfBirth", e.target.value)
-                              }
-                              onBlur={() => handleFieldBlur("dateOfBirth")}
-                              className={`w-full border rounded-lg py-3 px-4 bg-black text-white focus:border-primary focus:ring-2 focus:ring-primary/20 ${
-                                touched.dateOfBirth && errors.dateOfBirth
-                                  ? "border-red-500"
-                                  : "border-white/20"
-                              }`}
-                            />
+                            <div className="relative w-full">
+                              <input
+                                type="date"
+                                value={formData.dateOfBirth}
+                                onChange={(e) =>
+                                  handleFieldChange(
+                                    "dateOfBirth",
+                                    e.target.value,
+                                  )
+                                }
+                                onBlur={() => handleFieldBlur("dateOfBirth")}
+                                className={`w-full min-w-0 border rounded-lg py-3 px-4 bg-black text-white focus:border-primary focus:ring-2 focus:ring-primary/20 appearance-none ${
+                                  touched.dateOfBirth && errors.dateOfBirth
+                                    ? "border-red-500"
+                                    : "border-white/20"
+                                }`}
+                                style={{
+                                  minWidth: 0,
+                                  maxWidth: "100%",
+                                  boxSizing: "border-box",
+                                  WebkitAppearance: "none", // Removes default iOS styling
+                                  appearance: "none",
+                                }}
+                              />
+                              {/* Custom calendar icon */}
+                              <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                                <svg
+                                  className="w-5 h-5 text-gray-400"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <rect
+                                    x="3"
+                                    y="4"
+                                    width="18"
+                                    height="18"
+                                    rx="2"
+                                    stroke="currentColor"
+                                    strokeWidth="1.5"
+                                  />
+                                  <path
+                                    d="M3 10h18"
+                                    stroke="currentColor"
+                                    strokeWidth="1.5"
+                                  />
+                                  <path
+                                    d="M8 2v4"
+                                    stroke="currentColor"
+                                    strokeWidth="1.5"
+                                    strokeLinecap="round"
+                                  />
+                                  <path
+                                    d="M16 2v4"
+                                    stroke="currentColor"
+                                    strokeWidth="1.5"
+                                    strokeLinecap="round"
+                                  />
+                                </svg>
+                              </div>
+                            </div>
                             {touched.dateOfBirth && errors.dateOfBirth && (
                               <p className="text-red-400 text-xs mt-1">
                                 {errors.dateOfBirth}
@@ -1104,7 +1152,7 @@ export default function SignUpPage() {
                               <div className="w-full border-t border-white/20"></div>
                             </div>
                             <div className="relative flex justify-center text-sm">
-                              <span className="px-4 bg-black/40 text-gray-400">
+                              <span className="px-4 bg-black text-gray-300">
                                 Choose how you want to sign up
                               </span>
                             </div>
@@ -1144,7 +1192,7 @@ export default function SignUpPage() {
                             <button
                               type="button"
                               onClick={handleOpenEmailModal}
-                              className="w-full py-3 border border-white/20 rounded-lg bg-black hover:bg-white/20 transition-all duration-300 text-white font-medium"
+                              className="w-full py-3 border border-white/20 rounded-lg bg-black/40 hover:bg-white/20 transition-all duration-300 text-white font-medium"
                             >
                               Sign up with Email
                             </button>
