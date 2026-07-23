@@ -1,5 +1,4 @@
 // AuthGate.jsx
-
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabaseClient";
 import RedirectPage from "../pages/RedirectPage";
@@ -51,13 +50,15 @@ export default function AuthGate({ children }) {
           "Account not found. Please sign up first.",
         );
 
-        window.location.replace("/");
+        // ✅ FIX: Redirect to sign-up, not home
+        window.location.replace("/sign-up?error=account_not_found");
       } catch (err) {
         console.error("AuthGate error:", err);
 
         await supabase.auth.signOut();
 
-        window.location.replace("/");
+        // ✅ FIX: Redirect to sign-up
+        window.location.replace("/sign-up?error=session_error");
       }
     };
 

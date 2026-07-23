@@ -1,3 +1,4 @@
+// ProtectedRoute.jsx
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabaseClient";
 
@@ -12,8 +13,12 @@ export default function ProtectedRoute({ children }) {
 
       // ❌ Not logged in
       if (!user) {
-        window.location.replace("/sign-up");
-        alert("You must be logged in to access this page.");
+        // ✅ FIX: No alert, just redirect
+        sessionStorage.setItem(
+          "auth_message",
+          "Please log in to access this page.",
+        );
+        window.location.replace("/sign-up?error=not_logged_in");
         return;
       }
 
@@ -23,9 +28,10 @@ export default function ProtectedRoute({ children }) {
         .eq("user_id", user.id)
         .maybeSingle();
 
-      // 🆕 NEW USER → SEND TO SIGNUP (NOT HOME)
+      // 🆕 NEW USER → SEND TO SIGNUP
       if (!profile) {
-        window.location.replace("/sign-up"); // ✅ FIX
+        sessionStorage.setItem("auth_message", "Please complete your profile.");
+        window.location.replace("/sign-up?error=incomplete_profile");
         return;
       }
 
@@ -40,16 +46,3 @@ export default function ProtectedRoute({ children }) {
 
   return children;
 }
-
-// import { Navigate } from "react-router-dom";
-// import { useAuth } from "../context/AuthContext";
-
-// export default function ProtectedRoute({ children }) {
-//   const { user, loading } = useAuth();
-
-//   if (loading) return null; // or loader
-
-//   if (!user) return <Navigate to="/home" replace />;
-
-//   return children;
-// }

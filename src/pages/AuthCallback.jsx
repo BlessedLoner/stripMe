@@ -63,12 +63,13 @@ export default function AuthCallback() {
         console.log("📦 Signup data:", savedData);
 
         // ❌ User tried to bypass signup flow
+        // ✅ FIX: Only check for fields that are actually in the form
         if (
           !savedData ||
           !savedData.displayName ||
           !savedData.gender ||
           !savedData.lookingFor ||
-          !savedData.age ||
+          !savedData.dateOfBirth ||
           !savedData.country ||
           !savedData.location
         ) {
@@ -91,7 +92,21 @@ export default function AuthCallback() {
           return;
         }
 
-        // ✅ Create FULL profile
+        // Calculate age from date of birth
+        const calculateAge = (dob) => {
+          const birthDate = new Date(dob);
+          const today = new Date();
+          let age = today.getFullYear() - birthDate.getFullYear();
+          const m = today.getMonth() - birthDate.getMonth();
+          if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+            age--;
+          }
+          return age;
+        };
+
+        const age = calculateAge(savedData.dateOfBirth);
+
+        // ✅ Create FULL profile (with only the fields we have)
         const { error: profileError } = await supabase
           .from("user_profiles")
           .insert({
@@ -109,12 +124,9 @@ export default function AuthCallback() {
             location_longitude: savedData.location?.lng || null,
             gender: savedData.gender,
             looking_gender: savedData.lookingFor,
-            age: parseInt(savedData.age),
-            interests: savedData.interests || [],
-            relationship_goals: savedData.relationshipGoal
-              ? [savedData.relationshipGoal]
-              : [],
+            age: age,
             date_of_birth: savedData.dateOfBirth || null,
+            interests: [], // Empty for now - will be filled later
             email_verified: true,
           });
 
