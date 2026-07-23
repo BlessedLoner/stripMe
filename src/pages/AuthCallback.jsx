@@ -80,6 +80,17 @@ export default function AuthCallback() {
 
         console.log("📦 Signup data:", savedData);
 
+        console.log("===== SAVED SIGNUP DATA =====");
+        console.log(savedData);
+
+        console.log("displayName:", savedData?.displayName);
+        console.log("gender:", savedData?.gender);
+        console.log("lookingFor:", savedData?.lookingFor);
+        console.log("dateOfBirth:", savedData?.dateOfBirth);
+        console.log("country:", savedData?.country);
+        console.log("location:", savedData?.location);
+        console.log("============================");
+
         // ❌ User tried to bypass signup flow
         // ✅ FIX: Only check for fields that are actually in the form
         if (
