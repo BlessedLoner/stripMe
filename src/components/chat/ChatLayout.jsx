@@ -674,7 +674,7 @@ export default function ChatLayout() {
               ? "translate-x-0"
               : "-translate-x-full md:translate-x-0"
           }
-         h-full bg-background backdrop-blur-sm border-r border-primary/10
+         h-full bg-primary/10 backdrop-blur-sm border-r border-primary/10
         `}
       >
         {/* Toast Notification */}
