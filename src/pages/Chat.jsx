@@ -9,6 +9,7 @@ export default function Chat() {
   const bottomRef = useRef(null);
   const fileInputRef = useRef(null);
   const textareaRef = useRef(null);
+  const messagesContainerRef = useRef(null);
 
   const [sending, setSending] = useState(false);
   const [profileId, setProfileId] = useState(null);
@@ -37,10 +38,11 @@ export default function Chat() {
   // Credit warning modals
   const [showLowCreditModal, setShowLowCreditModal] = useState(false);
   const [showOutOfCreditsModal, setShowOutOfCreditsModal] = useState(false);
-  const [lowCreditThreshold] = useState(10); // Show warning when credits < 10
-
-  // Track if low credit warning has been shown to avoid spamming
+  const [lowCreditThreshold] = useState(10);
   const [lowCreditWarningShown, setLowCreditWarningShown] = useState(false);
+
+  // Track optimistic messages
+  const [optimisticMessages, setOptimisticMessages] = useState([]);
 
   /* ---------------- Load user profile ---------------- */
   useEffect(() => {
@@ -59,11 +61,11 @@ export default function Chat() {
     loadProfile();
   }, []);
 
-  // ****************************
   // Auto-scroll to bottom when messages load
   useEffect(() => {
-    if (messages.length > 0 && bottomRef.current) {
-      bottomRef.current.scrollIntoView({ behavior: "smooth" });
+    if (messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTop =
+        messagesContainerRef.current.scrollHeight;
     }
   }, [messages]);
 
@@ -79,7 +81,6 @@ export default function Chat() {
       const newBalance = data.balance;
       setCredits(newBalance);
 
-      // Check for low credit warning (only if not already shown and user has > 0 credits)
       if (
         !lowCreditWarningShown &&
         newBalance > 0 &&
@@ -89,7 +90,6 @@ export default function Chat() {
         setLowCreditWarningShown(true);
       }
 
-      // Reset warning flag if credits go back above threshold
       if (newBalance >= lowCreditThreshold) {
         setLowCreditWarningShown(false);
       }
@@ -100,14 +100,13 @@ export default function Chat() {
     if (profileId) loadCredits(profileId);
   }, [profileId]);
 
-  /* ---------------- Conversation meta & block status (runs on mount and when IDs change) ---------------- */
+  /* ---------------- Conversation meta & block status ---------------- */
   useEffect(() => {
     if (!conversationId || !profileId) return;
 
     let isMounted = true;
 
     async function loadMeta() {
-      // Fetch conversation with fictional profile
       const { data, error } = await supabase
         .from("conversations")
         .select(
@@ -143,7 +142,6 @@ export default function Chat() {
         setFictionalAge(fictionalProfile?.age || "");
         setRecipientId(fictionalId);
 
-        // Check block status from DB
         if (fictionalId && profileId) {
           const { data: blockData } = await supabase
             .from("blocked_profiles")
@@ -151,11 +149,6 @@ export default function Chat() {
             .eq("user_profile_id", profileId)
             .eq("blocked_fictional_id", fictionalId)
             .maybeSingle();
-
-          console.log("BLOCK CHECK:", {
-            profileId,
-            fictionalId,
-          });
 
           setIsBlocked(!!blockData);
           setBlockChecked(true);
@@ -169,7 +162,7 @@ export default function Chat() {
     return () => {
       isMounted = false;
     };
-  }, [conversationId, profileId]); // Re-run when conversationId or profileId changes (including refresh)
+  }, [conversationId, profileId]);
 
   /* ---------------- Fetch messages ---------------- */
   const fetchMessages = useCallback(async () => {
@@ -183,7 +176,8 @@ export default function Chat() {
 
     if (!error && data) {
       setMessages(data);
-      bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+      // Clear optimistic messages once real messages load
+      setOptimisticMessages([]);
 
       if (profileId) {
         await supabase.from("conversation_reads").upsert({
@@ -199,15 +193,9 @@ export default function Chat() {
     fetchMessages();
   }, [fetchMessages]);
 
-  /* ---------------- Realtime new messages (with block filter) ---------------- */
+  /* ---------------- Realtime new messages ---------------- */
   useEffect(() => {
     if (!conversationId || !profileId || !recipientId) return;
-
-    console.log("SUBSCRIBING TO:", {
-      conversationId,
-      profileId,
-      recipientId,
-    });
 
     const channel = supabase
       .channel(`messages:${conversationId}`)
@@ -220,76 +208,34 @@ export default function Chat() {
           filter: `conversation_id=eq.${conversationId}`,
         },
         async (payload) => {
-          console.log("MESSAGE EVENT:", payload);
           const newMsg = payload.new;
 
-          // // ✅ ALWAYS CHECK DB (never trust state)
-          // const { data: blockExists } = await supabase
-          //   .from("blocked_profiles")
-          //   .select("id")
-          //   .eq("user_profile_id", profileId) // ✅ matches your schema
-          //   .eq("blocked_fictional_id", recipientId)
-          //   .maybeSingle();
-
-          // if (blockExists) {
-          //   console.log("🚫 Blocked message prevented");
-          //   return;
-          // }
-
+          // Check if message is already in optimistic list
           setMessages((prev) => {
             if (prev.some((m) => m.id === newMsg.id)) return prev;
             return [...prev, newMsg];
           });
 
-          bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+          // Remove from optimistic if it matches
+          setOptimisticMessages((prev) =>
+            prev.filter((m) => m.id !== newMsg.id),
+          );
         },
       )
-      .subscribe((status) => {
-        console.log("CHAT REALTIME STATUS:", status);
-
-        console.log(
-          "ACTIVE CHANNELS:",
-          supabase.getChannels().map((c) => c.topic),
-        );
-      });
+      .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
     };
   }, [conversationId, profileId, recipientId]);
 
-  // ****************************
-  useEffect(() => {
-    const testChannel = supabase
-      .channel("realtime-test")
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "messages",
-        },
-        (payload) => {
-          console.log("🔥 TEST EVENT:", payload);
-        },
-      )
-      .subscribe((status) => {
-        console.log("🔥 TEST STATUS:", status);
-      });
-
-    return () => {
-      supabase.removeChannel(testChannel);
-    };
-  }, []);
-
-  /* ---------------- Block handler ---------------- */
+  /* ---------------- Block handlers ---------------- */
   async function handleBlockProfile() {
     if (!recipientId) {
       alert("Unable to block: recipient not found");
       return;
     }
 
-    // Check if already blocked
     const { data: existing } = await supabase
       .from("blocked_profiles")
       .select("id")
@@ -408,22 +354,14 @@ export default function Chat() {
     if (fileInputRef.current) fileInputRef.current.value = "";
   }
 
-  /* ---------------- Send message (with block check and credit check) ---------------- */
-  /* ---------------- Send message (with block check and credit check) ---------------- */
+  /* ---------------- Send message with optimistic update ---------------- */
   async function sendMessage() {
-    // Prevent duplicate sends
     if (sending) return;
-
-    // Prevent empty sends
     if ((!input.trim() && !imageFile) || !conversationId) return;
-
-    // Block check
     if (isBlocked || !blockChecked) {
       alert("You have blocked this profile. Unblock to send messages.");
       return;
     }
-
-    // Credit check
     if (credits <= 0) {
       setShowOutOfCreditsModal(true);
       return;
@@ -432,21 +370,43 @@ export default function Chat() {
     try {
       setSending(true);
 
-      // Save values BEFORE clearing state
       const messageText = input.trim();
       const currentImage = imageFile;
 
-      // Clear UI immediately for smoother experience
-      setInput("");
+      // Create optimistic message
+      const tempId = `temp-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+      const optimisticMessage = {
+        id: tempId,
+        conversation_id: conversationId,
+        sender_type: "real_user",
+        sender_user_id: profileId,
+        content: messageText || null,
+        image_url: null,
+        direction: "user_to_fictional",
+        credit_cost: 1,
+        is_read: false,
+        created_at: new Date().toISOString(),
+        is_optimistic: true,
+      };
 
-      // Reset textarea height immediately
+      // Add optimistic message to the list
+      setOptimisticMessages((prev) => [...prev, optimisticMessage]);
+
+      // Clear input immediately
+      setInput("");
       if (textareaRef.current) {
         textareaRef.current.style.height = "44px";
       }
-
-      // Remove selected image preview immediately
       if (currentImage) {
         removeImage();
+      }
+
+      // Scroll to bottom
+      if (messagesContainerRef.current) {
+        setTimeout(() => {
+          messagesContainerRef.current.scrollTop =
+            messagesContainerRef.current.scrollHeight;
+        }, 50);
       }
 
       // Extra safety block check from DB
@@ -459,8 +419,10 @@ export default function Chat() {
           .maybeSingle();
 
         if (blockExists) {
-          alert("You have blocked this profile. Unblock to send messages.");
           setIsBlocked(true);
+          // Remove optimistic message
+          setOptimisticMessages((prev) => prev.filter((m) => m.id !== tempId));
+          alert("You have blocked this profile. Unblock to send messages.");
           return;
         }
       }
@@ -473,23 +435,21 @@ export default function Chat() {
 
       if (userError || !user) {
         console.error("User not authenticated");
+        setOptimisticMessages((prev) => prev.filter((m) => m.id !== tempId));
+        setInput(messageText);
         return;
       }
 
       let imageUrl = null;
 
-      /* ---------------- IMAGE UPLOAD ---------------- */
+      // Image upload
       if (currentImage) {
         try {
           const originalName = currentImage.name;
           const fileExt = originalName.split(".").pop();
-
           let baseName = originalName.slice(0, originalName.lastIndexOf("."));
-
-          // Sanitize filename
           baseName = baseName.replace(/[^a-zA-Z0-9]/g, "_");
           baseName = baseName.substring(0, 50);
-
           const fileName = `${Date.now()}-${baseName}.${fileExt}`;
           const path = `${conversationId}/${fileName}`;
 
@@ -503,14 +463,11 @@ export default function Chat() {
 
           if (uploadError) {
             console.error("Upload error:", uploadError);
-
-            // Restore message if upload failed
-            setInput(messageText);
-
-            alert(
-              "Failed to upload image. Please try again with a different file.",
+            setOptimisticMessages((prev) =>
+              prev.filter((m) => m.id !== tempId),
             );
-
+            setInput(messageText);
+            alert("Failed to upload image. Please try again.");
             return;
           }
 
@@ -520,7 +477,6 @@ export default function Chat() {
 
           imageUrl = data.publicUrl;
 
-          // Save image reference
           await supabase.from("message_images").insert({
             sender_id: user.id,
             recipient_id: recipientId,
@@ -529,18 +485,23 @@ export default function Chat() {
           });
         } catch (uploadErr) {
           console.error("Upload exception:", uploadErr);
-
-          // Restore message
+          setOptimisticMessages((prev) => prev.filter((m) => m.id !== tempId));
           setInput(messageText);
-
           alert("Error uploading image. Please try again.");
-
           return;
         }
       }
 
-      /* ---------------- SEND MESSAGE RPC ---------------- */
+      // Update optimistic message with image URL if needed
+      if (imageUrl) {
+        setOptimisticMessages((prev) =>
+          prev.map((m) =>
+            m.id === tempId ? { ...m, image_url: imageUrl } : m,
+          ),
+        );
+      }
 
+      // Send message via RPC
       const CREDIT_COST = 1;
 
       const { error } = await supabase.rpc("send_message_with_credits", {
@@ -555,8 +516,8 @@ export default function Chat() {
 
       if (error) {
         console.error("RPC send error:", error);
-
-        // Restore text if failed
+        // Remove optimistic message on failure
+        setOptimisticMessages((prev) => prev.filter((m) => m.id !== tempId));
         setInput(messageText);
 
         if (error.message?.includes("Insufficient credits")) {
@@ -564,12 +525,10 @@ export default function Chat() {
         } else {
           alert("Failed to send message");
         }
-
         return;
       }
 
-      /* ---------------- UPDATE CONVERSATION PREVIEW ---------------- */
-
+      // Update conversation preview
       const messagePreview = messageText
         ? messageText.substring(0, 50)
         : currentImage
@@ -577,7 +536,7 @@ export default function Chat() {
           : null;
 
       if (messagePreview) {
-        const { error: updateConvError } = await supabase
+        await supabase
           .from("conversations")
           .update({
             last_message_at: new Date().toISOString(),
@@ -585,26 +544,20 @@ export default function Chat() {
             last_message_preview: messagePreview,
           })
           .eq("id", conversationId);
-
-        if (updateConvError) {
-          console.error(
-            "Failed to update conversation last message:",
-            updateConvError,
-          );
-        }
       }
 
-      /* ---------------- MARK AS READ ---------------- */
-
+      // Mark as read
       await supabase.from("conversation_reads").upsert({
         conversation_id: conversationId,
         user_id: profileId,
         last_read_at: new Date().toISOString(),
       });
 
-      /* ---------------- REFRESH DATA ---------------- */
+      // Refresh credits
+      await loadCredits();
 
-      await Promise.all([fetchMessages(), loadCredits()]);
+      // The real-time subscription will add the actual message
+      // and the optimistic message will be replaced
     } catch (err) {
       console.error("Send message error:", err);
       alert("Failed to send message");
@@ -612,12 +565,17 @@ export default function Chat() {
       setSending(false);
     }
   }
-  // Navigate to credits page and close modals
+
   function goToCredits() {
     setShowLowCreditModal(false);
     setShowOutOfCreditsModal(false);
     navigate("/credits");
   }
+
+  // Combine real messages with optimistic messages
+  const allMessages = [...messages, ...optimisticMessages].sort(
+    (a, b) => new Date(a.created_at) - new Date(b.created_at),
+  );
 
   if (loading || !blockChecked) {
     return (
@@ -786,21 +744,28 @@ export default function Chat() {
         </div>
       </div>
 
-      {/* Messages container */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 min-h-0">
-        {messages.map((msg) => {
+      {/* Messages container - FIXED scrolling */}
+      <div
+        ref={messagesContainerRef}
+        className="flex-1 overflow-y-auto p-4 space-y-4 min-h-0"
+      >
+        {allMessages.map((msg) => {
           const isUser = msg.sender_type === "real_user";
+          const isOptimistic = msg.is_optimistic;
+
           return (
             <div
               key={msg.id}
-              className={`flex ${isUser ? "justify-end" : "justify-start"}`}
+              className={`flex ${isUser ? "justify-end" : "justify-start"} ${
+                isOptimistic ? "animate-fade-in" : ""
+              }`}
             >
               <div
                 className={`max-w-[80%] sm:max-w-md rounded-2xl shadow-sm overflow-hidden ${
                   isUser
                     ? "bg-primary text-white rounded-br-sm"
                     : "bg-primary/10 text-black rounded-bl-sm"
-                }`}
+                } ${isOptimistic ? "opacity-80" : ""}`}
               >
                 {msg.image_url && (
                   <img
@@ -811,6 +776,11 @@ export default function Chat() {
                   />
                 )}
                 {msg.content && <div className="px-4 py-2">{msg.content}</div>}
+                {isOptimistic && (
+                  <div className="px-4 pb-2 text-xs text-white/50">
+                    Sending...
+                  </div>
+                )}
               </div>
             </div>
           );
@@ -818,7 +788,7 @@ export default function Chat() {
         <div ref={bottomRef} />
       </div>
 
-      {/* Input area – conditional */}
+      {/* Input area */}
       {isBlocked ? (
         <div className="p-4 bg-red-50 border-t border-red-200 text-center">
           <p className="text-red-600 mb-2">
@@ -832,7 +802,7 @@ export default function Chat() {
           </button>
         </div>
       ) : (
-        <div className="p-1 border-primary/10 bg-surface">
+        <div className="p-1 border-primary/10 bg-surface shrink-0">
           {imagePreview && (
             <div className="mb-3 p-3 bg-primary/10 h-28 rounded-lg border border-gray-200">
               <div className="flex items-center justify-between">
@@ -892,7 +862,6 @@ export default function Chat() {
                   </svg>
                 </button>
 
-                {/* Emoji Picker Dropdown */}
                 <div
                   id="emoji-picker"
                   className="absolute bottom-full left-0 mb-2 bg-white rounded-lg shadow-xl border border-gray-200 p-2 w-64 z-50 hidden"
@@ -973,8 +942,6 @@ export default function Chat() {
                 onChange={(e) => {
                   const value = e.target.value;
                   setInput(value);
-
-                  // ✅ Reset to min height first, then grow if there's text
                   e.target.style.height = "44px";
                   if (value.trim()) {
                     e.target.style.height = `${Math.min(e.target.scrollHeight, 120)}px`;
@@ -1035,6 +1002,7 @@ export default function Chat() {
         </div>
       )}
 
+      {/* Image Preview Modal */}
       {activeImage && (
         <div
           className="fixed inset-0 bg-black/90 flex items-center justify-center z-50"
