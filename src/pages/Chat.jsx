@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "../lib/supabaseClient";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Check, Clock } from "lucide-react";
 
 export default function Chat() {
   const navigate = useNavigate();
@@ -41,7 +41,7 @@ export default function Chat() {
   const [lowCreditThreshold] = useState(10);
   const [lowCreditWarningShown, setLowCreditWarningShown] = useState(false);
 
-  // Track optimistic messages
+  // Track optimistic messages with status
   const [optimisticMessages, setOptimisticMessages] = useState([]);
 
   /* ---------------- Load user profile ---------------- */
@@ -61,13 +61,13 @@ export default function Chat() {
     loadProfile();
   }, []);
 
-  // Auto-scroll to bottom when messages load
+  // Auto-scroll to bottom when messages change
   useEffect(() => {
     if (messagesContainerRef.current) {
       messagesContainerRef.current.scrollTop =
         messagesContainerRef.current.scrollHeight;
     }
-  }, [messages]);
+  }, [messages, optimisticMessages]);
 
   /* ---------------- Credits ---------------- */
   async function loadCredits(pid = profileId) {
@@ -210,16 +210,16 @@ export default function Chat() {
         async (payload) => {
           const newMsg = payload.new;
 
-          // Check if message is already in optimistic list
+          // Check if this is an optimistic message that was just confirmed
+          setOptimisticMessages((prev) =>
+            prev.filter((m) => m.id !== newMsg.id),
+          );
+
+          // Add the real message
           setMessages((prev) => {
             if (prev.some((m) => m.id === newMsg.id)) return prev;
             return [...prev, newMsg];
           });
-
-          // Remove from optimistic if it matches
-          setOptimisticMessages((prev) =>
-            prev.filter((m) => m.id !== newMsg.id),
-          );
         },
       )
       .subscribe();
@@ -354,6 +354,14 @@ export default function Chat() {
     if (fileInputRef.current) fileInputRef.current.value = "";
   }
 
+  /* ---------------- Format time ---------------- */
+  function formatMessageTime(dateString) {
+    if (!dateString) return "";
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return "";
+    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  }
+
   /* ---------------- Send message with optimistic update ---------------- */
   async function sendMessage() {
     if (sending) return;
@@ -367,48 +375,52 @@ export default function Chat() {
       return;
     }
 
-    try {
-      setSending(true);
+    // Save values before clearing
+    const messageText = input.trim();
+    const currentImage = imageFile;
+    const tempId = `temp-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+    const createdAt = new Date().toISOString();
 
-      const messageText = input.trim();
-      const currentImage = imageFile;
+    // Create optimistic message with "sending" status
+    const optimisticMessage = {
+      id: tempId,
+      conversation_id: conversationId,
+      sender_type: "real_user",
+      sender_user_id: profileId,
+      content: messageText || null,
+      image_url: null,
+      direction: "user_to_fictional",
+      credit_cost: 1,
+      is_read: false,
+      created_at: createdAt,
+      is_optimistic: true,
+      status: "sending", // 'sending' or 'sent'
+    };
 
-      // Create optimistic message
-      const tempId = `temp-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
-      const optimisticMessage = {
-        id: tempId,
-        conversation_id: conversationId,
-        sender_type: "real_user",
-        sender_user_id: profileId,
-        content: messageText || null,
-        image_url: null,
-        direction: "user_to_fictional",
-        credit_cost: 1,
-        is_read: false,
-        created_at: new Date().toISOString(),
-        is_optimistic: true,
-      };
+    // Add optimistic message immediately
+    setOptimisticMessages((prev) => [...prev, optimisticMessage]);
 
-      // Add optimistic message to the list
-      setOptimisticMessages((prev) => [...prev, optimisticMessage]);
+    // Clear input immediately
+    setInput("");
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "44px";
+    }
+    if (currentImage) {
+      removeImage();
+    }
 
-      // Clear input immediately
-      setInput("");
-      if (textareaRef.current) {
-        textareaRef.current.style.height = "44px";
-      }
-      if (currentImage) {
-        removeImage();
-      }
+    // Reset sending state after message is added
+    setSending(true);
 
-      // Scroll to bottom
+    // Scroll to bottom
+    setTimeout(() => {
       if (messagesContainerRef.current) {
-        setTimeout(() => {
-          messagesContainerRef.current.scrollTop =
-            messagesContainerRef.current.scrollHeight;
-        }, 50);
+        messagesContainerRef.current.scrollTop =
+          messagesContainerRef.current.scrollHeight;
       }
+    }, 50);
 
+    try {
       // Extra safety block check from DB
       if (profileId && recipientId) {
         const { data: blockExists } = await supabase
@@ -420,7 +432,6 @@ export default function Chat() {
 
         if (blockExists) {
           setIsBlocked(true);
-          // Remove optimistic message
           setOptimisticMessages((prev) => prev.filter((m) => m.id !== tempId));
           alert("You have blocked this profile. Unblock to send messages.");
           return;
@@ -528,6 +539,15 @@ export default function Chat() {
         return;
       }
 
+      // Update optimistic message status to "sent"
+      setOptimisticMessages((prev) =>
+        prev.map((m) =>
+          m.id === tempId
+            ? { ...m, status: "sent", sent_at: new Date().toISOString() }
+            : m,
+        ),
+      );
+
       // Update conversation preview
       const messagePreview = messageText
         ? messageText.substring(0, 50)
@@ -557,9 +577,10 @@ export default function Chat() {
       await loadCredits();
 
       // The real-time subscription will add the actual message
-      // and the optimistic message will be replaced
+      // The optimistic message will be cleaned up there
     } catch (err) {
       console.error("Send message error:", err);
+      setOptimisticMessages((prev) => prev.filter((m) => m.id !== tempId));
       alert("Failed to send message");
     } finally {
       setSending(false);
@@ -572,10 +593,14 @@ export default function Chat() {
     navigate("/credits");
   }
 
-  // Combine real messages with optimistic messages
-  const allMessages = [...messages, ...optimisticMessages].sort(
-    (a, b) => new Date(a.created_at) - new Date(b.created_at),
-  );
+  // Combine real messages with optimistic messages (filter out duplicates)
+  const allMessages = [...messages, ...optimisticMessages]
+    .filter(
+      (msg, index, self) =>
+        // Remove duplicates by id (keep the first occurrence)
+        self.findIndex((m) => m.id === msg.id) === index,
+    )
+    .sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
 
   if (loading || !blockChecked) {
     return (
@@ -752,6 +777,9 @@ export default function Chat() {
         {allMessages.map((msg) => {
           const isUser = msg.sender_type === "real_user";
           const isOptimistic = msg.is_optimistic;
+          const status = msg.status || "sent";
+          const isSending = status === "sending";
+          const isSent = status === "sent";
 
           return (
             <div
@@ -765,7 +793,7 @@ export default function Chat() {
                   isUser
                     ? "bg-primary text-white rounded-br-sm"
                     : "bg-primary/10 text-black rounded-bl-sm"
-                } ${isOptimistic ? "opacity-80" : ""}`}
+                } ${isSending ? "opacity-90" : ""}`}
               >
                 {msg.image_url && (
                   <img
@@ -776,9 +804,27 @@ export default function Chat() {
                   />
                 )}
                 {msg.content && <div className="px-4 py-2">{msg.content}</div>}
-                {isOptimistic && (
-                  <div className="px-4 pb-2 text-xs text-white/50">
-                    Sending...
+
+                {/* Status indicator inside the message bubble */}
+                {isUser && (
+                  <div className="px-4 pb-2 flex items-center justify-end gap-1.5 text-xs">
+                    {isSending ? (
+                      <>
+                        <span className="text-white/60">Sending</span>
+                        <div className="flex items-center gap-0.5">
+                          <div className="w-1.5 h-1.5 bg-white/40 rounded-full animate-pulse"></div>
+                          <div className="w-1.5 h-1.5 bg-white/40 rounded-full animate-pulse delay-100"></div>
+                          <div className="w-1.5 h-1.5 bg-white/40 rounded-full animate-pulse delay-200"></div>
+                        </div>
+                      </>
+                    ) : isSent ? (
+                      <>
+                        <span className="text-white/60">
+                          {formatMessageTime(msg.created_at)}
+                        </span>
+                        <Check size={12} className="text-white/60" />
+                      </>
+                    ) : null}
                   </div>
                 )}
               </div>
