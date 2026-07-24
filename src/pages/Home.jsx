@@ -348,11 +348,6 @@ function Home({ intervalMs = 5000, transitionMs = 800 }) {
                   {/* Right Side - Compatibility Content */}
                   <div className="space-y-6">
                     <div>
-                      <div className="inline-block px-3 py-1 bg-primary/10 rounded-full mb-4">
-                        <span className="text-xs font-semibold text-primary uppercase tracking-wide">
-                          AI-Powered Matching
-                        </span>
-                      </div>
                       <h4 className="text-3xl md:text-4xl font-serif font-bold text-text-primary mb-2">
                         Why You're
                         <span className="text-primary"> Compatible</span>
@@ -781,7 +776,7 @@ function Home({ intervalMs = 5000, transitionMs = 800 }) {
           }}
         >
           <div className="absolute inset-0 z-0">
-            <SlideinpogCard />
+            <SlideingCard />
             <SlidingCardTwo />
             <div className="absolute inset-0 bg-gradient-to-r from-primary-900/80 via-secondary-800/70 to-accent-800/60" />
           </div>

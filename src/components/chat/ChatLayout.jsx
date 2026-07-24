@@ -966,7 +966,6 @@ export default function ChatLayout() {
         className={`
           flex-1 min-h-0 flex flex-col overflow-hidden
           ${!conversationId ? "hidden md:flex" : "flex"}
-          h-full
         `}
       >
         {conversationId ? (
