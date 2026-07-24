@@ -674,7 +674,7 @@ export default function ChatLayout() {
               ? "translate-x-0"
               : "-translate-x-full md:translate-x-0"
           }
-          bg-background/95 backdrop-blur-sm border-r border-primary/10
+         h-full bg-background backdrop-blur-sm border-r border-primary/10
         `}
       >
         {/* Toast Notification */}
@@ -806,7 +806,7 @@ export default function ChatLayout() {
         </div>
 
         {/* Scrollable Conversation List */}
-        <div className="flex-1 overflow-y-auto overscroll-contain">
+        <div className="flex-1 overflow-y-auto">
           {isLoading ? (
             <ChatListSkeleton />
           ) : error ? (
