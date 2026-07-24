@@ -662,11 +662,11 @@ export default function ChatLayout() {
   const isLoading = filter === "flirts" ? loadingFlirts : loading;
 
   return (
-    <main className="h-screen flex flex-col md:flex-row bg-primary/10 overflow-hidden">
+    <main className="h-screen pt-16 flex flex-col md:flex-row bg-primary/10 overflow-hidden">
       {/* Sidebar - Full height with fixed header and scrollable list */}
       <div
         className={`
-          w-full md:w-[360px] md:min-w-[320px] lg:min-w-[360px] flex flex-col
+          md:w-[360px] md:min-w-[320px] lg:min-w-[360px] flex flex-col
           ${conversationId ? "hidden md:flex" : "flex"}
           transform transition-transform duration-300 ease-in-out
           ${
