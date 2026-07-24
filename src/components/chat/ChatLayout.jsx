@@ -370,7 +370,7 @@ export default function ChatLayout() {
                 last_message_at: newMessage.created_at,
                 last_message_sender_id: currentUser.id,
                 last_message_preview:
-                  newMessage.content?.substring(0, 50) || "[Image]",
+                  newMessage.content?.substring(0, 50) || "📷",
                 unread_count: 0,
               };
             });
@@ -674,7 +674,7 @@ export default function ChatLayout() {
               ? "translate-x-0"
               : "-translate-x-full md:translate-x-0"
           }
-          h-full bg-background/95 backdrop-blur-sm border-r border-primary/10
+          bg-background/95 backdrop-blur-sm border-r border-primary/10
         `}
       >
         {/* Toast Notification */}
@@ -857,7 +857,7 @@ export default function ChatLayout() {
                     active:bg-gray-100 transition-colors text-left cursor-pointer
                     ${
                       conversationId === conversation.id
-                        ? "bg-primary/10 border-l-4 border-primary"
+                        ? "bg-primary border-l-4 border-primary"
                         : ""
                     }
                     ${filter === "flirts" ? "border-l-4 border-pink-400" : ""}
