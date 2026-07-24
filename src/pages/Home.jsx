@@ -781,7 +781,7 @@ function Home({ intervalMs = 5000, transitionMs = 800 }) {
           }}
         >
           <div className="absolute inset-0 z-0">
-            <SlideingCard />
+            <SlideinpogCard />
             <SlidingCardTwo />
             <div className="absolute inset-0 bg-gradient-to-r from-primary-900/80 via-secondary-800/70 to-accent-800/60" />
           </div>

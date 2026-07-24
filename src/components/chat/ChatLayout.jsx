@@ -26,12 +26,14 @@ export default function ChatLayout() {
   const [searchTerm, setSearchTerm] = useState("");
   const [flirtConversations, setFlirtConversations] = useState([]);
   const [loadingFlirts, setLoadingFlirts] = useState(false);
-
   const [toast, setToast] = useState(null);
-  const pollingIntervalRef = useRef(null);
 
-  function showToast(message) {
-    setToast(message);
+  // Debounce search term
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
+  const searchTimeoutRef = useRef(null);
+
+  function showToast(message, type = "info") {
+    setToast({ message, type });
     setTimeout(() => setToast(null), 3000);
   }
 
@@ -41,24 +43,30 @@ export default function ChatLayout() {
 
   useEffect(() => {
     const loadProfile = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+      try {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
 
-      if (!user) return;
+        if (!user) return;
 
-      const { data: profile, error } = await supabase
-        .from("user_profiles")
-        .select("id")
-        .eq("user_id", user.id)
-        .single();
+        const { data: profile, error } = await supabase
+          .from("user_profiles")
+          .select("id")
+          .eq("user_id", user.id)
+          .single();
 
-      if (error) {
-        console.error("Failed to load profile:", error);
-        return;
+        if (error) {
+          console.error("Failed to load profile:", error);
+          showToast("Failed to load your profile", "error");
+          return;
+        }
+
+        setCurrentUser(profile);
+      } catch (err) {
+        console.error("Error loading profile:", err);
+        showToast("Something went wrong", "error");
       }
-
-      setCurrentUser(profile);
     };
 
     loadProfile();
@@ -109,6 +117,7 @@ export default function ChatLayout() {
       setFlirtConversations(formatted);
     } catch (err) {
       console.error("Error fetching flirt conversations:", err);
+      showToast("Failed to load flirt conversations", "error");
     } finally {
       setLoadingFlirts(false);
     }
@@ -156,6 +165,7 @@ export default function ChatLayout() {
         navigate(`/chat/${created.id}`);
       } catch (err) {
         console.error("Start conversation error:", err);
+        showToast("Failed to start conversation", "error");
       }
     },
     [currentUser, navigate],
@@ -172,7 +182,6 @@ export default function ChatLayout() {
   /* ============================= */
 
   const loadConversations = useCallback(async () => {
-    console.log("🔵 loadConversations running", new Date().toISOString());
     if (!currentUser) return;
 
     try {
@@ -205,8 +214,6 @@ export default function ChatLayout() {
         setConversations([]);
         return;
       }
-
-      console.log("📦 Raw conversations data:", convs);
 
       const { data: reads, error: readError } = await supabase
         .from("conversation_reads")
@@ -246,6 +253,7 @@ export default function ChatLayout() {
     } catch (err) {
       console.error("Failed to load conversations:", err);
       setError(err.message);
+      showToast("Failed to load conversations", "error");
     } finally {
       setLoading(false);
     }
@@ -320,18 +328,13 @@ export default function ChatLayout() {
       )
       .subscribe();
 
-    console.log(
-      "ACTIVE CHANNELS:",
-      supabase.getChannels().map((c) => c.topic),
-    );
-
     return () => {
       supabase.removeChannel(channel);
     };
   }, [currentUser]);
 
   /* ============================= */
-  /* 4️⃣ Real-Time Message Subscription (NEW - FIXES THE ISSUE) */
+  /* 4️⃣ Real-Time Message Subscription (Optimized) */
   /* ============================= */
   useEffect(() => {
     if (!currentUser) return;
@@ -350,8 +353,6 @@ export default function ChatLayout() {
 
           // Only care about messages from this user
           if (newMessage.sender_user_id !== currentUser.id) return;
-
-          // Ignore if it's not a user message
           if (newMessage.sender_type !== "real_user") return;
 
           console.log(
@@ -360,8 +361,8 @@ export default function ChatLayout() {
           );
 
           // ✅ Optimistically update the conversation in the list
-          setConversations((prev) =>
-            prev.map((conv) => {
+          setConversations((prev) => {
+            const updated = prev.map((conv) => {
               if (conv.id !== newMessage.conversation_id) return conv;
 
               return {
@@ -370,18 +371,17 @@ export default function ChatLayout() {
                 last_message_sender_id: currentUser.id,
                 last_message_preview:
                   newMessage.content?.substring(0, 50) || "[Image]",
-                unread_count: 0, // ✅ User sent it, so it's read
+                unread_count: 0,
               };
-            }),
-          );
+            });
 
-          // ✅ Also refresh the conversation list to get any other updates
-          // (silent refresh without showing loading state)
-          try {
-            await loadConversations();
-          } catch (err) {
-            console.error("Silent refresh failed:", err);
-          }
+            // Sort conversations by last_message_at
+            return updated.sort(
+              (a, b) =>
+                new Date(b.last_message_at || 0) -
+                new Date(a.last_message_at || 0),
+            );
+          });
         },
       )
       .subscribe();
@@ -389,7 +389,7 @@ export default function ChatLayout() {
     return () => {
       supabase.removeChannel(messageChannel);
     };
-  }, [currentUser, loadConversations]);
+  }, [currentUser]); // ✅ Removed loadConversations from dependencies
 
   /* ============================= */
   /* 5️⃣ Real-Time Notification Subscription */
@@ -457,7 +457,7 @@ export default function ChatLayout() {
             senderName = sender?.display_name || "Fictional user";
           }
 
-          showToast(`${senderName} sent a message`);
+          showToast(`${senderName} sent a message`, "info");
 
           if (notificationSoundRef.current) {
             notificationSoundRef.current.currentTime = 0;
@@ -500,7 +500,26 @@ export default function ChatLayout() {
   }, [currentUser, conversationId]);
 
   /* ============================= */
-  /* 6️⃣ Filters */
+  /* 6️⃣ Debounced Search */
+  /* ============================= */
+  useEffect(() => {
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+
+    searchTimeoutRef.current = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 300);
+
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, [searchTerm]);
+
+  /* ============================= */
+  /* 7️⃣ Filters */
   /* ============================= */
 
   const filteredConversations = useMemo(() => {
@@ -519,8 +538,8 @@ export default function ChatLayout() {
         break;
     }
 
-    if (searchTerm.trim()) {
-      const term = searchTerm.toLowerCase();
+    if (debouncedSearchTerm.trim()) {
+      const term = debouncedSearchTerm.toLowerCase();
 
       result = result.filter((c) => {
         const name = c.fictional_profiles?.display_name?.toLowerCase() || "";
@@ -530,7 +549,7 @@ export default function ChatLayout() {
     }
 
     return result;
-  }, [conversations, flirtConversations, filter, searchTerm]);
+  }, [conversations, flirtConversations, filter, debouncedSearchTerm]);
 
   const totalUnread = conversations.reduce(
     (sum, c) => sum + (c.unread_count || 0),
@@ -538,10 +557,15 @@ export default function ChatLayout() {
   );
 
   /* ============================= */
-  /* 7️⃣ Mark As Read */
+  /* 8️⃣ Mark As Read */
   /* ============================= */
 
   const handleConversationSelect = async (id) => {
+    if (!currentUser) {
+      console.warn("No current user to mark conversation as read");
+      return;
+    }
+
     setIsMobileListOpen(false);
     navigate(`/chat/${id}`);
 
@@ -549,15 +573,19 @@ export default function ChatLayout() {
       prev.map((c) => (c.id === id ? { ...c, unread_count: 0 } : c)),
     );
 
-    await supabase.from("conversation_reads").upsert({
-      conversation_id: id,
-      user_id: currentUser.id,
-      last_read_at: new Date().toISOString(),
-    });
+    try {
+      await supabase.from("conversation_reads").upsert({
+        conversation_id: id,
+        user_id: currentUser.id,
+        last_read_at: new Date().toISOString(),
+      });
+    } catch (err) {
+      console.error("Failed to mark conversation as read:", err);
+    }
   };
 
   /* ============================= */
-  /* 8️⃣ UI Helpers */
+  /* 9️⃣ UI Helpers */
   /* ============================= */
 
   const getInitials = (name = "") => {
@@ -581,7 +609,10 @@ export default function ChatLayout() {
     const now = new Date();
     const diffInHours = (now - date) / (1000 * 60 * 60);
 
-    if (diffInHours < 24) {
+    if (diffInHours < 1) {
+      const minutes = Math.floor(diffInHours * 60);
+      return minutes < 1 ? "Just now" : `${minutes}m ago`;
+    } else if (diffInHours < 24) {
       return date.toLocaleTimeString([], {
         hour: "2-digit",
         minute: "2-digit",
@@ -599,27 +630,30 @@ export default function ChatLayout() {
   const handleToggleFavoriteFromList = async (e, conversation) => {
     e.stopPropagation();
 
-    const newValue = !conversation.is_favorite;
-
-    const { data, error } = await supabase
-      .from("conversations")
-      .update({ is_favorite: newValue })
-      .eq("id", conversation.id)
-      .select();
-
-    console.log("Update result:", data, error);
-
-    if (error) {
-      console.error("DB update failed:", error.message);
-      alert("DB update failed: " + error.message);
+    if (!currentUser) {
+      showToast("Please log in to favorite conversations", "error");
       return;
     }
 
-    setConversations((prev) =>
-      prev.map((c) =>
-        c.id === conversation.id ? { ...c, is_favorite: newValue } : c,
-      ),
-    );
+    const newValue = !conversation.is_favorite;
+
+    try {
+      const { error } = await supabase
+        .from("conversations")
+        .update({ is_favorite: newValue })
+        .eq("id", conversation.id);
+
+      if (error) throw error;
+
+      setConversations((prev) =>
+        prev.map((c) =>
+          c.id === conversation.id ? { ...c, is_favorite: newValue } : c,
+        ),
+      );
+    } catch (err) {
+      console.error("DB update failed:", err);
+      showToast("Failed to update favorite", "error");
+    }
   };
 
   // Determine which conversations to display
@@ -628,45 +662,78 @@ export default function ChatLayout() {
   const isLoading = filter === "flirts" ? loadingFlirts : loading;
 
   return (
-    <main className="pt-16 flex flex-col md:flex-row h-screen bg-primary/10">
+    <main className="h-screen flex flex-col md:flex-row bg-primary/10 overflow-hidden">
+      {/* Sidebar - Full height with fixed header and scrollable list */}
       <div
         className={`
-              md:w-[360px] border-r flex flex-col
-            ${conversationId ? "hidden md:flex" : "flex"}
-            transform transition-transform duration-300 ease-in-out
-            ${
-              isMobileListOpen || !conversationId
-                ? "translate-x-0"
-                : "-translate-x-full md:translate-x-0"
-            }
-          `}
+          w-full md:w-[360px] md:min-w-[320px] lg:min-w-[360px] flex flex-col
+          ${conversationId ? "hidden md:flex" : "flex"}
+          transform transition-transform duration-300 ease-in-out
+          ${
+            isMobileListOpen || !conversationId
+              ? "translate-x-0"
+              : "-translate-x-full md:translate-x-0"
+          }
+          h-full bg-background/95 backdrop-blur-sm border-r border-primary/10
+        `}
       >
+        {/* Toast Notification */}
         {toast && (
-          <div
-            className="fixed 
-                  backdrop-blur-md bg-primary dark:bg-primary 
-                  border border-white/20 rounded-xl 
-                  px-5 py-3 shadow-2xl
-                  animate-slide-up"
-          >
-            <p className="text-sm font-medium text-black dark:text-black">
-              {toast}
-            </p>
+          <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 animate-slide-up">
+            <div
+              className={`px-5 py-3 rounded-xl shadow-2xl border ${
+                toast.type === "error"
+                  ? "bg-red-500 border-red-400 text-white"
+                  : toast.type === "success"
+                    ? "bg-green-500 border-green-400 text-white"
+                    : "bg-primary border-white/20 text-white"
+              }`}
+            >
+              <p className="text-sm font-medium">{toast.message}</p>
+            </div>
           </div>
         )}
-        <div className="p-6 border-b border-primary">
-          <div className="flex items-center justify-between mb-4">
-            <h1 className="text-2xl font-serif font-semibold text-text-primary">
-              Messages
-            </h1>
-            <button
-              onClick={loadConversations}
-              disabled={loading}
-              className="p-2 rounded-lg text-primary hover:bg-primary/10 transition-colors disabled:opacity-50"
-              aria-label="Refresh conversations"
-            >
+
+        {/* Fixed Header Section */}
+        <div className="flex-shrink-0">
+          {/* Header */}
+          <div className="p-4 sm:p-6 border-b border-primary/10">
+            <div className="flex items-center justify-between mb-4">
+              <h1 className="text-xl sm:text-2xl font-serif font-semibold text-text-primary">
+                Messages
+              </h1>
+              <button
+                onClick={loadConversations}
+                disabled={loading}
+                className="p-2 rounded-lg text-primary hover:bg-primary/10 transition-colors disabled:opacity-50"
+                aria-label="Refresh conversations"
+              >
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                  />
+                </svg>
+              </button>
+            </div>
+
+            <div className="relative">
+              <input
+                type="search"
+                placeholder="Search conversations..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="form-input pl-10 pr-4 py-2 text-sm w-full"
+              />
               <svg
-                className="w-5 h-5"
+                className="absolute left-3 top-2/3 transform -translate-y-1/2 w-4 h-4 text-text-secondary"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -674,92 +741,72 @@ export default function ChatLayout() {
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                  strokeWidth="2"
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
                 />
               </svg>
-            </button>
+            </div>
           </div>
 
-          <div className="relative">
-            <input
-              type="search"
-              placeholder="Search conversations..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="form-input pl-10 pr-4 py-2 text-sm w-full"
-            />
-            <svg
-              className="absolute left-3 top-2/3 transform -translate-y-1/2 w-4 h-4 text-text-secondary"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-              />
-            </svg>
-          </div>
-        </div>
-
-        <div className="px-6 py-3 border-b border-primary/10">
-          <div className="flex gap-2 whitespace-nowrap overflow-x-auto scrollbar-none">
-            <button
-              onClick={() => setFilter("all")}
-              className={`px-4 py-2 text-sm font-medium  rounded-lg ${
-                filter === "all"
-                  ? "text-white bg-primary"
-                  : "text-text-secondary hover:text-primary hover:bg-primary/10"
-              }`}
-            >
-              All
-            </button>
-            <button
-              onClick={() => setFilter("unread")}
-              className={`px-4 py-2 text-sm font-medium rounded-lg ${
-                filter === "unread"
-                  ? "text-white bg-primary"
-                  : "text-text-secondary hover:text-primary hover:bg-primary/10"
-              }`}
-            >
-              Unread
-              <span className="ml-2 text-xs text-red-500">
-                {totalUnread > 0 && `(${totalUnread})`}
-              </span>
-            </button>
-            <button
-              onClick={() => setFilter("flirts")}
-              className={`px-4 py-2 text-sm font-medium rounded-lg ${
-                filter === "flirts"
-                  ? "text-white bg-primary"
-                  : "text-text-secondary hover:text-primary hover:bg-primary/10"
-              }`}
-            >
-              Flirts
-              {flirtConversations.length > 0 && (
-                <span className="ml-2 text-xs text-pink-500">
-                  ({flirtConversations.length})
-                </span>
-              )}
-            </button>
-            <button
-              onClick={() => setFilter("favorites")}
-              className={`px-4 py-2 text-sm font-medium rounded-lg ${
-                filter === "favorites"
-                  ? "text-white bg-primary"
-                  : "text-text-secondary hover:text-primary hover:bg-primary/10"
-              }`}
-            >
-              Favorites
-            </button>
+          {/* Filter Buttons */}
+          <div className="px-4 sm:px-6 py-3 border-b border-primary/10 overflow-x-auto">
+            <div className="flex gap-2 whitespace-nowrap">
+              <button
+                onClick={() => setFilter("all")}
+                className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                  filter === "all"
+                    ? "text-white bg-primary"
+                    : "text-text-secondary hover:text-primary hover:bg-primary/10"
+                }`}
+              >
+                All
+              </button>
+              <button
+                onClick={() => setFilter("unread")}
+                className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                  filter === "unread"
+                    ? "text-white bg-primary"
+                    : "text-text-secondary hover:text-primary hover:bg-primary/10"
+                }`}
+              >
+                Unread
+                {totalUnread > 0 && (
+                  <span className="ml-2 text-xs text-red-500">
+                    ({totalUnread})
+                  </span>
+                )}
+              </button>
+              <button
+                onClick={() => setFilter("flirts")}
+                className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                  filter === "flirts"
+                    ? "text-white bg-primary"
+                    : "text-text-secondary hover:text-primary hover:bg-primary/10"
+                }`}
+              >
+                Flirts
+                {flirtConversations.length > 0 && (
+                  <span className="ml-2 text-xs text-pink-500">
+                    ({flirtConversations.length})
+                  </span>
+                )}
+              </button>
+              <button
+                onClick={() => setFilter("favorites")}
+                className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                  filter === "favorites"
+                    ? "text-white bg-primary"
+                    : "text-text-secondary hover:text-primary hover:bg-primary/10"
+                }`}
+              >
+                Favorites
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* Conversation Items - Unified display */}
-        <div className="flex-1 overflow-y-auto">
+        {/* Scrollable Conversation List */}
+        <div className="flex-1 overflow-y-auto overscroll-contain">
           {isLoading ? (
             <ChatListSkeleton />
           ) : error ? (
@@ -799,20 +846,22 @@ export default function ChatLayout() {
                   key={conversation.id}
                   onClick={() => handleConversationSelect(conversation.id)}
                   role="button"
-                  onKeyDown={(e) =>
-                    e.key === " Enter" &&
-                    handleConversationSelect(conversation.id)
-                  }
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      handleConversationSelect(conversation.id);
+                    }
+                  }}
                   className={`
-                      w-full p-4 flex items-center space-x-3 hover:bg-primary/5
-                      active:bg-gray-100 transition-colors text-left cursor-pointer
-                      ${
-                        conversationId === conversation.id
-                          ? "bg-primary border-l-4 border-blue-500"
-                          : ""
-                      }
-                      ${filter === "flirts" ? "border-l-4 border-pink-400" : ""}
-                    `}
+                    w-full p-4 flex items-center space-x-3 hover:bg-primary/5
+                    active:bg-gray-100 transition-colors text-left cursor-pointer
+                    ${
+                      conversationId === conversation.id
+                        ? "bg-primary/10 border-l-4 border-primary"
+                        : ""
+                    }
+                    ${filter === "flirts" ? "border-l-4 border-pink-400" : ""}
+                  `}
                   aria-current={
                     conversationId === conversation.id ? "page" : undefined
                   }
@@ -853,33 +902,32 @@ export default function ChatLayout() {
                   {/* Content */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 min-w-0">
                         <h3 className="font-semibold text-gray-800 truncate">
                           {conversation.fictional_profiles?.display_name ||
                             "Unknown"}
                         </h3>
                         {filter === "flirts" && (
-                          <span className="text-xs bg-pink-100 text-pink-600 px-2 py-0.5 rounded-full">
+                          <span className="text-xs bg-pink-100 text-pink-600 px-2 py-0.5 rounded-full flex-shrink-0">
                             Flirt
                           </span>
                         )}
                       </div>
 
-                      <div className="flex items-center gap-3 flex-shrink-0">
+                      <div className="flex items-center gap-2 flex-shrink-0 ml-2">
                         {!conversation.is_flirt_conversation && (
                           <button
                             onClick={(e) =>
                               handleToggleFavoriteFromList(e, conversation)
                             }
                             title="Toggle favorite"
-                            className="text-sm w-5 text-center"
+                            className="text-sm w-5 text-center hover:text-yellow-500 transition-colors"
                           >
                             {conversation.is_favorite ? "★" : "☆"}
                           </button>
                         )}
-
                         {conversation.last_message_at && (
-                          <span className="text-xs text-gray-500 w-14 text-right">
+                          <span className="text-xs text-gray-500 whitespace-nowrap">
                             {formatTime(conversation.last_message_at)}
                           </span>
                         )}
@@ -891,7 +939,7 @@ export default function ChatLayout() {
                       </p>
                       {!conversation.is_flirt_conversation &&
                         conversation.unread_count > 0 && (
-                          <span className="text-xs bg-red-500 text-white rounded-full px-2 py-0.5">
+                          <span className="text-xs bg-red-500 text-white rounded-full px-2 py-0.5 flex-shrink-0">
                             {conversation.unread_count}
                           </span>
                         )}
@@ -904,6 +952,7 @@ export default function ChatLayout() {
         </div>
       </div>
 
+      {/* Mobile Overlay */}
       {isMobileListOpen && !conversationId && (
         <div
           className="fixed inset-0 bg-black/50 z-40 md:hidden"
@@ -915,14 +964,15 @@ export default function ChatLayout() {
       {/* Chat Area */}
       <div
         className={`
-            flex-1 min-h-0 flex flex-col overflow-hidden
-            ${!conversationId ? "hidden md:flex" : "flex"}
-          `}
+          flex-1 min-h-0 flex flex-col overflow-hidden
+          ${!conversationId ? "hidden md:flex" : "flex"}
+          h-full
+        `}
       >
         {conversationId ? (
           <Outlet context={{ onBack: () => setIsMobileListOpen(true) }} />
         ) : (
-          <div className="md:flex flex-1 items-center bg-surface justify-center p-6">
+          <div className="flex-1 flex items-center bg-surface justify-center p-6">
             <div className="text-center max-w-md">
               <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-gray-100 flex items-center justify-center">
                 <MessageSquare size={32} className="text-gray-400" />
