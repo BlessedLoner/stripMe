@@ -194,6 +194,7 @@ export default function Chat() {
   }, [fetchMessages]);
 
   /* ---------------- Realtime new messages ---------------- */
+  /* ---------------- Realtime new messages ---------------- */
   useEffect(() => {
     if (!conversationId || !profileId || !recipientId) return;
 
@@ -210,10 +211,52 @@ export default function Chat() {
         async (payload) => {
           const newMsg = payload.new;
 
-          // Check if this is an optimistic message that was just confirmed
-          setOptimisticMessages((prev) =>
-            prev.filter((m) => m.id !== newMsg.id),
-          );
+          // ✅ FIX: Remove matching optimistic messages
+          setOptimisticMessages((prev) => {
+            // Check if this real message matches any optimistic message
+            const hasMatch = prev.some((opt) => {
+              // Match by content if both have content
+              if (
+                opt.content &&
+                newMsg.content &&
+                opt.content === newMsg.content
+              ) {
+                return true;
+              }
+              // Match by image_url if both have image
+              if (
+                opt.image_url &&
+                newMsg.image_url &&
+                opt.image_url === newMsg.image_url
+              ) {
+                return true;
+              }
+              return false;
+            });
+
+            if (hasMatch) {
+              // Remove ALL optimistic messages that match
+              return prev.filter((opt) => {
+                // Keep if it doesn't match
+                if (
+                  opt.content &&
+                  newMsg.content &&
+                  opt.content === newMsg.content
+                ) {
+                  return false;
+                }
+                if (
+                  opt.image_url &&
+                  newMsg.image_url &&
+                  opt.image_url === newMsg.image_url
+                ) {
+                  return false;
+                }
+                return true;
+              });
+            }
+            return prev;
+          });
 
           // Add the real message
           setMessages((prev) => {
