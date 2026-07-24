@@ -2,6 +2,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import SlideingCard from "../components/SlideingCard";
+import SlidingCardTwo from "../components/SlidingCardTwo";
 import Logo from "../assets/Logo.png";
 import home from "../assets/home_img/home.jpg";
 import home1 from "../assets/home_img/home1.jpg";
@@ -781,7 +782,7 @@ function Home({ intervalMs = 5000, transitionMs = 800 }) {
         >
           <div className="absolute inset-0 z-0">
             <SlideingCard />
-            <SlideingCard />
+            <SlidingCardTwo />
             <div className="absolute inset-0 bg-gradient-to-r from-primary-900/80 via-secondary-800/70 to-accent-800/60" />
           </div>
 
