@@ -474,16 +474,6 @@ export default function MembersFromDB({ limit = 200 }) {
                 ))}
               </select>
             </div>
-
-            {/* Results Count */}
-            {/* <div className="flex items-end">
-              <div className="text-center lg:text-right w-full">
-                <div className="text-2xl font-bold text-red-300">
-                  {filteredMembers.length}
-                </div>
-                <div className="text-sm text-primary">matches found</div>
-              </div>
-            </div> */}
           </div>
         </div>
       </section>
@@ -665,70 +655,122 @@ export default function MembersFromDB({ limit = 200 }) {
                 })}
               </div>
 
-              {/* Pagination */}
+              {/* Pagination - Clean & Modern */}
               {totalPages > 1 && (
-                <div className="flex justify-center items-center gap-2 mt-12 flex-wrap">
+                <div className="flex justify-center items-center gap-3 mt-12 flex-wrap">
+                  {/* Previous */}
                   <button
                     onClick={() => changePage(currentPage - 1)}
                     disabled={currentPage === 1 || loadingPage}
-                    className="px-3 py-2 rounded-lg text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                    style={{
-                      backgroundImage:
-                        "linear-gradient(to right, #8b4b6b, #d4a574)",
-                    }}
+                    className="px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1.5 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 shadow-sm"
                   >
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M15 19l-7-7 7-7"
+                      />
+                    </svg>
                     Previous
                   </button>
 
-                  <div className="flex gap-1">
+                  {/* Page Numbers */}
+                  <div className="flex items-center gap-1">
                     {(() => {
-                      let pages = [];
-                      let startPage = Math.max(1, currentPage - 2);
-                      let endPage = Math.min(totalPages, currentPage + 2);
+                      const pages = [];
+                      const total = totalPages;
+                      const current = currentPage;
+                      const delta = 2; // Number of pages to show on each side of current
 
-                      if (startPage > 1) {
-                        pages.push(1);
-                        if (startPage > 2) pages.push("...");
+                      // Always show first page
+                      pages.push(1);
+
+                      // Calculate range around current page
+                      let start = Math.max(2, current - delta);
+                      let end = Math.min(total - 1, current + delta);
+
+                      // If we're near the beginning, show more pages
+                      if (current <= delta + 2) {
+                        end = Math.min(total - 1, delta * 2 + 2);
                       }
 
-                      for (let i = startPage; i <= endPage; i++) {
-                        pages.push(i);
+                      // If we're near the end, show more pages
+                      if (current >= total - delta - 1) {
+                        start = Math.max(2, total - delta * 2 - 1);
                       }
 
-                      if (endPage < totalPages) {
-                        if (endPage < totalPages - 1) pages.push("...");
-                        pages.push(totalPages);
+                      // Add ellipsis if needed before start
+                      if (start > 2) {
+                        pages.push("...");
                       }
 
-                      return pages.map((page, idx) => (
-                        <button
-                          key={idx}
-                          onClick={() =>
-                            typeof page === "number" && changePage(page)
-                          }
-                          disabled={loadingPage || typeof page !== "number"}
-                          className={`w-8 h-8 rounded-lg text-sm font-medium transition ${
-                            currentPage === page
-                              ? "bg-purple-600 text-primary"
-                              : "bg-gray-100 hover:bg-gray-200 text-gray-700"
-                          } ${typeof page !== "number" ? "cursor-default" : ""}`}
-                        >
-                          {page}
-                        </button>
-                      ));
-                    })()}
+                      // Add pages in range
+                      for (let i = start; i <= end; i++) {
+                        if (i > 1 && i < total) {
+                          pages.push(i);
+                        }
+                      }
+
+                      // Add ellipsis if needed after end
+                      if (end < total - 1) {
+                        pages.push("...");
+                      }
+
+                      // Always show last page if total > 1
+                      if (total > 1) {
+                        pages.push(total);
+                      }
+
+                      return pages;
+                    })().map((page, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() =>
+                          typeof page === "number" && changePage(page)
+                        }
+                        disabled={loadingPage || typeof page !== "number"}
+                        className={`
+            min-w-[36px] h-9 px-2 rounded-lg text-sm font-medium transition-all duration-200
+            ${
+              typeof page === "number"
+                ? currentPage === page
+                  ? "bg-primary text-white shadow-md shadow-primary/30 scale-105"
+                  : "bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 hover:border-gray-300"
+                : "cursor-default text-gray-400 px-1"
+            }
+          `}
+                      >
+                        {page}
+                      </button>
+                    ))}
                   </div>
 
+                  {/* Next */}
                   <button
                     onClick={() => changePage(currentPage + 1)}
                     disabled={currentPage === totalPages || loadingPage}
-                    className="px-3 py-2 rounded-lg text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                    style={{
-                      backgroundImage:
-                        "linear-gradient(to right, #8b4b6b, #d4a574)",
-                    }}
+                    className="px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1.5 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 shadow-sm"
                   >
                     Next
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M9 5l7 7-7 7"
+                      />
+                    </svg>
                   </button>
                 </div>
               )}
