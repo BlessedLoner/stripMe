@@ -1,7 +1,7 @@
 // *************************MembersPage.jsx*************************
 // src/components/MembersFromDB.jsx
 import React, { useEffect, useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 import { supabase } from "../lib/supabaseClient";
 import LoveButton from "../components/LoveButton";
 import sexy_pic from "../assets/sexy_pic.jpg";
@@ -12,13 +12,19 @@ import { LoveSpinner } from "../components/Spinner";
 export default function MembersFromDB({ limit = 200 }) {
   const navigate = useNavigate();
 
+  const location = useLocation();
+
+  // Get initial filter values from URL
+  const queryParams = new URLSearchParams(location.search);
+
+  // Initialize filters from URL or defaults
   const [filters, setFilters] = useState({
-    minAge: 18,
-    maxAge: 90,
-    distance: "50",
-    lookingFor: "",
-    state: "",
-    searchQuery: "",
+    minAge: parseInt(queryParams.get("minAge")) || 18,
+    maxAge: parseInt(queryParams.get("maxAge")) || 90,
+    distance: queryParams.get("distance") || "50",
+    lookingFor: queryParams.get("lookingFor") || "",
+    state: queryParams.get("state") || "",
+    searchQuery: queryParams.get("search") || "",
   });
 
   const [filteredMembers, setFilteredMembers] = useState([]);
@@ -42,13 +48,65 @@ export default function MembersFromDB({ limit = 200 }) {
 
   const totalPages = Math.ceil(totalCount / membersPerPage);
 
+  // Update URL when filters change
+  const updateURL = (newFilters) => {
+    const params = new URLSearchParams();
+
+    if (newFilters.minAge && newFilters.minAge !== 18) {
+      params.set("minAge", newFilters.minAge);
+    }
+    if (newFilters.maxAge && newFilters.maxAge !== 90) {
+      params.set("maxAge", newFilters.maxAge);
+    }
+    if (newFilters.distance && newFilters.distance !== "50") {
+      params.set("distance", newFilters.distance);
+    }
+    if (newFilters.lookingFor) {
+      params.set("lookingFor", newFilters.lookingFor);
+    }
+    if (newFilters.state) {
+      params.set("state", newFilters.state);
+    }
+    if (newFilters.searchQuery) {
+      params.set("search", newFilters.searchQuery);
+    }
+
+    const searchString = params.toString();
+    const newURL = searchString ? `?${searchString}` : location.pathname;
+
+    // Update URL without reloading
+    navigate(newURL, { replace: true });
+  };
+
+  // Handle filter changes
+  const handleFilterChange = (key, value) => {
+    const newFilters = {
+      ...filters,
+      [key]: value,
+    };
+    setFilters(newFilters);
+    setCurrentPage(1);
+    updateURL(newFilters);
+  };
+
   const changePage = (page) => {
     if (page < 1 || page > totalPages) return;
 
     setLoadingPage(true);
+    setCurrentPage(page);
+
+    // Update window to keep current page visible
+    const windowSize = 7;
+    let newStart = Math.max(1, page - 3);
+    if (newStart + windowSize - 1 > totalPages) {
+      newStart = Math.max(1, totalPages - windowSize + 1);
+    }
+    setWindowStart(newStart);
+
+    // Scroll to top smoothly
+    window.scrollTo({ top: 0, behavior: "smooth" });
+
     setTimeout(() => {
-      setCurrentPage(page);
-      window.scrollTo({ top: 0, behavior: "smooth" });
       setLoadingPage(false);
     }, 300);
   };
@@ -251,13 +309,26 @@ export default function MembersFromDB({ limit = 200 }) {
     neighborStates, // Important: re-run when neighbors change
   ]);
 
-  const handleFilterChange = (key, value) => {
-    setFilters((prev) => ({
-      ...prev,
-      [key]: value,
-    }));
-    setCurrentPage(1);
-  };
+  // Add this after your other useEffects
+  useEffect(() => {
+    // Ensure current page is visible in the window
+    const windowSize = 7;
+    const start = Math.max(1, currentPage - 3);
+    const end = Math.min(totalPages, start + windowSize - 1);
+
+    // If current page is outside the current window, adjust
+    if (
+      currentPage < windowStart ||
+      currentPage > windowStart + windowSize - 1
+    ) {
+      let newStart = Math.max(1, currentPage - 3);
+      // Ensure we don't go past the end
+      if (newStart + windowSize - 1 > totalPages) {
+        newStart = Math.max(1, totalPages - windowSize + 1);
+      }
+      setWindowStart(newStart);
+    }
+  }, [currentPage, totalPages]);
 
   const showToast = (message) => {
     setToast(message);
@@ -690,6 +761,8 @@ export default function MembersFromDB({ limit = 200 }) {
                       onClick={() => {
                         const newStart = Math.max(1, windowStart - 3);
                         setWindowStart(newStart);
+                        // Move to the first page of the new window
+                        changePage(newStart);
                       }}
                       disabled={windowStart <= 1 || loadingPage}
                       className="w-8 h-8 rounded-lg text-gray-500 hover:bg-gray-100 transition-colors disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center"
@@ -704,7 +777,7 @@ export default function MembersFromDB({ limit = 200 }) {
                           strokeLinecap="round"
                           strokeLinejoin="round"
                           strokeWidth="2"
-                          d="M11 19l-7-7 7-7"
+                          d="M15 19l-7-7 7-7"
                         />
                       </svg>
                     </button>
@@ -757,11 +830,19 @@ export default function MembersFromDB({ limit = 200 }) {
                     {/* Right Arrow - Shift window right */}
                     <button
                       onClick={() => {
-                        const newStart = Math.min(
-                          totalPages - 6,
+                        const windowSize = 7;
+                        let newStart = Math.min(
+                          totalPages - windowSize + 1,
                           windowStart + 3,
                         );
-                        setWindowStart(Math.max(1, newStart));
+                        if (newStart < 1) newStart = 1;
+                        setWindowStart(newStart);
+                        // Move to the last page of the new window
+                        const newPage = Math.min(
+                          totalPages,
+                          newStart + windowSize - 1,
+                        );
+                        changePage(newPage);
                       }}
                       disabled={windowStart > totalPages - 7 || loadingPage}
                       className="w-8 h-8 rounded-lg text-gray-500 hover:bg-gray-100 transition-colors disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center"
