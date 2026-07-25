@@ -736,7 +736,7 @@ export default function MembersFromDB({ limit = 200 }) {
                   <button
                     onClick={() => changePage(currentPage - 1)}
                     disabled={currentPage === 1 || loadingPage}
-                    className="px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1 border-gray-200 hover:bg-gray-50 text-gray-700 shadow-sm"
+                    className="px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed flex items-center border-gray-200 hover:bg-gray-50 text-gray-700 shadow-sm"
                     style={{
                       backgroundImage:
                         "linear-gradient(to right, #8b4b6b, #d4a574)",
@@ -769,8 +769,7 @@ export default function MembersFromDB({ limit = 200 }) {
                       />
                     </svg>
                   </button>
-                  Page Numbers - Shifting Window
-                  <div className="flex items-center gap-1 rounded-lg border border-gray-200 shadow-sm px-1 py-1">
+                  <div className="flex items-center gap-1 shadow-sm px-1 py-1">
                     {/* Left Arrow - Shift window left */}
 
                     {/* Page Numbers */}
@@ -824,7 +823,7 @@ export default function MembersFromDB({ limit = 200 }) {
                   <button
                     onClick={() => changePage(currentPage + 1)}
                     disabled={currentPage === totalPages || loadingPage}
-                    className="px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1 border-gray-200 hover:bg-gray-50 text-gray-700 shadow-sm"
+                    className="px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed flex items-center border-gray-200 hover:bg-gray-50 text-gray-700 shadow-sm"
                     style={{
                       backgroundImage:
                         "linear-gradient(to right, #8b4b6b, #d4a574)",
