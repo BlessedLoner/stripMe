@@ -36,6 +36,8 @@ export default function MembersFromDB({ limit = 200 }) {
   const [currentPage, setCurrentPage] = useState(1);
   const [loadingPage, setLoadingPage] = useState(false);
   const [totalCount, setTotalCount] = useState(0);
+  // Add this with your other states
+  const [windowStart, setWindowStart] = useState(1);
   const membersPerPage = 20;
 
   const totalPages = Math.ceil(totalCount / membersPerPage);
@@ -656,13 +658,14 @@ export default function MembersFromDB({ limit = 200 }) {
               </div>
 
               {/* Pagination - Clean & Modern */}
+              {/* Pagination */}
               {totalPages > 1 && (
-                <div className="flex justify-center items-center gap-3 mt-12 flex-wrap">
-                  {/* Previous */}
+                <div className="flex justify-center items-center gap-2 mt-12 flex-wrap">
+                  {/* Previous Button */}
                   <button
                     onClick={() => changePage(currentPage - 1)}
                     disabled={currentPage === 1 || loadingPage}
-                    className="px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1.5 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 shadow-sm"
+                    className="px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 shadow-sm"
                   >
                     <svg
                       className="w-4 h-4"
@@ -677,87 +680,115 @@ export default function MembersFromDB({ limit = 200 }) {
                         d="M15 19l-7-7 7-7"
                       />
                     </svg>
-                    Previous
+                    <span className="text-xs">Prev</span>
                   </button>
 
-                  {/* Page Numbers */}
-                  <div className="flex items-center gap-1">
+                  {/* Page Numbers - Shifting Window */}
+                  <div className="flex items-center gap-1 bg-white rounded-lg border border-gray-200 shadow-sm px-1 py-1">
+                    {/* Left Arrow - Shift window left */}
+                    <button
+                      onClick={() => {
+                        const newStart = Math.max(1, windowStart - 3);
+                        setWindowStart(newStart);
+                      }}
+                      disabled={windowStart <= 1 || loadingPage}
+                      className="w-8 h-8 rounded-lg text-gray-500 hover:bg-gray-100 transition-colors disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center"
+                    >
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M11 19l-7-7 7-7"
+                        />
+                      </svg>
+                    </button>
+
+                    {/* Page Numbers */}
                     {(() => {
                       const pages = [];
                       const total = totalPages;
                       const current = currentPage;
-                      const delta = 2; // Number of pages to show on each side of current
+                      const windowSize = 7; // Number of pages to show
 
-                      // Always show first page
-                      pages.push(1);
+                      // Calculate window start
+                      let start = Math.max(1, current - 3);
+                      let end = Math.min(total, start + windowSize - 1);
 
-                      // Calculate range around current page
-                      let start = Math.max(2, current - delta);
-                      let end = Math.min(total - 1, current + delta);
-
-                      // If we're near the beginning, show more pages
-                      if (current <= delta + 2) {
-                        end = Math.min(total - 1, delta * 2 + 2);
+                      // Adjust if we're near the end
+                      if (end - start < windowSize - 1) {
+                        start = Math.max(1, end - windowSize + 1);
                       }
 
-                      // If we're near the end, show more pages
-                      if (current >= total - delta - 1) {
-                        start = Math.max(2, total - delta * 2 - 1);
+                      // If total pages is less than window size, show all
+                      if (total <= windowSize) {
+                        start = 1;
+                        end = total;
                       }
 
-                      // Add ellipsis if needed before start
-                      if (start > 2) {
-                        pages.push("...");
-                      }
-
-                      // Add pages in range
                       for (let i = start; i <= end; i++) {
-                        if (i > 1 && i < total) {
-                          pages.push(i);
-                        }
-                      }
-
-                      // Add ellipsis if needed after end
-                      if (end < total - 1) {
-                        pages.push("...");
-                      }
-
-                      // Always show last page if total > 1
-                      if (total > 1) {
-                        pages.push(total);
+                        pages.push(i);
                       }
 
                       return pages;
-                    })().map((page, idx) => (
+                    })().map((page) => (
                       <button
-                        key={idx}
-                        onClick={() =>
-                          typeof page === "number" && changePage(page)
-                        }
-                        disabled={loadingPage || typeof page !== "number"}
+                        key={page}
+                        onClick={() => changePage(page)}
+                        disabled={loadingPage}
                         className={`
-            min-w-[36px] h-9 px-2 rounded-lg text-sm font-medium transition-all duration-200
+            w-9 h-9 rounded-lg text-sm font-medium transition-all duration-200
             ${
-              typeof page === "number"
-                ? currentPage === page
-                  ? "bg-primary text-white shadow-md shadow-primary/30 scale-105"
-                  : "bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 hover:border-gray-300"
-                : "cursor-default text-gray-400 px-1"
+              currentPage === page
+                ? "bg-primary text-white shadow-md shadow-primary/30 scale-105"
+                : "text-gray-700 hover:bg-gray-100"
             }
           `}
                       >
                         {page}
                       </button>
                     ))}
+
+                    {/* Right Arrow - Shift window right */}
+                    <button
+                      onClick={() => {
+                        const newStart = Math.min(
+                          totalPages - 6,
+                          windowStart + 3,
+                        );
+                        setWindowStart(Math.max(1, newStart));
+                      }}
+                      disabled={windowStart > totalPages - 7 || loadingPage}
+                      className="w-8 h-8 rounded-lg text-gray-500 hover:bg-gray-100 transition-colors disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center"
+                    >
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M13 5l7 7-7 7"
+                        />
+                      </svg>
+                    </button>
                   </div>
 
-                  {/* Next */}
+                  {/* Next Button */}
                   <button
                     onClick={() => changePage(currentPage + 1)}
                     disabled={currentPage === totalPages || loadingPage}
-                    className="px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1.5 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 shadow-sm"
+                    className="px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 shadow-sm"
                   >
-                    Next
+                    <span className="text-xs">Next</span>
                     <svg
                       className="w-4 h-4"
                       fill="none"
