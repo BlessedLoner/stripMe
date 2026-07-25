@@ -419,19 +419,19 @@ export default function ProfilePage() {
       }
 
       // Update conversation preview
-      await supabase
-        .from("conversations")
-        .update({
-          last_message_at: new Date().toISOString(),
-          last_message_sender_id: profile.id,
-          last_message_preview: text,
-        })
-        .eq("id", conversationId);
+      // await supabase
+      //   .from("conversations")
+      //   .update({
+      //     last_message_at: new Date().toISOString(),
+      //     last_message_sender_id: profile.id,
+      //     last_message_preview: text,
+      //   })
+      //   .eq("id", conversationId);
+
+      await loadCredits(profile.id);
 
       setLastFlirtConversationId(conversationId);
       setShowFlirtSuccess(true);
-
-      await loadCredits(profile.id);
 
       // Optional:
       // navigate(`/chat/${conversationId}`);

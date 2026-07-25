@@ -194,7 +194,6 @@ export default function Chat() {
   }, [fetchMessages]);
 
   /* ---------------- Realtime new messages ---------------- */
-  /* ---------------- Realtime new messages ---------------- */
   useEffect(() => {
     if (!conversationId || !profileId || !recipientId) return;
 
@@ -590,24 +589,6 @@ export default function Chat() {
             : m,
         ),
       );
-
-      // Update conversation preview
-      const messagePreview = messageText
-        ? messageText.substring(0, 50)
-        : currentImage
-          ? "📷 Sent a photo"
-          : null;
-
-      if (messagePreview) {
-        await supabase
-          .from("conversations")
-          .update({
-            last_message_at: new Date().toISOString(),
-            last_message_sender_id: profileId,
-            last_message_preview: messagePreview,
-          })
-          .eq("id", conversationId);
-      }
 
       // Mark as read
       await supabase.from("conversation_reads").upsert({

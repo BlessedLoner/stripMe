@@ -27,6 +27,7 @@ export default function ChatLayout() {
   const [flirtConversations, setFlirtConversations] = useState([]);
   const [loadingFlirts, setLoadingFlirts] = useState(false);
   const [toast, setToast] = useState(null);
+  const [, forceTimeUpdate] = useState(Date.now());
 
   // Debounce search term
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
@@ -368,29 +369,29 @@ export default function ChatLayout() {
           );
 
           // ✅ Optimistically update the conversation in the list
-          setConversations((prev) => {
-            const updated = prev.map((conv) => {
-              if (conv.id !== newMessage.conversation_id) return conv;
+          // setConversations((prev) => {
+          //   const updated = prev.map((conv) => {
+          //     if (conv.id !== newMessage.conversation_id) return conv;
 
-              return {
-                ...conv,
-                last_message_at: newMessage.created_at,
-                last_message_sender_id: currentUser.id,
-                last_message_preview:
-                  newMessage.content?.substring(0, 50) || "📷",
-                unread_count: 0,
-                // ✅ FIX: Also update last_read_at to current time
-                last_read_at: new Date().toISOString(),
-              };
-            });
+          //     return {
+          //       ...conv,
+          //       last_message_at: newMessage.created_at,
+          //       last_message_sender_id: currentUser.id,
+          //       last_message_preview:
+          //         newMessage.content?.substring(0, 50) || "📷",
+          //       unread_count: 0,
+          //       // ✅ FIX: Also update last_read_at to current time
+          //       last_read_at: new Date().toISOString(),
+          //     };
+          //   });
 
-            // Sort conversations by last_message_at
-            return updated.sort(
-              (a, b) =>
-                new Date(b.last_message_at || 0) -
-                new Date(a.last_message_at || 0),
-            );
-          });
+          //   // Sort conversations by last_message_at
+          //   return updated.sort(
+          //     (a, b) =>
+          //       new Date(b.last_message_at || 0) -
+          //       new Date(a.last_message_at || 0),
+          //   );
+          // });
         },
       )
       .subscribe();
@@ -526,6 +527,15 @@ export default function ChatLayout() {
       }
     };
   }, [searchTerm]);
+
+  // ************Timer Useeffect*********
+  useEffect(() => {
+    const interval = setInterval(() => {
+      forceTimeUpdate(Date.now());
+    }, 60000); // every 60 seconds
+
+    return () => clearInterval(interval);
+  }, []);
 
   /* ============================= */
   /* 7️⃣ Filters */
