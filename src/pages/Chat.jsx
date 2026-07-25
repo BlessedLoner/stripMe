@@ -49,6 +49,7 @@ export default function Chat() {
 
   // Track optimistic messages with status
   const [optimisticMessages, setOptimisticMessages] = useState([]);
+  const [initialScrollDone, setInitialScrollDone] = useState(false);
 
   /* ---------------- Load user profile ---------------- */
   useEffect(() => {
@@ -69,13 +70,13 @@ export default function Chat() {
 
   // Auto-scroll to bottom when messages change
   useLayoutEffect(() => {
-    requestAnimationFrame(() => {
-      bottomRef.current?.scrollIntoView({
-        behavior: "auto",
-        block: "end",
-      });
+    if (!initialScrollDone) return;
+
+    bottomRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "end",
     });
-  }, [messages, optimisticMessages]);
+  }, [optimisticMessages.length]);
 
   /* ---------------- Credits ---------------- */
   async function loadCredits(pid = profileId) {
@@ -176,6 +177,8 @@ export default function Chat() {
   const fetchMessages = useCallback(async () => {
     if (!conversationId) return;
 
+    setInitialScrollDone(false);
+
     const { data, error } = await supabase
       .from("messages")
       .select("*")
@@ -187,14 +190,18 @@ export default function Chat() {
       // Clear optimistic messages once real messages load
       setOptimisticMessages([]);
 
-      requestAnimationFrame(() => {
+      const hasImages = data.some((m) => m.image_url);
+
+      if (!hasImages) {
         requestAnimationFrame(() => {
           bottomRef.current?.scrollIntoView({
             behavior: "auto",
             block: "end",
           });
+
+          setInitialScrollDone(true);
         });
-      });
+      }
 
       if (profileId) {
         await supabase.from("conversation_reads").upsert({
@@ -832,6 +839,16 @@ export default function Chat() {
                   <img
                     src={msg.image_url}
                     onClick={() => setActiveImage(msg.image_url)}
+                    onLoad={() => {
+                      if (!initialScrollDone) {
+                        bottomRef.current?.scrollIntoView({
+                          behavior: "auto",
+                          block: "end",
+                        });
+
+                        setInitialScrollDone(true);
+                      }
+                    }}
                     className="w-full rounded-t-2xl cursor-pointer"
                     alt="attachment"
                   />
