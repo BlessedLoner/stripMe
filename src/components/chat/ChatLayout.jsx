@@ -26,11 +26,8 @@ export default function ChatLayout() {
   const [searchTerm, setSearchTerm] = useState("");
   const [flirtConversations, setFlirtConversations] = useState([]);
   const [loadingFlirts, setLoadingFlirts] = useState(false);
-  const [toast, setToast] = useState(null);
 
-  // Debounce search term
-  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
-  const searchTimeoutRef = useRef(null);
+  const [toast, setToast] = useState(null);
 
   function showToast(message, type = "info") {
     setToast({ message, type });
@@ -117,7 +114,7 @@ export default function ChatLayout() {
       setFlirtConversations(formatted);
     } catch (err) {
       console.error("Error fetching flirt conversations:", err);
-      showToast("Failed to load flirt conversations", "error");
+      showToast("Failed to fetch flirt conversations", "error");
     } finally {
       setLoadingFlirts(false);
     }
@@ -165,7 +162,6 @@ export default function ChatLayout() {
         navigate(`/chat/${created.id}`);
       } catch (err) {
         console.error("Start conversation error:", err);
-        showToast("Failed to start conversation", "error");
       }
     },
     [currentUser, navigate],
@@ -253,7 +249,6 @@ export default function ChatLayout() {
     } catch (err) {
       console.error("Failed to load conversations:", err);
       setError(err.message);
-      showToast("Failed to load conversations", "error");
     } finally {
       setLoading(false);
     }
@@ -280,7 +275,6 @@ export default function ChatLayout() {
         },
         async (payload) => {
           const updated = payload.new;
-          console.log("📡 Received conversation update:", updated);
 
           const senderId = updated.last_message_sender_id;
           if (!senderId) return;
@@ -334,7 +328,7 @@ export default function ChatLayout() {
   }, [currentUser]);
 
   /* ============================= */
-  /* 4️⃣ Real-Time Message Subscription (Optimized) */
+  /* 4️⃣ Real-Time Message Subscription (NEW - FIXES THE ISSUE) */
   /* ============================= */
   useEffect(() => {
     if (!currentUser) return;
@@ -353,6 +347,8 @@ export default function ChatLayout() {
 
           // Only care about messages from this user
           if (newMessage.sender_user_id !== currentUser.id) return;
+
+          // Ignore if it's not a user message
           if (newMessage.sender_type !== "real_user") return;
 
           console.log(
@@ -361,8 +357,8 @@ export default function ChatLayout() {
           );
 
           // ✅ Optimistically update the conversation in the list
-          setConversations((prev) => {
-            const updated = prev.map((conv) => {
+          setConversations((prev) =>
+            prev.map((conv) => {
               if (conv.id !== newMessage.conversation_id) return conv;
 
               return {
@@ -371,17 +367,10 @@ export default function ChatLayout() {
                 last_message_sender_id: currentUser.id,
                 last_message_preview:
                   newMessage.content?.substring(0, 50) || "📷",
-                unread_count: 0,
+                unread_count: 0, // ✅ User sent it, so it's read
               };
-            });
-
-            // Sort conversations by last_message_at
-            return updated.sort(
-              (a, b) =>
-                new Date(b.last_message_at || 0) -
-                new Date(a.last_message_at || 0),
-            );
-          });
+            }),
+          );
         },
       )
       .subscribe();
@@ -389,7 +378,7 @@ export default function ChatLayout() {
     return () => {
       supabase.removeChannel(messageChannel);
     };
-  }, [currentUser]); // ✅ Removed loadConversations from dependencies
+  }, [currentUser]);
 
   /* ============================= */
   /* 5️⃣ Real-Time Notification Subscription */
@@ -457,7 +446,7 @@ export default function ChatLayout() {
             senderName = sender?.display_name || "Fictional user";
           }
 
-          showToast(`${senderName} sent a message`, "info");
+          showToast(`${senderName} sent a message`);
 
           if (notificationSoundRef.current) {
             notificationSoundRef.current.currentTime = 0;
@@ -500,26 +489,7 @@ export default function ChatLayout() {
   }, [currentUser, conversationId]);
 
   /* ============================= */
-  /* 6️⃣ Debounced Search */
-  /* ============================= */
-  useEffect(() => {
-    if (searchTimeoutRef.current) {
-      clearTimeout(searchTimeoutRef.current);
-    }
-
-    searchTimeoutRef.current = setTimeout(() => {
-      setDebouncedSearchTerm(searchTerm);
-    }, 300);
-
-    return () => {
-      if (searchTimeoutRef.current) {
-        clearTimeout(searchTimeoutRef.current);
-      }
-    };
-  }, [searchTerm]);
-
-  /* ============================= */
-  /* 7️⃣ Filters */
+  /* 6️⃣ Filters */
   /* ============================= */
 
   const filteredConversations = useMemo(() => {
@@ -538,8 +508,8 @@ export default function ChatLayout() {
         break;
     }
 
-    if (debouncedSearchTerm.trim()) {
-      const term = debouncedSearchTerm.toLowerCase();
+    if (searchTerm.trim()) {
+      const term = searchTerm.toLowerCase();
 
       result = result.filter((c) => {
         const name = c.fictional_profiles?.display_name?.toLowerCase() || "";
@@ -549,7 +519,7 @@ export default function ChatLayout() {
     }
 
     return result;
-  }, [conversations, flirtConversations, filter, debouncedSearchTerm]);
+  }, [conversations, flirtConversations, filter, searchTerm]);
 
   const totalUnread = conversations.reduce(
     (sum, c) => sum + (c.unread_count || 0),
@@ -557,15 +527,10 @@ export default function ChatLayout() {
   );
 
   /* ============================= */
-  /* 8️⃣ Mark As Read */
+  /* 7️⃣ Mark As Read */
   /* ============================= */
 
   const handleConversationSelect = async (id) => {
-    if (!currentUser) {
-      console.warn("No current user to mark conversation as read");
-      return;
-    }
-
     setIsMobileListOpen(false);
     navigate(`/chat/${id}`);
 
@@ -573,19 +538,15 @@ export default function ChatLayout() {
       prev.map((c) => (c.id === id ? { ...c, unread_count: 0 } : c)),
     );
 
-    try {
-      await supabase.from("conversation_reads").upsert({
-        conversation_id: id,
-        user_id: currentUser.id,
-        last_read_at: new Date().toISOString(),
-      });
-    } catch (err) {
-      console.error("Failed to mark conversation as read:", err);
-    }
+    await supabase.from("conversation_reads").upsert({
+      conversation_id: id,
+      user_id: currentUser.id,
+      last_read_at: new Date().toISOString(),
+    });
   };
 
   /* ============================= */
-  /* 9️⃣ UI Helpers */
+  /* 8️⃣ UI Helpers */
   /* ============================= */
 
   const getInitials = (name = "") => {
@@ -663,7 +624,6 @@ export default function ChatLayout() {
 
   return (
     <main className="h-screen pt-16 flex flex-col md:flex-row bg-primary/10 overflow-hidden">
-      {/* Sidebar - Full height with fixed header and scrollable list */}
       <div
         className={`
           md:w-[360px] md:min-w-[320px] lg:min-w-[360px] flex flex-col
@@ -694,12 +654,11 @@ export default function ChatLayout() {
           </div>
         )}
 
-        {/* Fixed Header Section */}
         <div className="flex-shrink-0">
           {/* Header */}
           <div className="p-4 sm:p-6 border-b border-primary/10">
             <div className="flex items-center justify-between mb-4">
-              <h1 className="text-xl sm:text-2xl font-serif font-semibold text-text-primary">
+              <h1 className="text-2xl font-serif font-semibold text-text-primary">
                 Messages
               </h1>
               <button
@@ -748,12 +707,11 @@ export default function ChatLayout() {
             </div>
           </div>
 
-          {/* Filter Buttons */}
           <div className="px-4 sm:px-6 py-3 border-b border-primary/10 overflow-x-auto">
             <div className="flex gap-2 whitespace-nowrap">
               <button
                 onClick={() => setFilter("all")}
-                className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                className={`px-4 py-2 text-sm font-medium  rounded-lg ${
                   filter === "all"
                     ? "text-white bg-primary"
                     : "text-text-secondary hover:text-primary hover:bg-primary/10"
@@ -763,22 +721,20 @@ export default function ChatLayout() {
               </button>
               <button
                 onClick={() => setFilter("unread")}
-                className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                className={`px-4 py-2 text-sm font-medium rounded-lg ${
                   filter === "unread"
                     ? "text-white bg-primary"
                     : "text-text-secondary hover:text-primary hover:bg-primary/10"
                 }`}
               >
                 Unread
-                {totalUnread > 0 && (
-                  <span className="ml-2 text-xs text-red-500">
-                    ({totalUnread})
-                  </span>
-                )}
+                <span className="ml-2 text-xs text-red-500">
+                  {totalUnread > 0 && `(${totalUnread})`}
+                </span>
               </button>
               <button
                 onClick={() => setFilter("flirts")}
-                className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                className={`px-4 py-2 text-sm font-medium rounded-lg ${
                   filter === "flirts"
                     ? "text-white bg-primary"
                     : "text-text-secondary hover:text-primary hover:bg-primary/10"
@@ -793,7 +749,7 @@ export default function ChatLayout() {
               </button>
               <button
                 onClick={() => setFilter("favorites")}
-                className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                className={`px-4 py-2 text-sm font-medium rounded-lg ${
                   filter === "favorites"
                     ? "text-white bg-primary"
                     : "text-text-secondary hover:text-primary hover:bg-primary/10"
@@ -805,7 +761,7 @@ export default function ChatLayout() {
           </div>
         </div>
 
-        {/* Scrollable Conversation List */}
+        {/* Conversation Items - Unified display */}
         <div className="flex-1 overflow-y-auto">
           {isLoading ? (
             <ChatListSkeleton />
@@ -835,7 +791,7 @@ export default function ChatLayout() {
               </p>
               <p className="text-sm mt-1">
                 {filter === "flirts"
-                  ? "Flirt messages from pokers will appear here"
+                  ? "Flirt messages will appear here"
                   : "Start a new conversation to see it here"}
               </p>
             </div>
@@ -853,15 +809,15 @@ export default function ChatLayout() {
                     }
                   }}
                   className={`
-                    w-full p-4 flex items-center space-x-3 hover:bg-primary/5
-                    active:bg-gray-100 transition-colors text-left cursor-pointer
-                    ${
-                      conversationId === conversation.id
-                        ? "bg-primary border-l-4 border-primary"
-                        : ""
-                    }
-                    ${filter === "flirts" ? "border-l-4 border-pink-400" : ""}
-                  `}
+                      w-full p-4 flex items-center space-x-3 hover:bg-primary/5
+                      active:bg-gray-100 transition-colors text-left cursor-pointer
+                      ${
+                        conversationId === conversation.id
+                          ? "bg-primary border-l-4 border-blue-500"
+                          : ""
+                      }
+                      ${filter === "flirts" ? "border-l-4 border-pink-400" : ""}
+                    `}
                   aria-current={
                     conversationId === conversation.id ? "page" : undefined
                   }
@@ -902,32 +858,33 @@ export default function ChatLayout() {
                   {/* Content */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between">
-                      <div className="flex items-center gap-2 min-w-0">
+                      <div className="flex items-center gap-2">
                         <h3 className="font-semibold text-gray-800 truncate">
                           {conversation.fictional_profiles?.display_name ||
                             "Unknown"}
                         </h3>
                         {filter === "flirts" && (
-                          <span className="text-xs bg-pink-100 text-pink-600 px-2 py-0.5 rounded-full flex-shrink-0">
+                          <span className="text-xs bg-pink-100 text-pink-600 px-2 py-0.5 rounded-full">
                             Flirt
                           </span>
                         )}
                       </div>
 
-                      <div className="flex items-center gap-2 flex-shrink-0 ml-2">
+                      <div className="flex items-center gap-3 flex-shrink-0">
                         {!conversation.is_flirt_conversation && (
                           <button
                             onClick={(e) =>
                               handleToggleFavoriteFromList(e, conversation)
                             }
                             title="Toggle favorite"
-                            className="text-sm w-5 text-center hover:text-yellow-500 transition-colors"
+                            className="text-sm w-5 text-center"
                           >
                             {conversation.is_favorite ? "★" : "☆"}
                           </button>
                         )}
+
                         {conversation.last_message_at && (
-                          <span className="text-xs text-gray-500 whitespace-nowrap">
+                          <span className="text-xs text-gray-500 w-14 text-right">
                             {formatTime(conversation.last_message_at)}
                           </span>
                         )}
@@ -939,7 +896,7 @@ export default function ChatLayout() {
                       </p>
                       {!conversation.is_flirt_conversation &&
                         conversation.unread_count > 0 && (
-                          <span className="text-xs bg-red-500 text-white rounded-full px-2 py-0.5 flex-shrink-0">
+                          <span className="text-xs bg-red-500 text-white rounded-full px-2 py-0.5">
                             {conversation.unread_count}
                           </span>
                         )}
@@ -952,7 +909,6 @@ export default function ChatLayout() {
         </div>
       </div>
 
-      {/* Mobile Overlay */}
       {isMobileListOpen && !conversationId && (
         <div
           className="fixed inset-0 bg-black/50 z-40 md:hidden"
@@ -964,14 +920,15 @@ export default function ChatLayout() {
       {/* Chat Area */}
       <div
         className={`
-          flex-1 min-h-0 flex flex-col overflow-hidden
-          ${!conversationId ? "hidden md:flex" : "flex"}
-        `}
+            flex-1 min-h-0 flex flex-col overflow-hidden
+            ${!conversationId ? "hidden md:flex" : "flex"}
+            h-full
+          `}
       >
         {conversationId ? (
           <Outlet context={{ onBack: () => setIsMobileListOpen(true) }} />
         ) : (
-          <div className="flex-1 flex items-center bg-surface justify-center p-6">
+          <div className="md:flex flex-1 items-center bg-surface justify-center p-6">
             <div className="text-center max-w-md">
               <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-gray-100 flex items-center justify-center">
                 <MessageSquare size={32} className="text-gray-400" />
