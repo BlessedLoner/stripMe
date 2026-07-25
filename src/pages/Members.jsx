@@ -755,7 +755,7 @@ export default function MembersFromDB({ limit = 200 }) {
                   </button>
 
                   {/* Page Numbers - Shifting Window */}
-                  <div className="flex items-center gap-1 bg-white rounded-lg border border-gray-200 shadow-sm px-1 py-1">
+                  <div className="flex items-center gap-1 rounded-lg border border-gray-200 shadow-sm px-1 py-1">
                     {/* Left Arrow - Shift window left */}
                     <button
                       onClick={() => {
@@ -766,6 +766,10 @@ export default function MembersFromDB({ limit = 200 }) {
                       }}
                       disabled={windowStart <= 1 || loadingPage}
                       className="w-8 h-8 rounded-lg text-gray-500 hover:bg-gray-100 transition-colors disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center"
+                      style={{
+                        backgroundImage:
+                          "linear-gradient(to right, #8b4b6b, #d4a574)",
+                      }}
                     >
                       <svg
                         className="w-4 h-4"
@@ -846,6 +850,10 @@ export default function MembersFromDB({ limit = 200 }) {
                       }}
                       disabled={windowStart > totalPages - 7 || loadingPage}
                       className="w-8 h-8 rounded-lg text-gray-500 hover:bg-gray-100 transition-colors disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center"
+                      style={{
+                        backgroundImage:
+                          "linear-gradient(to right, #8b4b6b, #d4a574)",
+                      }}
                     >
                       <svg
                         className="w-4 h-4"
