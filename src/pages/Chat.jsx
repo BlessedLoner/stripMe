@@ -1,4 +1,10 @@
-import { useEffect, useState, useRef, useCallback } from "react";
+import {
+  useEffect,
+  useState,
+  useRef,
+  useCallback,
+  useLayoutEffect,
+} from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "../lib/supabaseClient";
 import { ArrowLeft, Check, Clock } from "lucide-react";
@@ -62,11 +68,13 @@ export default function Chat() {
   }, []);
 
   // Auto-scroll to bottom when messages change
-  useEffect(() => {
-    if (messagesContainerRef.current) {
-      messagesContainerRef.current.scrollTop =
-        messagesContainerRef.current.scrollHeight;
-    }
+  useLayoutEffect(() => {
+    requestAnimationFrame(() => {
+      bottomRef.current?.scrollIntoView({
+        behavior: "auto",
+        block: "end",
+      });
+    });
   }, [messages, optimisticMessages]);
 
   /* ---------------- Credits ---------------- */
@@ -178,6 +186,15 @@ export default function Chat() {
       setMessages(data);
       // Clear optimistic messages once real messages load
       setOptimisticMessages([]);
+
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          bottomRef.current?.scrollIntoView({
+            behavior: "auto",
+            block: "end",
+          });
+        });
+      });
 
       if (profileId) {
         await supabase.from("conversation_reads").upsert({
@@ -453,14 +470,6 @@ export default function Chat() {
 
     // Reset sending state after message is added
     setSending(true);
-
-    // Scroll to bottom
-    setTimeout(() => {
-      if (messagesContainerRef.current) {
-        messagesContainerRef.current.scrollTop =
-          messagesContainerRef.current.scrollHeight;
-      }
-    }, 50);
 
     try {
       // Extra safety block check from DB
