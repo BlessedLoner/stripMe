@@ -736,7 +736,11 @@ export default function MembersFromDB({ limit = 200 }) {
                   <button
                     onClick={() => changePage(currentPage - 1)}
                     disabled={currentPage === 1 || loadingPage}
-                    className="px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 shadow-sm"
+                    className="px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1 border-gray-200 hover:bg-gray-50 text-gray-700 shadow-sm"
+                    style={{
+                      backgroundImage:
+                        "linear-gradient(to right, #8b4b6b, #d4a574)",
+                    }}
                   >
                     <svg
                       className="w-4 h-4"
@@ -751,40 +755,23 @@ export default function MembersFromDB({ limit = 200 }) {
                         d="M15 19l-7-7 7-7"
                       />
                     </svg>
-                    <span className="text-xs">Prev</span>
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M13 5l7 7-7 7"
+                      />
+                    </svg>
                   </button>
-
-                  {/* Page Numbers - Shifting Window */}
+                  Page Numbers - Shifting Window
                   <div className="flex items-center gap-1 rounded-lg border border-gray-200 shadow-sm px-1 py-1">
                     {/* Left Arrow - Shift window left */}
-                    <button
-                      onClick={() => {
-                        const newStart = Math.max(1, windowStart - 3);
-                        setWindowStart(newStart);
-                        // Move to the first page of the new window
-                        changePage(newStart);
-                      }}
-                      disabled={windowStart <= 1 || loadingPage}
-                      className="w-8 h-8 rounded-lg text-gray-500 hover:bg-gray-100 transition-colors disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center"
-                      style={{
-                        backgroundImage:
-                          "linear-gradient(to right, #8b4b6b, #d4a574)",
-                      }}
-                    >
-                      <svg
-                        className="w-4 h-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                          d="M15 19l-7-7 7-7"
-                        />
-                      </svg>
-                    </button>
 
                     {/* Page Numbers */}
                     {(() => {
@@ -832,52 +819,17 @@ export default function MembersFromDB({ limit = 200 }) {
                     ))}
 
                     {/* Right Arrow - Shift window right */}
-                    <button
-                      onClick={() => {
-                        const windowSize = 7;
-                        let newStart = Math.min(
-                          totalPages - windowSize + 1,
-                          windowStart + 3,
-                        );
-                        if (newStart < 1) newStart = 1;
-                        setWindowStart(newStart);
-                        // Move to the last page of the new window
-                        const newPage = Math.min(
-                          totalPages,
-                          newStart + windowSize - 1,
-                        );
-                        changePage(newPage);
-                      }}
-                      disabled={windowStart > totalPages - 7 || loadingPage}
-                      className="w-8 h-8 rounded-lg text-gray-500 hover:bg-gray-100 transition-colors disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center"
-                      style={{
-                        backgroundImage:
-                          "linear-gradient(to right, #8b4b6b, #d4a574)",
-                      }}
-                    >
-                      <svg
-                        className="w-4 h-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                          d="M13 5l7 7-7 7"
-                        />
-                      </svg>
-                    </button>
                   </div>
-
                   {/* Next Button */}
                   <button
                     onClick={() => changePage(currentPage + 1)}
                     disabled={currentPage === totalPages || loadingPage}
-                    className="px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 shadow-sm"
+                    className="px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1 border-gray-200 hover:bg-gray-50 text-gray-700 shadow-sm"
+                    style={{
+                      backgroundImage:
+                        "linear-gradient(to right, #8b4b6b, #d4a574)",
+                    }}
                   >
-                    <span className="text-xs">Next</span>
                     <svg
                       className="w-4 h-4"
                       fill="none"
@@ -889,6 +841,19 @@ export default function MembersFromDB({ limit = 200 }) {
                         strokeLinejoin="round"
                         strokeWidth="2"
                         d="M9 5l7 7-7 7"
+                      />
+                    </svg>
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M13 5l7 7-7 7"
                       />
                     </svg>
                   </button>
