@@ -6,7 +6,6 @@ import SlidingCardTwo from "../components/SlidingCardTwo";
 import Logo from "../assets/Logo.png";
 import home from "../assets/home_img/home.jpg";
 import home1 from "../assets/home_img/home1.jpg";
-import home2 from "../assets/home_img/home2.jpg";
 import home3 from "../assets/home_img/home3.jpg";
 import home4 from "../assets/home_img/home4.jpg";
 import home5 from "../assets/home_img/home5.jpg";
@@ -55,15 +54,14 @@ function Home({ intervalMs = 5000, transitionMs = 800 }) {
 
   const images = [
     home,
+    home9,
     home1,
-    home2,
     home3,
     home4,
     home5,
     home6,
     home7,
     home8,
-    home9,
     home10,
   ];
 
