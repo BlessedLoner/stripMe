@@ -3,8 +3,8 @@ import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Logo from "../assets/Logo.png";
 import home1 from "../assets/home_img/home1.jpg";
-import home2 from "../assets/home_img/home2.jpg";
 import home9 from "../assets/home_img/home9.jpg";
+import home3 from "../assets/home_img/home3.jpg";
 import { supabase } from "../lib/supabaseClient";
 import { COUNTRIES } from "../components/countries";
 import LocationInput from "../components/LocationInput";
@@ -65,7 +65,7 @@ export default function SignUpPage() {
   const [emailModalError, setEmailModalError] = useState(null);
 
   // slider
-  const slides = [home1, home2, home9];
+  const slides = [home1, home3, home9];
   const [index, setIndex] = useState(0);
   useEffect(() => {
     const id = setInterval(() => {
@@ -639,7 +639,7 @@ export default function SignUpPage() {
           overflow: "hidden",
         }}
       >
-        {[home1, home2, home3].map((src, i) => (
+        {[home1, home9, home3].map((src, i) => (
           <div
             key={i}
             className="bg-slide"

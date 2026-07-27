@@ -53,8 +53,8 @@ function Home({ intervalMs = 5000, transitionMs = 800 }) {
   }, [location.pathname]);
 
   const images = [
-    home,
     home9,
+    home,
     home1,
     home3,
     home4,
