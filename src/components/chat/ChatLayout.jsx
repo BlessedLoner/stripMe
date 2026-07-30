@@ -367,31 +367,6 @@ export default function ChatLayout() {
             "📨 User sent a new message, updating conversation:",
             newMessage,
           );
-
-          // ✅ Optimistically update the conversation in the list
-          // setConversations((prev) => {
-          //   const updated = prev.map((conv) => {
-          //     if (conv.id !== newMessage.conversation_id) return conv;
-
-          //     return {
-          //       ...conv,
-          //       last_message_at: newMessage.created_at,
-          //       last_message_sender_id: currentUser.id,
-          //       last_message_preview:
-          //         newMessage.content?.substring(0, 50) || "📷",
-          //       unread_count: 0,
-          //       // ✅ FIX: Also update last_read_at to current time
-          //       last_read_at: new Date().toISOString(),
-          //     };
-          //   });
-
-          //   // Sort conversations by last_message_at
-          //   return updated.sort(
-          //     (a, b) =>
-          //       new Date(b.last_message_at || 0) -
-          //       new Date(a.last_message_at || 0),
-          //   );
-          // });
         },
       )
       .subscribe();
