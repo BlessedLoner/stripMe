@@ -605,7 +605,7 @@ export default function MembersFromDB({ limit = 200 }) {
               )}
 
               {/* Responsive Grid - Mobile: 1, Tablet: 2, Desktop: 3-4, Large: 5 */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
+              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
                 {filteredMembers.map((m) => {
                   let imgSrc = null;
                   if (m.image_url && m.image_url.startsWith("http"))

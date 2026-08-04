@@ -313,15 +313,6 @@ function CreditStore() {
                 <span className="text-2xl font-bold text-primary">
                   {currentBalance} credits
                 </span>
-
-                <div className="text-sm text-text-secondary">
-                  <p>
-                    Last Purchase:{" "}
-                    <span className="font-medium">
-                      {formatDate(lastPurchaseDate)}
-                    </span>
-                  </p>
-                </div>
               </div>
             </div>
           </div>
@@ -345,14 +336,6 @@ function CreditStore() {
               </svg>
               <span className="font-semibold">
                 Limited Time: Get 25% Extra Credits on All Packages!
-              </span>
-              <span className="text-accent-200 text-sm">
-                <p>
-                  Last Purchase:{" "}
-                  <span className="font-medium">
-                    {formatDate(lastPurchaseDate)}
-                  </span>
-                </p>
               </span>
             </div>
           </div>
