@@ -261,7 +261,16 @@ export default function MembersFromDB({ limit = 200 }) {
         };
 
         // Sort by priority
-        results.sort((a, b) => getPriority(a) - getPriority(b));
+        // results.sort((a, b) => getPriority(a) - getPriority(b));
+        results.sort((a, b) => {
+          const priorityDiff = getPriority(a) - getPriority(b);
+
+          if (priorityDiff !== 0) return priorityDiff;
+
+          // Same priority?
+          // Use shuffle order.
+          return (a.shuffle_order || 999999) - (b.shuffle_order || 999999);
+        });
 
         // Step 3: Check if selected state has profiles (for fallback message)
         if (selectedState) {
