@@ -806,7 +806,6 @@ export default function AdminPage() {
                 {country.name}
               </button>
             ))}
-
             <div className="ml-auto flex items-center gap-2 px-4">
               <button
                 onClick={() => setShowDeleted(false)}
@@ -829,7 +828,6 @@ export default function AdminPage() {
                 Deleted
               </button>
             </div>
-
             <button
               onClick={() => navigate("/members")}
               className="flex items-center justify-center w-10 h-10 rounded-full hover:bg-gray-200 transition ml-2"
@@ -848,6 +846,27 @@ export default function AdminPage() {
                   d="M15 19l-7-7 7-7"
                 />
               </svg>
+            </button>
+            // In AdminPage.jsx - Add this button
+            <button
+              onClick={async () => {
+                const confirmed = window.confirm(
+                  "This will shuffle all profiles. Continue?",
+                );
+                if (!confirmed) return;
+
+                try {
+                  const { data, error } =
+                    await supabase.functions.invoke("shuffle-profiles");
+                  if (error) throw error;
+                  alert(`✅ ${data.updated} profiles shuffled successfully!`);
+                } catch (err) {
+                  alert("❌ Failed to shuffle: " + err.message);
+                }
+              }}
+              className="bg-gray-400 text-black font-semibold py-2 px-4 rounded-lg shadow transition duration-200"
+            >
+              🔀 Shuffle Profiles
             </button>
           </div>
         </div>
