@@ -409,7 +409,7 @@ export default function MembersFromDB({ limit = 200 }) {
 
       {/* Filters Section */}
       <section className="card">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-4 lg:px-8">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-8">
             <div>
               <h2 className="text-2xl text-center font-serif font-semibold text-text-primary">
@@ -553,7 +553,7 @@ export default function MembersFromDB({ limit = 200 }) {
 
       {/* Members Grid */}
       <section className="card py-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-3 lg:px-8">
           <h2 className="text-xl font-semibold mb-4">Members</h2>
           {loading ? (
             <div className="text-center py-16">
@@ -636,7 +636,7 @@ export default function MembersFromDB({ limit = 200 }) {
                               state: { member: m },
                             })
                           }
-                          className="w-full h-60 object-cover"
+                          className="w-full h-full object-cover"
                         >
                           {imgSrc ? (
                             <img
