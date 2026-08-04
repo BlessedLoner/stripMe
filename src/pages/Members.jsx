@@ -629,14 +629,14 @@ export default function MembersFromDB({ limit = 200 }) {
                       className="bg-white rounded-2xl overflow-hidden cursor-pointer hover:scale-105 transition-transform duration-200 border border-primary/20 flex flex-col"
                     >
                       {/* Image Section */}
-                      <div className="relative w-full h-full  overflow-hidden">
+                      <div className="relative w-full h-full overflow-hidden">
                         <button
                           onClick={() =>
                             navigate(`/profile/${m.id}`, {
                               state: { member: m },
                             })
                           }
-                          className="w-full h-full object-cover"
+                          className="w-full h-60 object-cover"
                         >
                           {imgSrc ? (
                             <img
