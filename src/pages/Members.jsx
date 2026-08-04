@@ -629,7 +629,7 @@ export default function MembersFromDB({ limit = 200 }) {
                       className="bg-white rounded-2xl overflow-hidden cursor-pointer hover:scale-105 transition-transform duration-200 border border-primary/20 flex flex-col"
                     >
                       {/* Image Section */}
-                      <div className="relative w-full h-full aspect-10/4 overflow-hidden">
+                      <div className="relative w-full h-full aspect-8/5 overflow-hidden">
                         <button
                           onClick={() =>
                             navigate(`/profile/${m.id}`, {
