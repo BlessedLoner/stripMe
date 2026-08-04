@@ -847,27 +847,6 @@ export default function AdminPage() {
                 />
               </svg>
             </button>
-            // In AdminPage.jsx - Add this button
-            <button
-              onClick={async () => {
-                const confirmed = window.confirm(
-                  "This will shuffle all profiles. Continue?",
-                );
-                if (!confirmed) return;
-
-                try {
-                  const { data, error } =
-                    await supabase.functions.invoke("shuffle-profiles");
-                  if (error) throw error;
-                  alert(`✅ ${data.updated} profiles shuffled successfully!`);
-                } catch (err) {
-                  alert("❌ Failed to shuffle: " + err.message);
-                }
-              }}
-              className="bg-gray-400 text-black font-semibold py-2 px-4 rounded-lg shadow transition duration-200"
-            >
-              🔀 Shuffle Profiles
-            </button>
           </div>
         </div>
 
@@ -925,6 +904,62 @@ export default function AdminPage() {
                   className="bg-indigo-600 hover:bg-indigo-700 text-black font-semibold py-2 px-4 rounded-lg shadow transition duration-200"
                 >
                   🌎 State Neighbors
+                </button>
+
+                <button
+                  onClick={async () => {
+                    const confirmed = window.confirm(
+                      "🔄 This will shuffle all profiles randomly.\n\n" +
+                        "Current page 1 profiles will be moved to the back,\n" +
+                        "and deeper profiles will come to the front.\n\n" +
+                        "Continue?",
+                    );
+                    if (!confirmed) return;
+
+                    try {
+                      // Get all active profiles
+                      const { data: profiles, error: fetchError } =
+                        await supabase
+                          .from("fictional_profiles")
+                          .select("id")
+                          .eq("is_deleted", false);
+
+                      if (fetchError) throw fetchError;
+
+                      if (!profiles || profiles.length === 0) {
+                        alert("No profiles found to shuffle.");
+                        return;
+                      }
+
+                      // Shuffle using Fisher-Yates algorithm
+                      for (let i = profiles.length - 1; i > 0; i--) {
+                        const j = Math.floor(Math.random() * (i + 1));
+                        [profiles[i], profiles[j]] = [profiles[j], profiles[i]];
+                      }
+
+                      // Update each profile with new shuffle_order
+                      let updated = 0;
+                      for (let i = 0; i < profiles.length; i++) {
+                        const { error: updateError } = await supabase
+                          .from("fictional_profiles")
+                          .update({ shuffle_order: i + 1 })
+                          .eq("id", profiles[i].id);
+
+                        if (!updateError) updated++;
+                      }
+
+                      alert(`✅ Successfully shuffled ${updated} profiles!`);
+
+                      // Refresh the page
+                      window.location.reload();
+                    } catch (err) {
+                      console.error("❌ Shuffle error:", err);
+                      alert("❌ Failed to shuffle: " + err.message);
+                    }
+                  }}
+                  className="bg-primary hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg shadow transition duration-200"
+                >
+                  🔀 Shuffle Profiles
                 </button>
 
                 <button
