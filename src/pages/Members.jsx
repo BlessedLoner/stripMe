@@ -740,7 +740,7 @@ export default function MembersFromDB({ limit = 200 }) {
               {/* Pagination - Clean & Modern */}
               {/* Pagination */}
               {totalPages > 1 && (
-                <div className="flex justify-center items-center gap-2 mt-12 flex-wrap">
+                <div className="flex justify-center items-center gap-2 mt-12 w-full">
                   {/* Previous Button */}
                   <button
                     onClick={() => changePage(currentPage - 1)}
@@ -765,7 +765,7 @@ export default function MembersFromDB({ limit = 200 }) {
                       />
                     </svg>
                   </button>
-                  <div className="flex items-center gap-1 shadow-sm px-1 py-1">
+                  <div className="flex items-center gap-1 shadow-sm px-1 py-1 overflow-x-auto scrollbar-hide">
                     {/* Left Arrow - Shift window left */}
 
                     {/* Page Numbers */}
@@ -773,7 +773,10 @@ export default function MembersFromDB({ limit = 200 }) {
                       const pages = [];
                       const total = totalPages;
                       const current = currentPage;
-                      const windowSize = 7; // Number of pages to show
+                      const windowSize =
+                        typeof window !== "undefined" && window.innerWidth < 640
+                          ? 5
+                          : 7; // Number of pages to show
 
                       // Calculate window start
                       let start = Math.max(1, current - 3);
