@@ -629,7 +629,7 @@ export default function MembersFromDB({ limit = 200 }) {
                       className="bg-white rounded-2xl overflow-hidden cursor-pointer hover:scale-105 transition-transform duration-200 border border-primary/20 flex flex-col"
                     >
                       {/* Image Section */}
-                      <div className="relative w-full aspect-10/5 overflow-hidden">
+                      <div className="relative w-full h-full aspect-10/5 overflow-hidden">
                         <button
                           onClick={() =>
                             navigate(`/profile/${m.id}`, {
@@ -755,19 +755,6 @@ export default function MembersFromDB({ limit = 200 }) {
                         d="M15 19l-7-7 7-7"
                       />
                     </svg>
-                    <svg
-                      className="w-4 h-4"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M15 19l-7-7 7-7"
-                      />
-                    </svg>
                   </button>
                   <div className="flex items-center gap-1 shadow-sm px-1 py-1">
                     {/* Left Arrow - Shift window left */}
@@ -840,19 +827,6 @@ export default function MembersFromDB({ limit = 200 }) {
                         strokeLinejoin="round"
                         strokeWidth="2"
                         d="M9 5l7 7-7 7"
-                      />
-                    </svg>
-                    <svg
-                      className="w-4 h-4"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M13 5l7 7-7 7"
                       />
                     </svg>
                   </button>
