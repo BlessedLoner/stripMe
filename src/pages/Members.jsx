@@ -9,6 +9,8 @@ import Logo from "../assets/Logo.png";
 import { REGIONS } from "../data/regions";
 import { LoveSpinner } from "../components/Spinner";
 
+const FILTERS_STORAGE_KEY = "members_filters";
+
 export default function MembersFromDB({ limit = 200 }) {
   const navigate = useNavigate();
   const location = useLocation();
@@ -16,16 +18,84 @@ export default function MembersFromDB({ limit = 200 }) {
   // Get initial filter values from URL
   const queryParams = new URLSearchParams(location.search);
 
-  // Initialize filters from URL or defaults
-  const [filters, setFilters] = useState({
-    minAge: parseInt(queryParams.get("minAge")) || 18,
-    maxAge: parseInt(queryParams.get("maxAge")) || 90,
-    distance: queryParams.get("distance") || "50",
-    lookingFor: queryParams.get("lookingFor") || "",
-    state: queryParams.get("state") || "",
-    searchQuery: queryParams.get("search") || "",
-  });
+  // Save filters to localStorage
+  const saveFiltersToStorage = (filtersData) => {
+    try {
+      localStorage.setItem(FILTERS_STORAGE_KEY, JSON.stringify(filtersData));
+    } catch (e) {
+      console.error("Failed to save filters:", e);
+    }
+  };
 
+  // Load filters from localStorage
+  const loadFiltersFromStorage = () => {
+    try {
+      const stored = localStorage.getItem(FILTERS_STORAGE_KEY);
+      if (stored) {
+        return JSON.parse(stored);
+      }
+    } catch (e) {
+      console.error("Failed to load filters:", e);
+    }
+    return null;
+  };
+
+  // Get initial filters from URL or localStorage
+  const getInitialFilters = () => {
+    // Check if URL has any filter params
+    const hasUrlParams =
+      queryParams.get("minAge") ||
+      queryParams.get("maxAge") ||
+      queryParams.get("distance") ||
+      queryParams.get("lookingFor") ||
+      queryParams.get("state") ||
+      queryParams.get("search");
+
+    if (hasUrlParams) {
+      return {
+        minAge: parseInt(queryParams.get("minAge")) || 18,
+        maxAge: parseInt(queryParams.get("maxAge")) || 90,
+        distance: queryParams.get("distance") || "50",
+        lookingFor: queryParams.get("lookingFor") || "",
+        state: queryParams.get("state") || "",
+        searchQuery: queryParams.get("search") || "",
+      };
+    }
+
+    const stored = loadFiltersFromStorage();
+    if (stored) {
+      return {
+        minAge: stored.minAge || 18,
+        maxAge: stored.maxAge || 90,
+        distance: stored.distance || "50",
+        lookingFor: stored.lookingFor || "",
+        state: stored.state || "",
+        searchQuery: stored.searchQuery || "",
+      };
+    }
+
+    return {
+      minAge: 18,
+      maxAge: 90,
+      distance: "50",
+      lookingFor: "",
+      state: "",
+      searchQuery: "",
+    };
+  };
+
+  const getInitialPage = () => {
+    const urlPage = parseInt(queryParams.get("page"));
+    if (urlPage) return urlPage;
+
+    const stored = loadFiltersFromStorage();
+    if (stored && stored.page) {
+      return stored.page;
+    }
+    return 1;
+  };
+
+  const [filters, setFilters] = useState(getInitialFilters);
   const [filteredMembers, setFilteredMembers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -38,10 +108,7 @@ export default function MembersFromDB({ limit = 200 }) {
   const [selectedState, setSelectedState] = useState("");
   const [neighborStates, setNeighborStates] = useState([]);
 
-  // ✅ Initialize currentPage from URL
-  const [currentPage, setCurrentPage] = useState(
-    parseInt(queryParams.get("page")) || 1,
-  );
+  const [currentPage, setCurrentPage] = useState(getInitialPage);
   const [loadingPage, setLoadingPage] = useState(false);
   const [totalCount, setTotalCount] = useState(0);
   const [windowStart, setWindowStart] = useState(1);
@@ -49,7 +116,7 @@ export default function MembersFromDB({ limit = 200 }) {
 
   const totalPages = Math.ceil(totalCount / membersPerPage);
 
-  // ✅ Update URL with page number
+  // Update URL when filters change
   const updateURL = (newFilters, page = currentPage) => {
     const params = new URLSearchParams();
 
@@ -71,7 +138,6 @@ export default function MembersFromDB({ limit = 200 }) {
     if (newFilters.searchQuery) {
       params.set("search", newFilters.searchQuery);
     }
-    // ✅ Add page to URL
     if (page && page > 1) {
       params.set("page", page);
     }
@@ -81,9 +147,15 @@ export default function MembersFromDB({ limit = 200 }) {
 
     // Update URL without reloading
     navigate(newURL, { replace: true });
+
+    // ✅ Save to localStorage
+    saveFiltersToStorage({
+      ...newFilters,
+      page: page,
+    });
   };
 
-  // ✅ Handle filter changes - reset to page 1
+  // Handle filter changes
   const handleFilterChange = (key, value) => {
     const newFilters = {
       ...filters,
@@ -94,14 +166,12 @@ export default function MembersFromDB({ limit = 200 }) {
     updateURL(newFilters, 1);
   };
 
-  // ✅ Change page and update URL
   const changePage = (page) => {
     if (page < 1 || page > totalPages) return;
 
     setLoadingPage(true);
     setCurrentPage(page);
 
-    // Update window to keep current page visible
     const windowSize = 7;
     let newStart = Math.max(1, page - 3);
     if (newStart + windowSize - 1 > totalPages) {
@@ -112,7 +182,6 @@ export default function MembersFromDB({ limit = 200 }) {
     // ✅ Update URL with current page
     updateURL(filters, page);
 
-    // Scroll to top smoothly
     window.scrollTo({ top: 0, behavior: "smooth" });
 
     setTimeout(() => {
@@ -213,30 +282,24 @@ export default function MembersFromDB({ limit = 200 }) {
 
     async function fetchFiltered() {
       try {
-        // Step 1: Get ALL profiles for the user's country
         let q = supabase
           .from("fictional_profiles")
           .select("*", { count: "exact" });
 
-        // Always filter by country
         if (currentUser?.country) {
           q = q.eq("country", currentUser.country);
         }
 
-        // Exclude deleted profiles
         q = q.eq("is_deleted", false);
 
-        // Apply age filter
         if (filters.minAge != null) q = q.gte("age", filters.minAge);
         if (filters.maxAge != null) q = q.lte("age", filters.maxAge);
 
-        // Apply search filter
         if (debouncedQuery) {
           const like = `%${debouncedQuery}%`;
           q = q.or(`display_name.ilike.${like},bio.ilike.${like}`);
         }
 
-        // Execute the query
         const { data, count, error: qErr } = await q;
 
         if (!mounted) return;
@@ -245,41 +308,32 @@ export default function MembersFromDB({ limit = 200 }) {
         let results = Array.isArray(data) ? data : [];
         setTotalCount(count || 0);
 
-        // Step 2: Apply state-based sorting
         const normalize = (v) => v?.toLowerCase()?.trim();
         const userState = normalize(currentUser.state);
         const userCity = normalize(currentUser.city);
         const selectedState = normalize(filters.state);
 
-        // Priority levels
         const getPriority = (profile) => {
           const profileState = normalize(profile.state);
           const profileCity = normalize(profile.city);
 
-          // If NO state is selected
           if (!selectedState) {
-            if (profileCity === userCity) return 1; // Same city - highest
-            if (profileState === userState) return 2; // Same state
-            return 3; // Other states in country
+            if (profileCity === userCity) return 1;
+            if (profileState === userState) return 2;
+            return 3;
           }
 
-          // If a state IS selected
-          if (profileState === selectedState) return 1; // Selected state - highest
-          if (neighborStates.includes(profileState)) return 2; // Neighbor state
-          return 3; // Other states in country
+          if (profileState === selectedState) return 1;
+          if (neighborStates.includes(profileState)) return 2;
+          return 3;
         };
 
-        // Sort by priority
         results.sort((a, b) => {
           const priorityDiff = getPriority(a) - getPriority(b);
-
           if (priorityDiff !== 0) return priorityDiff;
-
-          // Same priority? Use shuffle order.
           return (a.shuffle_order || 999999) - (b.shuffle_order || 999999);
         });
 
-        // Step 3: Check if selected state has profiles (for fallback message)
         if (selectedState) {
           const hasProfilesInSelectedState = results.some(
             (profile) => normalize(profile.state) === selectedState,
@@ -290,14 +344,11 @@ export default function MembersFromDB({ limit = 200 }) {
           setShowFallbackMessage(false);
         }
 
-        // Step 4: Pagination (after sorting)
         const from = (currentPage - 1) * membersPerPage;
         const to = from + membersPerPage;
         const paginatedResults = results.slice(from, to);
 
         setFilteredMembers(paginatedResults || []);
-
-        // Update total count for pagination
         setTotalCount(results.length);
       } catch (err) {
         if (mounted) {
@@ -350,7 +401,7 @@ export default function MembersFromDB({ limit = 200 }) {
 
   return (
     <div className="pt-16 min-h-screen bg-background">
-      {/* Hero Section - same as before */}
+      {/* Hero Section */}
       <section className="relative min-h-[60vh] flex items-center justify-center overflow-hidden pt-16">
         <div className="absolute inset-0 z-0">
           <img
@@ -769,7 +820,6 @@ export default function MembersFromDB({ limit = 200 }) {
                     </svg>
                   </button>
                   <div className="flex items-center gap-1 shadow-sm px-1 py-1 overflow-x-auto scrollbar-hide">
-                    {/* Page Numbers */}
                     {(() => {
                       const pages = [];
                       const total = totalPages;
@@ -814,7 +864,6 @@ export default function MembersFromDB({ limit = 200 }) {
                       </button>
                     ))}
                   </div>
-                  {/* Next Button */}
                   <button
                     onClick={() => changePage(currentPage + 1)}
                     disabled={currentPage === totalPages || loadingPage}
