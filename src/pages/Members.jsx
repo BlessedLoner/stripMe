@@ -11,7 +11,6 @@ import { LoveSpinner } from "../components/Spinner";
 
 export default function MembersFromDB({ limit = 200 }) {
   const navigate = useNavigate();
-
   const location = useLocation();
 
   // Get initial filter values from URL
@@ -39,17 +38,19 @@ export default function MembersFromDB({ limit = 200 }) {
   const [selectedState, setSelectedState] = useState("");
   const [neighborStates, setNeighborStates] = useState([]);
 
-  const [currentPage, setCurrentPage] = useState(1);
+  // ✅ Initialize currentPage from URL
+  const [currentPage, setCurrentPage] = useState(
+    parseInt(queryParams.get("page")) || 1,
+  );
   const [loadingPage, setLoadingPage] = useState(false);
   const [totalCount, setTotalCount] = useState(0);
-  // Add this with your other states
   const [windowStart, setWindowStart] = useState(1);
   const membersPerPage = 20;
 
   const totalPages = Math.ceil(totalCount / membersPerPage);
 
-  // Update URL when filters change
-  const updateURL = (newFilters) => {
+  // ✅ Update URL with page number
+  const updateURL = (newFilters, page = currentPage) => {
     const params = new URLSearchParams();
 
     if (newFilters.minAge && newFilters.minAge !== 18) {
@@ -70,6 +71,10 @@ export default function MembersFromDB({ limit = 200 }) {
     if (newFilters.searchQuery) {
       params.set("search", newFilters.searchQuery);
     }
+    // ✅ Add page to URL
+    if (page && page > 1) {
+      params.set("page", page);
+    }
 
     const searchString = params.toString();
     const newURL = searchString ? `?${searchString}` : location.pathname;
@@ -78,7 +83,7 @@ export default function MembersFromDB({ limit = 200 }) {
     navigate(newURL, { replace: true });
   };
 
-  // Handle filter changes
+  // ✅ Handle filter changes - reset to page 1
   const handleFilterChange = (key, value) => {
     const newFilters = {
       ...filters,
@@ -86,9 +91,10 @@ export default function MembersFromDB({ limit = 200 }) {
     };
     setFilters(newFilters);
     setCurrentPage(1);
-    updateURL(newFilters);
+    updateURL(newFilters, 1);
   };
 
+  // ✅ Change page and update URL
   const changePage = (page) => {
     if (page < 1 || page > totalPages) return;
 
@@ -102,6 +108,9 @@ export default function MembersFromDB({ limit = 200 }) {
       newStart = Math.max(1, totalPages - windowSize + 1);
     }
     setWindowStart(newStart);
+
+    // ✅ Update URL with current page
+    updateURL(filters, page);
 
     // Scroll to top smoothly
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -261,14 +270,12 @@ export default function MembersFromDB({ limit = 200 }) {
         };
 
         // Sort by priority
-        // results.sort((a, b) => getPriority(a) - getPriority(b));
         results.sort((a, b) => {
           const priorityDiff = getPriority(a) - getPriority(b);
 
           if (priorityDiff !== 0) return priorityDiff;
 
-          // Same priority?
-          // Use shuffle order.
+          // Same priority? Use shuffle order.
           return (a.shuffle_order || 999999) - (b.shuffle_order || 999999);
         });
 
@@ -315,23 +322,20 @@ export default function MembersFromDB({ limit = 200 }) {
     filters.state,
     debouncedQuery,
     currentPage,
-    neighborStates, // Important: re-run when neighbors change
+    neighborStates,
   ]);
 
-  // Add this after your other useEffects
+  // Sync windowStart with currentPage
   useEffect(() => {
-    // Ensure current page is visible in the window
     const windowSize = 7;
     const start = Math.max(1, currentPage - 3);
     const end = Math.min(totalPages, start + windowSize - 1);
 
-    // If current page is outside the current window, adjust
     if (
       currentPage < windowStart ||
       currentPage > windowStart + windowSize - 1
     ) {
       let newStart = Math.max(1, currentPage - 3);
-      // Ensure we don't go past the end
       if (newStart + windowSize - 1 > totalPages) {
         newStart = Math.max(1, totalPages - windowSize + 1);
       }
@@ -594,7 +598,7 @@ export default function MembersFromDB({ limit = 200 }) {
             </div>
           ) : (
             <>
-              {/* Fallback Message - Shows when selected state has 0 profiles */}
+              {/* Fallback Message */}
               {showFallbackMessage && (
                 <div className="mb-6 rounded-xl border border-amber-300 bg-amber-50 p-5">
                   <h3 className="text-lg font-semibold text-amber-900">
@@ -613,7 +617,7 @@ export default function MembersFromDB({ limit = 200 }) {
                 </div>
               )}
 
-              {/* Responsive Grid - Mobile: 1, Tablet: 2, Desktop: 3-4, Large: 5 */}
+              {/* Responsive Grid */}
               <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
                 {filteredMembers.map((m) => {
                   let imgSrc = null;
@@ -737,7 +741,6 @@ export default function MembersFromDB({ limit = 200 }) {
                 })}
               </div>
 
-              {/* Pagination - Clean & Modern */}
               {/* Pagination */}
               {totalPages > 1 && (
                 <div className="flex justify-center items-center gap-2 mt-12 w-full">
@@ -766,8 +769,6 @@ export default function MembersFromDB({ limit = 200 }) {
                     </svg>
                   </button>
                   <div className="flex items-center gap-1 shadow-sm px-1 py-1 overflow-x-auto scrollbar-hide">
-                    {/* Left Arrow - Shift window left */}
-
                     {/* Page Numbers */}
                     {(() => {
                       const pages = [];
@@ -776,18 +777,15 @@ export default function MembersFromDB({ limit = 200 }) {
                       const windowSize =
                         typeof window !== "undefined" && window.innerWidth < 640
                           ? 5
-                          : 7; // Number of pages to show
+                          : 7;
 
-                      // Calculate window start
                       let start = Math.max(1, current - 3);
                       let end = Math.min(total, start + windowSize - 1);
 
-                      // Adjust if we're near the end
                       if (end - start < windowSize - 1) {
                         start = Math.max(1, end - windowSize + 1);
                       }
 
-                      // If total pages is less than window size, show all
                       if (total <= windowSize) {
                         start = 1;
                         end = total;
@@ -804,19 +802,17 @@ export default function MembersFromDB({ limit = 200 }) {
                         onClick={() => changePage(page)}
                         disabled={loadingPage}
                         className={`
-            w-9 h-9 rounded-lg text-sm font-medium transition-all duration-200
-            ${
-              currentPage === page
-                ? "bg-primary text-white shadow-md shadow-primary/30 scale-105"
-                : "text-gray-700 hover:bg-gray-100"
-            }
-          `}
+                          w-9 h-9 rounded-lg text-sm font-medium transition-all duration-200
+                          ${
+                            currentPage === page
+                              ? "bg-primary text-white shadow-md shadow-primary/30 scale-105"
+                              : "text-gray-700 hover:bg-gray-100"
+                          }
+                        `}
                       >
                         {page}
                       </button>
                     ))}
-
-                    {/* Right Arrow - Shift window right */}
                   </div>
                   {/* Next Button */}
                   <button
