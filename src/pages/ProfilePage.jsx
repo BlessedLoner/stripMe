@@ -200,11 +200,35 @@ export default function ProfilePage() {
 
     async function fetchRelated() {
       try {
+        // --------------------------------------------------------------
+        // AGE RANGE
+        // --------------------------------------------------------------
         const minAge = member.age ? member.age - 5 : 18;
         const maxAge = member.age ? member.age + 5 : 99;
 
+        // --------------------------------------------------------------
+        // LOCATION
+        // --------------------------------------------------------------
+        const city = member.city?.trim();
+        const state = member.state?.trim();
+        const country = member.country?.trim();
+
+        console.log("🔍 Finding related profiles for:", {
+          city,
+          state,
+          country,
+          minAge,
+          maxAge,
+        });
+
+        // --------------------------------------------------------------
         // STEP 1:
-        // Get profiles in same country + similar age
+        // Find profiles in the SAME:
+        //   - Country
+        //   - State
+        //   - City
+        // and within the SAME age range
+        // --------------------------------------------------------------
         let query = supabase
           .from("fictional_profiles")
           .select("*")
@@ -212,8 +236,22 @@ export default function ProfilePage() {
           .eq("is_deleted", false)
           .gte("age", minAge)
           .lte("age", maxAge)
-          .eq("country", member.country)
-          .limit(30);
+          .limit(50);
+
+        // Country
+        if (country) {
+          query = query.ilike("country", country);
+        }
+
+        // State
+        if (state) {
+          query = query.ilike("state", state);
+        }
+
+        // City
+        if (city) {
+          query = query.ilike("city", city);
+        }
 
         const { data, error } = await query;
 
@@ -221,60 +259,101 @@ export default function ProfilePage() {
 
         let profiles = (data || []).map(normalizeProfile).filter(Boolean);
 
+        console.log(
+          `📍 Found ${profiles.length} related profiles in ${city}, ${state}`,
+        );
+
+        // --------------------------------------------------------------
         // STEP 2:
-        // Smart ranking system
-        profiles.sort((a, b) => {
-          let scoreA = 0;
-          let scoreB = 0;
+        // Smart ranking
+        //
+        // Since the query already guarantees the same city/state,
+        // location no longer needs to compete with other locations.
+        // We can use interests to rank the profiles.
+        // --------------------------------------------------------------
 
-          // Same city = highest priority
-          if (a.city?.toLowerCase() === member.city?.toLowerCase()) {
-            scoreA += 5;
-          }
+        const memberInterests = (member.interests || []).map((interest) =>
+          String(interest).toLowerCase().trim(),
+        );
 
-          if (b.city?.toLowerCase() === member.city?.toLowerCase()) {
-            scoreB += 5;
-          }
+        profiles.forEach((profile) => {
+          const profileInterests = (profile.interests || []).map((interest) =>
+            String(interest).toLowerCase().trim(),
+          );
 
-          // Same state
-          if (a.state?.toLowerCase() === member.state?.toLowerCase()) {
-            scoreA += 3;
-          }
+          const commonInterests = profileInterests.filter((interest) =>
+            memberInterests.includes(interest),
+          ).length;
 
-          if (b.state?.toLowerCase() === member.state?.toLowerCase()) {
-            scoreB += 3;
-          }
-
-          // Similar interests
-          const memberInterests = member.interests || [];
-
-          const commonA =
-            a.interests?.filter((i) => memberInterests.includes(i)).length || 0;
-
-          const commonB =
-            b.interests?.filter((i) => memberInterests.includes(i)).length || 0;
-
-          scoreA += commonA;
-          scoreB += commonB;
-
-          return scoreB - scoreA;
+          profile._relatedScore = commonInterests;
         });
 
+        // --------------------------------------------------------------
         // STEP 3:
-        // Shuffle slightly so it doesn't look repetitive
-        profiles = profiles.sort(() => Math.random() - 0.5);
+        // Sort by relevance
+        // --------------------------------------------------------------
+        profiles.sort((a, b) => {
+          return (b._relatedScore || 0) - (a._relatedScore || 0);
+        });
 
+        // --------------------------------------------------------------
         // STEP 4:
+        // Slight randomization WITHOUT destroying relevance
+        //
+        // Profiles with the same score are shuffled together.
+        // Profiles with more matching interests remain higher.
+        // --------------------------------------------------------------
+        const groupedProfiles = [];
+
+        let currentGroup = [];
+        let currentScore = null;
+
+        profiles.forEach((profile) => {
+          const score = profile._relatedScore || 0;
+
+          if (currentScore === null || score === currentScore) {
+            currentGroup.push(profile);
+          } else {
+            groupedProfiles.push(currentGroup);
+            currentGroup = [profile];
+          }
+
+          currentScore = score;
+        });
+
+        if (currentGroup.length > 0) {
+          groupedProfiles.push(currentGroup);
+        }
+
+        // Shuffle profiles only within the same relevance score
+        profiles = groupedProfiles.flatMap((group) => {
+          return group.sort(() => Math.random() - 0.5);
+        });
+
+        // --------------------------------------------------------------
+        // STEP 5:
         // Show only 12
+        // --------------------------------------------------------------
         profiles = profiles.slice(0, 12);
+
+        // Remove temporary scoring property
+        profiles.forEach((profile) => {
+          delete profile._relatedScore;
+        });
 
         if (active) {
           setRelatedProfiles(profiles);
         }
       } catch (err) {
-        console.error("Error fetching related profiles:", err);
+        console.error("❌ Error fetching related profiles:", err);
+
+        if (active) {
+          setRelatedProfiles([]);
+        }
       } finally {
-        if (active) setLoadingRelated(false);
+        if (active) {
+          setLoadingRelated(false);
+        }
       }
     }
 
