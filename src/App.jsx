@@ -26,6 +26,7 @@ import { supabase } from "./lib/supabaseClient";
 
 import ChatLayout from "./components/chat/ChatLayout";
 import AdminPage from "./pages/admin/AdminPage";
+import CityManagement from "./pages/admin/CityManagement";
 import AdminRoute from "./pages/admin/AdminRoute";
 import AuthGate from "./components/AuthGate";
 import AuthCallback from "./pages/AuthCallback";
@@ -104,11 +105,9 @@ function AppRoutes() {
         {/* ========================= */}
         {/* PUBLIC ROUTES */}
         {/* ========================= */}
-
         {/* ✅ IMPORTANT: OAuth callback OUTSIDE AuthGate */}
         <Route path="/auth/callback" element={<AuthCallback />} />
         <Route path="/complete-profile" element={<CompleteProfile />} />
-
         <Route
           path="/"
           element={
@@ -119,11 +118,9 @@ function AppRoutes() {
             )
           }
         />
-
         <Route path="/home" element={<Home />} />
         <Route path="/sign-up" element={<SignUpPage />} />
         <Route path="/redirect" element={<RedirectPage />} />
-
         {/* Legal */}
         <Route path="/terms" element={<TermsOfUse />} />
         <Route path="/privacy" element={<PrivacyPolicy />} />
@@ -134,11 +131,9 @@ function AppRoutes() {
         <Route path="/pricing" element={<Pricing />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/protect" element={<ProtectOurChildren />} />
-
         {/* ========================= */}
         {/* PROTECTED APP */}
         {/* ========================= */}
-
         <Route
           path="/admin"
           element={
@@ -149,7 +144,17 @@ function AppRoutes() {
             </AuthGate>
           }
         />
-
+        // Add this route
+        <Route
+          path="/admin/cities"
+          element={
+            <AuthGate>
+              <AdminRoute user={user} profile={profile}>
+                <CityManagement />
+              </AdminRoute>
+            </AuthGate>
+          }
+        />
         <Route
           path="/members"
           element={
@@ -160,7 +165,6 @@ function AppRoutes() {
             </AuthGate>
           }
         />
-
         <Route
           path="/chat"
           element={
@@ -180,7 +184,6 @@ function AppRoutes() {
 
           <Route path=":conversationId" element={<Chat />} />
         </Route>
-
         <Route
           path="/profile/:id"
           element={
@@ -191,7 +194,6 @@ function AppRoutes() {
             </AuthGate>
           }
         />
-
         <Route
           path="/credits"
           element={
@@ -202,7 +204,6 @@ function AppRoutes() {
             </AuthGate>
           }
         />
-
         <Route
           path="/settings"
           element={
@@ -213,11 +214,9 @@ function AppRoutes() {
             </AuthGate>
           }
         />
-
         {/* ========================= */}
         {/* FALLBACK */}
         {/* ========================= */}
-
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </>
