@@ -462,8 +462,8 @@ function CreditStore() {
 
             {/* 10-Credit Package Section - Separated Below Main Grid */}
             {tenCreditPackage && (
-              <div className="text-center border border-gray-20 rounded-lg max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-6">
-                <div className="card p-8 max-w-2xl mx-auto">
+              <div className="card text-center border border-gray-20 rounded-lg max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-6">
+                <div className="p-8 max-w-2xl mx-auto">
                   <h3 className="text-3xl font-serif font-semibold text-black mb-4">
                     Start Small, Test Premium Features
                   </h3>
