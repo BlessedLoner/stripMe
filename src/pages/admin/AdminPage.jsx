@@ -38,6 +38,13 @@ export default function AdminPage() {
   const [states, setStates] = useState([]);
   const [cities, setCities] = useState([]);
 
+  // Add these states at the top with your other states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const [isSearching, setIsSearching] = useState(false);
+  const limit = 20; // Profiles per page
+
   // State Neighbors state
   const [showStateNeighborsModal, setShowStateNeighborsModal] = useState(false);
   const [neighborCountryStates, setNeighborCountryStates] = useState([]);
@@ -262,22 +269,71 @@ export default function AdminPage() {
   // Not ended yet
 
   // Load all profiles (including deleted) from Supabase
-  async function fetchProfiles() {
+  // async function fetchProfiles() {
+  //   setLoading(true);
+  //   setError(null);
+  //   try {
+  //     const { data, error } = await supabase
+  //       .from("fictional_profiles")
+  //       .select("*")
+  //       .order("created_at", { ascending: false });
+
+  //     if (error) throw error;
+  //     setProfiles(data || []);
+  //   } catch (err) {
+  //     console.error("Error fetching profiles:", err);
+  //     setError(err.message || "Failed to load profiles");
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // }
+
+  // Load profiles with pagination and search
+  async function fetchProfiles(page = 1, search = "") {
     setLoading(true);
     setError(null);
+    setIsSearching(!!search);
+
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from("fictional_profiles")
-        .select("*")
+        .select("*", { count: "exact" })
+        .eq("is_deleted", false)
         .order("created_at", { ascending: false });
 
+      // Apply search if provided
+      if (search && search.trim().length >= 2) {
+        const term = search.trim();
+        query = query.or(
+          `display_name.ilike.%${term}%,name.ilike.%${term}%,bio.ilike.%${term}%,about.ilike.%${term}%,city.ilike.%${term}%,state.ilike.%${term}%`,
+        );
+        // For search, get all results (no pagination limit)
+        const { data, error, count } = await query;
+        if (error) throw error;
+        setProfiles(data || []);
+        setTotalCount(count || 0);
+        setTotalPages(1);
+        setLoading(false);
+        return;
+      }
+
+      // Paginate non-search queries
+      const from = (page - 1) * limit;
+      const to = from + limit - 1;
+      query = query.range(from, to);
+
+      const { data, error, count } = await query;
       if (error) throw error;
+
       setProfiles(data || []);
+      setTotalCount(count || 0);
+      setTotalPages(Math.ceil((count || 0) / limit));
     } catch (err) {
       console.error("Error fetching profiles:", err);
       setError(err.message || "Failed to load profiles");
     } finally {
       setLoading(false);
+      setIsSearching(false);
     }
   }
 
@@ -333,6 +389,21 @@ export default function AdminPage() {
 
     return countryMatch && statusMatch && searchMatch;
   });
+
+  // Handle search with debounce
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (searchQuery.trim().length >= 2 || searchQuery === "") {
+        const page = searchQuery.trim().length >= 2 ? 1 : currentPage;
+        fetchProfiles(page, searchQuery);
+        if (searchQuery.trim().length >= 2) {
+          setCurrentPage(1);
+        }
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   // Handle form input changes
   function handleInputChange(e) {
@@ -974,10 +1045,11 @@ export default function AdminPage() {
         </div>
 
         {/* Search results count */}
+        {/* Replace the existing search results count with this */}
         {searchQuery && (
           <div className="mb-4 text-sm text-gray-600">
-            Found {filteredProfiles.length} profile
-            {filteredProfiles.length !== 1 ? "s" : ""} matching "{searchQuery}"
+            Found {totalCount} profile{totalCount !== 1 ? "s" : ""} matching "
+            {searchQuery}"
           </div>
         )}
 
@@ -1068,6 +1140,76 @@ export default function AdminPage() {
                 </div>
               ))
             )}
+          </div>
+        )}
+
+        {/* Pagination - Add this after the profiles grid */}
+        {!loading && !searchQuery && totalPages > 1 && (
+          <div className="flex justify-center items-center gap-2 mt-8 flex-wrap">
+            <button
+              onClick={() => {
+                setCurrentPage((p) => Math.max(1, p - 1));
+                fetchProfiles(currentPage - 1, searchQuery);
+              }}
+              disabled={currentPage === 1}
+              className="px-4 py-2 text-sm bg-gray-200 rounded-lg hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Previous
+            </button>
+
+            <div className="flex gap-1">
+              {Array.from({ length: Math.min(totalPages, 10) }, (_, i) => {
+                let pageNum;
+                if (totalPages <= 10) {
+                  pageNum = i + 1;
+                } else if (currentPage <= 6) {
+                  pageNum = i + 1;
+                } else if (currentPage >= totalPages - 5) {
+                  pageNum = totalPages - 9 + i;
+                } else {
+                  pageNum = currentPage - 5 + i;
+                }
+
+                if (pageNum < 1 || pageNum > totalPages) return null;
+
+                return (
+                  <button
+                    key={pageNum}
+                    onClick={() => {
+                      setCurrentPage(pageNum);
+                      fetchProfiles(pageNum, searchQuery);
+                    }}
+                    className={`w-10 h-10 rounded-lg text-sm font-medium transition ${
+                      currentPage === pageNum
+                        ? "bg-primary text-white"
+                        : "bg-gray-100 hover:bg-gray-200 text-gray-700"
+                    }`}
+                  >
+                    {pageNum}
+                  </button>
+                );
+              })}
+            </div>
+
+            <button
+              onClick={() => {
+                setCurrentPage((p) => Math.min(totalPages, p + 1));
+                fetchProfiles(currentPage + 1, searchQuery);
+              }}
+              disabled={currentPage === totalPages}
+              className="px-4 py-2 text-sm bg-gray-200 rounded-lg hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Next
+            </button>
+          </div>
+        )}
+
+        {/* Show total count */}
+        {!loading && (
+          <div className="text-center text-sm text-gray-500 mt-4">
+            {searchQuery
+              ? `Found ${totalCount} profile${totalCount !== 1 ? "s" : ""} matching "${searchQuery}"`
+              : `Showing ${profiles.length} of ${totalCount} profiles`}
           </div>
         )}
       </div>
