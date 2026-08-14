@@ -462,9 +462,9 @@ function CreditStore() {
 
             {/* 10-Credit Package Section - Separated Below Main Grid */}
             {tenCreditPackage && (
-              <div className="text-center border border-gray-20 rounded-lg mb-6">
-                <div className="bg-linear-to-r from-primary-50 to-accent-50 rounded-xl p-8 max-w-2xl mx-auto">
-                  <h3 className="text-3xl font-serif font-semibold text-red-200 mb-4">
+              <div className="text-center border border-gray-20 rounded-lg max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-6">
+                <div className="card p-8 max-w-2xl mx-auto">
+                  <h3 className="text-3xl font-serif font-semibold text-black mb-4">
                     Start Small, Test Premium Features
                   </h3>
                   <p className="text-text-secondary mb-6">
@@ -478,9 +478,9 @@ function CreditStore() {
                       <div className="text-4xl font-bold text-primary">
                         {tenCreditPackage.credits}
                       </div>
-                      <div className="text-sm text-white">Credits</div>
+                      <div className="text-sm text-text-secondary">Credits</div>
                     </div>
-                    <div className="text-2xl font-bold text-white">
+                    <div className="text-2xl font-bold text-black">
                       {formatPrice(tenCreditPackage.price)}
                     </div>
                     <div className="text-sm text-text-secondary">
