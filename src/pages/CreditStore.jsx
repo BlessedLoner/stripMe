@@ -459,6 +459,53 @@ function CreditStore() {
                 </div>
               ))}
             </div>
+
+            {/* 10-Credit Package Section - Separated Below Main Grid */}
+            {tenCreditPackage && (
+              <div className="text-center border border-gray-20 rounded-lg mb-6">
+                <div className="bg-linear-to-r from-primary-50 to-accent-50 rounded-xl p-8 max-w-2xl mx-auto">
+                  <h3 className="text-3xl font-serif font-semibold text-red-200 mb-4">
+                    Start Small, Test Premium Features
+                  </h3>
+                  <p className="text-text-secondary mb-6">
+                    Get {tenCreditPackage.credits} credits to test any premium
+                    feature. Perfect for trying out the platform before
+                    committing to larger packages.
+                  </p>
+
+                  <div className="flex items-center justify-center gap-4 mb-6">
+                    <div className="text-center">
+                      <div className="text-4xl font-bold text-primary">
+                        {tenCreditPackage.credits}
+                      </div>
+                      <div className="text-sm text-white">Credits</div>
+                    </div>
+                    <div className="text-2xl font-bold text-white">
+                      {formatPrice(tenCreditPackage.price)}
+                    </div>
+                    <div className="text-sm text-text-secondary">
+                      ${tenCreditPackage.pricePerCredit} per credit
+                    </div>
+                  </div>
+
+                  <button
+                    className="btn-primary"
+                    onClick={() =>
+                      handlePurchase({
+                        id: tenCreditPackage.id,
+                        name: `${tenCreditPackage.name} Package`,
+                        price: tenCreditPackage.price,
+                        credits:
+                          tenCreditPackage.credits + tenCreditPackage.bonus,
+                        type: "credit_package",
+                      })
+                    }
+                  >
+                    Purchase {tenCreditPackage.credits} Credits
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </section>
 
@@ -710,53 +757,6 @@ function CreditStore() {
                   </div>
                 </div>
               </div>
-
-              {/* 10-Credit Package Section - Separated Below Main Grid */}
-              {tenCreditPackage && (
-                <div className="text-center border border-gray-20 rounded-lg mb-6">
-                  <div className="bg-linear-to-r from-primary-50 to-accent-50 rounded-xl p-8 max-w-2xl mx-auto">
-                    <h3 className="text-3xl font-serif font-semibold text-red-200 mb-4">
-                      Start Small, Test Premium Features
-                    </h3>
-                    <p className="text-text-secondary mb-6">
-                      Get {tenCreditPackage.credits} credits to test any premium
-                      feature. Perfect for trying out the platform before
-                      committing to larger packages.
-                    </p>
-
-                    <div className="flex items-center justify-center gap-4 mb-6">
-                      <div className="text-center">
-                        <div className="text-4xl font-bold text-primary">
-                          {tenCreditPackage.credits}
-                        </div>
-                        <div className="text-sm text-white">Credits</div>
-                      </div>
-                      <div className="text-2xl font-bold text-white">
-                        {formatPrice(tenCreditPackage.price)}
-                      </div>
-                      <div className="text-sm text-text-secondary">
-                        ${tenCreditPackage.pricePerCredit} per credit
-                      </div>
-                    </div>
-
-                    <button
-                      className="btn-primary"
-                      onClick={() =>
-                        handlePurchase({
-                          id: tenCreditPackage.id,
-                          name: `${tenCreditPackage.name} Package`,
-                          price: tenCreditPackage.price,
-                          credits:
-                            tenCreditPackage.credits + tenCreditPackage.bonus,
-                          type: "credit_package",
-                        })
-                      }
-                    >
-                      Purchase {tenCreditPackage.credits} Credits
-                    </button>
-                  </div>
-                </div>
-              )}
             </div>
           </div>
         </section>
