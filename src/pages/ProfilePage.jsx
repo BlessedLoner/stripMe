@@ -200,18 +200,14 @@ export default function ProfilePage() {
 
     async function fetchRelated() {
       try {
-        // --------------------------------------------------------------
-        // AGE RANGE
-        // --------------------------------------------------------------
-        const minAge = member.age ? member.age - 5 : 18;
-        const maxAge = member.age ? member.age + 5 : 99;
+        const memberAge = Number(member.age) || 25;
 
-        // --------------------------------------------------------------
-        // LOCATION
-        // --------------------------------------------------------------
         const city = member.city?.trim();
         const state = member.state?.trim();
         const country = member.country?.trim();
+
+        const minAge = Math.max(18, memberAge - 5);
+        const maxAge = Math.min(99, memberAge + 5);
 
         console.log("🔍 Finding related profiles for:", {
           city,
@@ -222,61 +218,167 @@ export default function ProfilePage() {
         });
 
         // --------------------------------------------------------------
-        // STEP 1:
-        // Find profiles in the SAME:
-        //   - Country
-        //   - State
-        //   - City
-        // and within the SAME age range
+        // Helper: fetch profiles using a particular location level
         // --------------------------------------------------------------
-        let query = supabase
-          .from("fictional_profiles")
-          .select("*")
-          .neq("id", member.id)
-          .eq("is_deleted", false)
-          .gte("age", minAge)
-          .lte("age", maxAge)
-          .limit(50);
+        async function fetchProfiles({
+          useCity = false,
+          useState = false,
+          useCountry = false,
+          minAgeValue = minAge,
+          maxAgeValue = maxAge,
+        }) {
+          let query = supabase
+            .from("fictional_profiles")
+            .select("*")
+            .neq("id", member.id)
+            .eq("is_deleted", false)
+            .gte("age", minAgeValue)
+            .lte("age", maxAgeValue)
+            .limit(50);
 
-        // Country
-        if (country) {
-          query = query.ilike("country", country);
+          if (useCountry && country) {
+            query = query.ilike("country", country);
+          }
+
+          if (useState && state) {
+            query = query.ilike("state", state);
+          }
+
+          if (useCity && city) {
+            query = query.ilike("city", city);
+          }
+
+          const { data, error } = await query;
+
+          if (error) throw error;
+
+          return (data || []).map(normalizeProfile).filter(Boolean);
         }
 
-        // State
-        if (state) {
-          query = query.ilike("state", state);
-        }
+        // --------------------------------------------------------------
+        // We want up to 12 profiles.
+        // Start with the most relevant location.
+        // --------------------------------------------------------------
+        const selectedProfiles = [];
+        const selectedIds = new Set();
 
-        // City
-        if (city) {
-          query = query.ilike("city", city);
-        }
+        const addProfiles = (profiles, tier) => {
+          for (const profile of profiles) {
+            if (selectedProfiles.length >= 12) break;
 
-        const { data, error } = await query;
+            if (selectedIds.has(profile.id)) continue;
 
-        if (error) throw error;
+            selectedIds.add(profile.id);
 
-        let profiles = (data || []).map(normalizeProfile).filter(Boolean);
+            profile._relatedTier = tier;
 
-        console.log(
-          `📍 Found ${profiles.length} related profiles in ${city}, ${state}`,
-        );
+            selectedProfiles.push(profile);
+          }
+        };
 
         // --------------------------------------------------------------
-        // STEP 2:
-        // Smart ranking
-        //
-        // Since the query already guarantees the same city/state,
-        // location no longer needs to compete with other locations.
-        // We can use interests to rank the profiles.
+        // TIER 1
+        // Same city + state + country + age ±5
         // --------------------------------------------------------------
+        if (city && state && country) {
+          const sameCity = await fetchProfiles({
+            useCity: true,
+            useState: true,
+            useCountry: true,
+          });
 
+          console.log(
+            `📍 Tier 1: ${sameCity.length} profiles in ${city}, ${state}`,
+          );
+
+          addProfiles(sameCity, 1);
+        }
+
+        // --------------------------------------------------------------
+        // TIER 2
+        // Same state + country + age ±5
+        // --------------------------------------------------------------
+        if (selectedProfiles.length < 12 && state && country) {
+          const sameState = await fetchProfiles({
+            useState: true,
+            useCountry: true,
+          });
+
+          console.log(`📍 Tier 2: ${sameState.length} profiles in ${state}`);
+
+          addProfiles(sameState, 2);
+        }
+
+        // --------------------------------------------------------------
+        // TIER 3
+        // Same country + age ±5
+        // --------------------------------------------------------------
+        if (selectedProfiles.length < 12 && country) {
+          const sameCountry = await fetchProfiles({
+            useCountry: true,
+          });
+
+          console.log(
+            `🌎 Tier 3: ${sameCountry.length} profiles in ${country}`,
+          );
+
+          addProfiles(sameCountry, 3);
+        }
+
+        // --------------------------------------------------------------
+        // TIER 4
+        // Same country + broader age range
+        // --------------------------------------------------------------
+        if (selectedProfiles.length < 12 && country) {
+          const broaderMinAge = Math.max(18, memberAge - 10);
+          const broaderMaxAge = Math.min(99, memberAge + 10);
+
+          const broaderCountry = await fetchProfiles({
+            useCountry: true,
+            minAgeValue: broaderMinAge,
+            maxAgeValue: broaderMaxAge,
+          });
+
+          console.log(
+            `🌎 Tier 4: broader age range found ${broaderCountry.length}`,
+          );
+
+          addProfiles(broaderCountry, 4);
+        }
+
+        // --------------------------------------------------------------
+        // TIER 5
+        // Last resort: any active profile
+        // --------------------------------------------------------------
+        if (selectedProfiles.length < 12) {
+          const { data, error } = await supabase
+            .from("fictional_profiles")
+            .select("*")
+            .neq("id", member.id)
+            .eq("is_deleted", false)
+            .limit(50);
+
+          if (error) throw error;
+
+          const fallbackProfiles = (data || [])
+            .map(normalizeProfile)
+            .filter(Boolean);
+
+          console.log(
+            `🌍 Tier 5: fallback profiles found ${fallbackProfiles.length}`,
+          );
+
+          addProfiles(fallbackProfiles, 5);
+        }
+
+        // --------------------------------------------------------------
+        // RANK BY INTERESTS
+        // --------------------------------------------------------------
         const memberInterests = (member.interests || []).map((interest) =>
           String(interest).toLowerCase().trim(),
         );
 
-        profiles.forEach((profile) => {
+        selectedProfiles.forEach((profile) => {
           const profileInterests = (profile.interests || []).map((interest) =>
             String(interest).toLowerCase().trim(),
           );
@@ -285,64 +387,65 @@ export default function ProfilePage() {
             memberInterests.includes(interest),
           ).length;
 
-          profile._relatedScore = commonInterests;
+          profile._interestScore = commonInterests;
+
+          // Location tier is more important than interests.
+          // Lower tier = better location match.
+          profile._finalScore =
+            (6 - profile._relatedTier) * 100 + commonInterests * 10;
         });
 
         // --------------------------------------------------------------
-        // STEP 3:
-        // Sort by relevance
+        // SORT
         // --------------------------------------------------------------
-        profiles.sort((a, b) => {
-          return (b._relatedScore || 0) - (a._relatedScore || 0);
+        selectedProfiles.sort((a, b) => {
+          return b._finalScore - a._finalScore;
         });
 
         // --------------------------------------------------------------
-        // STEP 4:
-        // Slight randomization WITHOUT destroying relevance
-        //
-        // Profiles with the same score are shuffled together.
-        // Profiles with more matching interests remain higher.
+        // Randomize profiles with exactly the same score
         // --------------------------------------------------------------
-        const groupedProfiles = [];
+        const grouped = [];
 
         let currentGroup = [];
         let currentScore = null;
 
-        profiles.forEach((profile) => {
-          const score = profile._relatedScore || 0;
-
-          if (currentScore === null || score === currentScore) {
+        selectedProfiles.forEach((profile) => {
+          if (currentScore === null || profile._finalScore === currentScore) {
             currentGroup.push(profile);
           } else {
-            groupedProfiles.push(currentGroup);
+            grouped.push(currentGroup);
             currentGroup = [profile];
           }
 
-          currentScore = score;
+          currentScore = profile._finalScore;
         });
 
-        if (currentGroup.length > 0) {
-          groupedProfiles.push(currentGroup);
+        if (currentGroup.length) {
+          grouped.push(currentGroup);
         }
 
-        // Shuffle profiles only within the same relevance score
-        profiles = groupedProfiles.flatMap((group) => {
-          return group.sort(() => Math.random() - 0.5);
-        });
+        const finalProfiles = grouped.flatMap((group) =>
+          group.sort(() => Math.random() - 0.5),
+        );
 
         // --------------------------------------------------------------
-        // STEP 5:
-        // Show only 12
+        // Remove temporary fields
         // --------------------------------------------------------------
-        profiles = profiles.slice(0, 12);
-
-        // Remove temporary scoring property
-        profiles.forEach((profile) => {
-          delete profile._relatedScore;
+        finalProfiles.forEach((profile) => {
+          delete profile._relatedTier;
+          delete profile._interestScore;
+          delete profile._finalScore;
         });
+
+        const result = finalProfiles.slice(0, 12);
+
+        console.log(
+          `✅ Showing ${result.length} related profiles for ${member.display_name}`,
+        );
 
         if (active) {
-          setRelatedProfiles(profiles);
+          setRelatedProfiles(result);
         }
       } catch (err) {
         console.error("❌ Error fetching related profiles:", err);
