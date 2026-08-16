@@ -217,7 +217,6 @@ export default function Chat() {
     fetchMessages();
   }, [fetchMessages]);
 
-  /* ---------------- Realtime new messages ---------------- */
   useEffect(() => {
     if (!conversationId || !profileId || !recipientId) return;
 
@@ -234,17 +233,27 @@ export default function Chat() {
         async (payload) => {
           const newMsg = payload.new;
 
+          console.log("📨 Real message received:", newMsg);
+
           // ✅ FIX: Remove matching optimistic messages
           setOptimisticMessages((prev) => {
             // Check if this real message matches any optimistic message
             const hasMatch = prev.some((opt) => {
               // Match by content if both have content
-              if (
-                opt.content &&
-                newMsg.content &&
-                opt.content === newMsg.content
-              ) {
-                return true;
+              if (opt.content && newMsg.content) {
+                // Check if the real message content contains the optimistic content
+                // or if they're exactly the same
+                if (opt.content === newMsg.content) return true;
+                // Also check if the optimistic content is the original and real is masked
+                // (since backend masks it, they might not match exactly)
+                if (newMsg.was_masked && opt.content.length > 5) {
+                  // If the optimistic message had a number and the real one is masked
+                  const hasNumber = /\d/.test(opt.content);
+                  if (hasNumber && newMsg.content.includes("***********")) {
+                    return true;
+                  }
+                }
+                return false;
               }
               // Match by image_url if both have image
               if (
@@ -258,13 +267,21 @@ export default function Chat() {
             });
 
             if (hasMatch) {
-              // Remove ALL optimistic messages that match
+              console.log("🗑️ Removing matching optimistic messages");
               return prev.filter((opt) => {
-                // Keep if it doesn't match
+                // Keep optimistic messages that DON'T match
                 if (
                   opt.content &&
                   newMsg.content &&
                   opt.content === newMsg.content
+                ) {
+                  return false;
+                }
+                if (
+                  newMsg.was_masked &&
+                  opt.content &&
+                  /\d/.test(opt.content) &&
+                  newMsg.content.includes("***********")
                 ) {
                   return false;
                 }
@@ -281,11 +298,19 @@ export default function Chat() {
             return prev;
           });
 
-          // Add the real message
+          // ✅ Add the real message (only if not already in messages)
           setMessages((prev) => {
             if (prev.some((m) => m.id === newMsg.id)) return prev;
             return [...prev, newMsg];
           });
+
+          // ✅ Scroll to bottom after message arrives
+          setTimeout(() => {
+            bottomRef.current?.scrollIntoView({
+              behavior: "smooth",
+              block: "end",
+            });
+          }, 100);
         },
       )
       .subscribe();
@@ -821,7 +846,7 @@ export default function Chat() {
         </div>
       </div>
 
-      {/* Messages container - FIXED scrolling */}
+      {/* Messages container - ENHANCED with professional image+text display */}
       <div
         ref={messagesContainerRef}
         className="flex-1 overflow-y-auto p-4 space-y-4 min-h-0"
@@ -847,29 +872,46 @@ export default function Chat() {
                     : "bg-primary/10 text-black rounded-bl-sm"
                 } ${isSending ? "opacity-90" : ""}`}
               >
+                {/* ✅ Image with NO extra spacing - directly at top */}
                 {msg.image_url && (
-                  <img
-                    src={msg.image_url}
-                    onClick={() => setActiveImage(msg.image_url)}
-                    onLoad={() => {
-                      if (!initialScrollDone) {
-                        bottomRef.current?.scrollIntoView({
-                          behavior: "auto",
-                          block: "end",
-                        });
-
-                        setInitialScrollDone(true);
-                      }
-                    }}
-                    className="w-full rounded-t-2xl cursor-pointer"
-                    alt="attachment"
-                  />
+                  <div className="relative">
+                    <img
+                      src={msg.image_url}
+                      onClick={() => setActiveImage(msg.image_url)}
+                      onLoad={() => {
+                        if (!initialScrollDone) {
+                          bottomRef.current?.scrollIntoView({
+                            behavior: "auto",
+                            block: "end",
+                          });
+                          setInitialScrollDone(true);
+                        }
+                      }}
+                      className="w-full object-cover cursor-pointer"
+                      alt="attachment"
+                      style={{ maxHeight: "400px" }}
+                    />
+                    {/* ✅ Subtle gradient overlay at bottom of image if there's text */}
+                    {msg.content && (
+                      <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-black/30 to-transparent pointer-events-none"></div>
+                    )}
+                  </div>
                 )}
-                {msg.content && <div className="px-4 py-2">{msg.content}</div>}
 
-                {/* Status indicator inside the message bubble */}
+                {/* ✅ Text with proper padding - no extra space between image and text */}
+                {msg.content && (
+                  <div className={`px-4 py-3 ${msg.image_url ? "pt-2" : ""}`}>
+                    <p className="text-sm break-words leading-relaxed whitespace-pre-wrap">
+                      {msg.content}
+                    </p>
+                  </div>
+                )}
+
+                {/* ✅ Status indicator inside the message bubble */}
                 {isUser && (
-                  <div className="px-4 pb-2 flex items-center justify-end gap-1.5 text-xs">
+                  <div
+                    className={`px-4 pb-2 flex items-center justify-end gap-1.5 text-xs ${!msg.content && !msg.image_url ? "hidden" : ""}`}
+                  >
                     {isSending ? (
                       <>
                         <span className="text-white/60">Sending</span>
@@ -887,6 +929,13 @@ export default function Chat() {
                         <Check size={12} className="text-white/60" />
                       </>
                     ) : null}
+                  </div>
+                )}
+
+                {/* ✅ Timestamp for non-user messages */}
+                {!isUser && (msg.content || msg.image_url) && (
+                  <div className="px-4 pb-2 flex items-start text-xs text-gray-500">
+                    <span>{formatMessageTime(msg.created_at)}</span>
                   </div>
                 )}
               </div>
