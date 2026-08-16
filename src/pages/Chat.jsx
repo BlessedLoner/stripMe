@@ -428,7 +428,7 @@ export default function Chat() {
     return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   }
 
-  /* ---------------- Send message with OPTIMISTIC UPDATE ---------------- */
+  /* ---------------- Send message with optimistic update ---------------- */
   async function sendMessage() {
     if (sending) return;
     if ((!input.trim() && !imageFile) || !conversationId) return;
@@ -460,7 +460,7 @@ export default function Chat() {
       is_read: false,
       created_at: createdAt,
       is_optimistic: true,
-      status: "sending",
+      status: "sending", // 'sending' or 'sent'
     };
 
     // Add optimistic message immediately
@@ -475,6 +475,7 @@ export default function Chat() {
       removeImage();
     }
 
+    // Reset sending state after message is added
     setSending(true);
 
     try {
@@ -569,50 +570,38 @@ export default function Chat() {
         );
       }
 
-      // ✅ FIX: Send message via OPERATOR API instead of direct RPC
-      const API_URL = "https://operator-api-production-de23.up.railway.app";
+      // Send message via RPC
+      const CREDIT_COST = 1;
 
-      const response = await fetch(`${API_URL}/user/send-message`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          conversation_id: conversationId,
-          user_id: profileId,
-          content: messageText || "",
-          image_url: imageUrl || null,
-        }),
+      const { error } = await supabase.rpc("send_message_with_credits", {
+        p_conversation_id: conversationId,
+        p_sender_type: "real_user",
+        p_sender_user_id: profileId,
+        p_content: messageText || null,
+        p_image_url: imageUrl,
+        p_direction: "user_to_fictional",
+        p_credit_cost: CREDIT_COST,
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        console.error("API Error:", data);
-
+      if (error) {
+        console.error("RPC send error:", error);
         // Remove optimistic message on failure
         setOptimisticMessages((prev) => prev.filter((m) => m.id !== tempId));
         setInput(messageText);
 
-        if (data.error?.includes("Insufficient credits")) {
+        if (error.message?.includes("Insufficient credits")) {
           setShowOutOfCreditsModal(true);
         } else {
-          alert(data.error || "Failed to send message");
+          alert("Failed to send message");
         }
         return;
       }
 
-      // ✅ Success - update optimistic message status
+      // Update optimistic message status to "sent"
       setOptimisticMessages((prev) =>
         prev.map((m) =>
           m.id === tempId
-            ? {
-                ...m,
-                status: "sent",
-                sent_at: new Date().toISOString(),
-                // ✅ The actual message will come from real-time subscription
-                // with the masked content from the backend
-              }
+            ? { ...m, status: "sent", sent_at: new Date().toISOString() }
             : m,
         ),
       );
@@ -627,13 +616,12 @@ export default function Chat() {
       // Refresh credits
       await loadCredits();
 
-      // The real-time subscription will add the actual masked message
+      // The real-time subscription will add the actual message
       // The optimistic message will be cleaned up there
     } catch (err) {
       console.error("Send message error:", err);
       setOptimisticMessages((prev) => prev.filter((m) => m.id !== tempId));
-      setInput(messageText);
-      alert("Failed to send message. Please try again.");
+      alert("Failed to send message");
     } finally {
       setSending(false);
     }
