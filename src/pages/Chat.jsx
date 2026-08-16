@@ -217,8 +217,7 @@ export default function Chat() {
     fetchMessages();
   }, [fetchMessages]);
 
-  /* ---------------- Realtime ---------------- */
-
+  /* ---------------- Realtime new messages ---------------- */
   useEffect(() => {
     if (!conversationId || !profileId || !recipientId) return;
 
@@ -235,40 +234,58 @@ export default function Chat() {
         async (payload) => {
           const newMsg = payload.new;
 
-          console.log("📨 Real message received:", newMsg);
-
-          // ✅ If this is the user's own message, use original_content
-          if (newMsg.sender_user_id === profileId) {
-            // Show original content to the user
-            const displayMsg = {
-              ...newMsg,
-              content: newMsg.original_content || newMsg.content,
-            };
-
-            // Remove optimistic messages
-            setOptimisticMessages((prev) => {
-              // ... matching logic
+          // ✅ FIX: Remove matching optimistic messages
+          setOptimisticMessages((prev) => {
+            // Check if this real message matches any optimistic message
+            const hasMatch = prev.some((opt) => {
+              // Match by content if both have content
+              if (
+                opt.content &&
+                newMsg.content &&
+                opt.content === newMsg.content
+              ) {
+                return true;
+              }
+              // Match by image_url if both have image
+              if (
+                opt.image_url &&
+                newMsg.image_url &&
+                opt.image_url === newMsg.image_url
+              ) {
+                return true;
+              }
+              return false;
             });
 
-            // Add the message with original content
-            setMessages((prev) => {
-              if (prev.some((m) => m.id === displayMsg.id)) return prev;
-              return [...prev, displayMsg];
-            });
-          } else {
-            // ✅ Message from fictional profile - show as-is
-            setMessages((prev) => {
-              if (prev.some((m) => m.id === newMsg.id)) return prev;
-              return [...prev, newMsg];
-            });
-          }
+            if (hasMatch) {
+              // Remove ALL optimistic messages that match
+              return prev.filter((opt) => {
+                // Keep if it doesn't match
+                if (
+                  opt.content &&
+                  newMsg.content &&
+                  opt.content === newMsg.content
+                ) {
+                  return false;
+                }
+                if (
+                  opt.image_url &&
+                  newMsg.image_url &&
+                  opt.image_url === newMsg.image_url
+                ) {
+                  return false;
+                }
+                return true;
+              });
+            }
+            return prev;
+          });
 
-          setTimeout(() => {
-            bottomRef.current?.scrollIntoView({
-              behavior: "smooth",
-              block: "end",
-            });
-          }, 100);
+          // Add the real message
+          setMessages((prev) => {
+            if (prev.some((m) => m.id === newMsg.id)) return prev;
+            return [...prev, newMsg];
+          });
         },
       )
       .subscribe();
@@ -436,8 +453,7 @@ export default function Chat() {
       conversation_id: conversationId,
       sender_type: "real_user",
       sender_user_id: profileId,
-      content: messageText,
-      original_content: messageText,
+      content: messageText || null,
       image_url: null,
       direction: "user_to_fictional",
       credit_cost: 1,
