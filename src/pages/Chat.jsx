@@ -217,6 +217,8 @@ export default function Chat() {
     fetchMessages();
   }, [fetchMessages]);
 
+  /* ---------------- Realtime ---------------- */
+
   useEffect(() => {
     if (!conversationId || !profileId || !recipientId) return;
 
@@ -235,76 +237,32 @@ export default function Chat() {
 
           console.log("📨 Real message received:", newMsg);
 
-          // ✅ FIX: Remove matching optimistic messages
-          setOptimisticMessages((prev) => {
-            // Check if this real message matches any optimistic message
-            const hasMatch = prev.some((opt) => {
-              // Match by content if both have content
-              if (opt.content && newMsg.content) {
-                // Check if the real message content contains the optimistic content
-                // or if they're exactly the same
-                if (opt.content === newMsg.content) return true;
-                // Also check if the optimistic content is the original and real is masked
-                // (since backend masks it, they might not match exactly)
-                if (newMsg.was_masked && opt.content.length > 5) {
-                  // If the optimistic message had a number and the real one is masked
-                  const hasNumber = /\d/.test(opt.content);
-                  if (hasNumber && newMsg.content.includes("***********")) {
-                    return true;
-                  }
-                }
-                return false;
-              }
-              // Match by image_url if both have image
-              if (
-                opt.image_url &&
-                newMsg.image_url &&
-                opt.image_url === newMsg.image_url
-              ) {
-                return true;
-              }
-              return false;
+          // ✅ If this is the user's own message, use original_content
+          if (newMsg.sender_user_id === profileId) {
+            // Show original content to the user
+            const displayMsg = {
+              ...newMsg,
+              content: newMsg.original_content || newMsg.content,
+            };
+
+            // Remove optimistic messages
+            setOptimisticMessages((prev) => {
+              // ... matching logic
             });
 
-            if (hasMatch) {
-              console.log("🗑️ Removing matching optimistic messages");
-              return prev.filter((opt) => {
-                // Keep optimistic messages that DON'T match
-                if (
-                  opt.content &&
-                  newMsg.content &&
-                  opt.content === newMsg.content
-                ) {
-                  return false;
-                }
-                if (
-                  newMsg.was_masked &&
-                  opt.content &&
-                  /\d/.test(opt.content) &&
-                  newMsg.content.includes("***********")
-                ) {
-                  return false;
-                }
-                if (
-                  opt.image_url &&
-                  newMsg.image_url &&
-                  opt.image_url === newMsg.image_url
-                ) {
-                  return false;
-                }
-                return true;
-              });
-            }
-            return prev;
-          });
+            // Add the message with original content
+            setMessages((prev) => {
+              if (prev.some((m) => m.id === displayMsg.id)) return prev;
+              return [...prev, displayMsg];
+            });
+          } else {
+            // ✅ Message from fictional profile - show as-is
+            setMessages((prev) => {
+              if (prev.some((m) => m.id === newMsg.id)) return prev;
+              return [...prev, newMsg];
+            });
+          }
 
-          // ✅ Add the real message (only if not already in messages)
-          setMessages((prev) => {
-            if (prev.some((m) => m.id === newMsg.id)) return prev;
-            return [...prev, newMsg];
-          });
-
-          // ✅ Scroll to bottom after message arrives
           setTimeout(() => {
             bottomRef.current?.scrollIntoView({
               behavior: "smooth",
@@ -478,7 +436,8 @@ export default function Chat() {
       conversation_id: conversationId,
       sender_type: "real_user",
       sender_user_id: profileId,
-      content: messageText || null,
+      content: messageText,
+      original_content: messageText,
       image_url: null,
       direction: "user_to_fictional",
       credit_cost: 1,
