@@ -413,9 +413,9 @@ function CreditStore() {
                           +{pkg.bonus} Bonus Credits
                         </div>
                       )}
-                      <div className="text-xs text-text-secondary">
+                      {/* <div className="text-xs text-text-secondary">
                         ${pkg.pricePerCredit} per credit
-                      </div>
+                      </div> */}
                     </div>
                   </div>
 
@@ -483,9 +483,9 @@ function CreditStore() {
                     <div className="text-2xl font-bold text-black">
                       {formatPrice(tenCreditPackage.price)}
                     </div>
-                    <div className="text-sm text-text-secondary">
+                    {/* <div className="text-sm text-text-secondary">
                       ${tenCreditPackage.pricePerCredit} per credit
-                    </div>
+                    </div> */}
                   </div>
 
                   <button
