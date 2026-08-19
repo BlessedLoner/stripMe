@@ -692,21 +692,31 @@ export default function Chat() {
             <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white"></div>
           </div>
 
-          <div className="flex flex-col min-w-0 flex-1">
+          <button
+            type="button"
+            onClick={() => {
+              if (recipientId) {
+                navigate(`/profile/${recipientId}`);
+              }
+            }}
+            className="flex flex-col min-w-0 flex-1 text-left cursor-pointer hover:opacity-80 transition"
+          >
             <div className="flex items-center gap-2">
               <span className="font-bold text-gray-800 truncate">
                 {fictionalName || "Unknown"}, {fictionalAge || "?"}
               </span>
+
               {isBlocked && (
                 <span className="text-xs bg-red-500 text-white px-2 py-0.5 rounded-full">
                   Blocked
                 </span>
               )}
             </div>
+
             <span className="text-xs text-gray-500 truncate">
               {fictionalState || "No State"}, {fictionalCity || "No City"}
             </span>
-          </div>
+          </button>
         </div>
 
         <div className="flex items-center gap-3 flex-shrink-0">
