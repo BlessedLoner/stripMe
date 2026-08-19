@@ -288,7 +288,7 @@ export default function AdminPage() {
   //   }
   // }
 
-  // Load profiles with pagination and search
+  // Load profiles with pagination, search, and country filter
   async function fetchProfiles(page = 1, search = "") {
     setLoading(true);
     setError(null);
@@ -299,6 +299,7 @@ export default function AdminPage() {
         .from("fictional_profiles")
         .select("*", { count: "exact" })
         .eq("is_deleted", false)
+        .eq("country", selectedCountry) // ✅ ADD THIS: Filter by selected country
         .order("created_at", { ascending: false });
 
       // Apply search if provided
@@ -403,7 +404,15 @@ export default function AdminPage() {
     }, 500);
 
     return () => clearTimeout(timer);
-  }, [searchQuery]);
+  }, [searchQuery, selectedCountry]); // ✅ ADD selectedCountry as dependency
+
+  // Refetch when country changes
+  useEffect(() => {
+    if (selectedCountry) {
+      setCurrentPage(1); // Reset to page 1
+      fetchProfiles(1, searchQuery);
+    }
+  }, [selectedCountry]); // ✅ Runs when country changes
 
   // Handle form input changes
   function handleInputChange(e) {
