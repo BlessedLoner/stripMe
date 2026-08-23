@@ -617,7 +617,7 @@ export default function MembersFromDB({ limit = 200 }) {
 
       {/* Members Grid */}
       <section className="card">
-        <div className="px-4 sm:px-3 lg:px-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-3 lg:px-2">
           <h2 className="text-xl font-semibold mb-4">Members</h2>
           {loading ? (
             <div className="text-center py-16">
