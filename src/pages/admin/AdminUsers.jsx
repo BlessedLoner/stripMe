@@ -86,9 +86,9 @@ export default function AdminUsers() {
     try {
       const { data, error } = await supabase
         .from("credits")
-        .select("*")
+        .select("balance")
         .eq("user_id", userId)
-        .maybeSingle();
+        .Single();
 
       if (error) {
         console.error("Error fetching credits:", error);
