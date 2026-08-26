@@ -27,6 +27,7 @@ import { supabase } from "./lib/supabaseClient";
 import ChatLayout from "./components/chat/ChatLayout";
 import AdminPage from "./pages/admin/AdminPage";
 import CityManagement from "./pages/admin/CityManagement";
+import AdminUsers from "./pages/admin/AdminUsers";
 import AdminRoute from "./pages/admin/AdminRoute";
 import AuthGate from "./components/AuthGate";
 import AuthCallback from "./pages/AuthCallback";
@@ -151,6 +152,16 @@ function AppRoutes() {
             <AuthGate>
               <AdminRoute user={user} profile={profile}>
                 <CityManagement />
+              </AdminRoute>
+            </AuthGate>
+          }
+        />
+        <Route
+          path="/admin/users"
+          element={
+            <AuthGate>
+              <AdminRoute user={user} profile={profile}>
+                <AdminUsers />
               </AdminRoute>
             </AuthGate>
           }
