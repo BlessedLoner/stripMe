@@ -86,7 +86,7 @@ export default function AdminUsers() {
     try {
       const { data, error } = await supabase
         .from("credits")
-        .select("balance, total_purchased, total_used")
+        .select("*")
         .eq("user_id", userId)
         .maybeSingle();
 
@@ -358,7 +358,7 @@ export default function AdminUsers() {
               <button
                 onClick={() => unblockUser(selectedUser.user_id)}
                 disabled={actionLoading}
-                className="w-full px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition disabled:opacity-50 text-sm"
+                className="w-full px-4 py-2 bg-primary hover:bg-green-600 text-white rounded-lg transition disabled:opacity-50 text-sm"
               >
                 Unblock User
               </button>
@@ -366,7 +366,7 @@ export default function AdminUsers() {
               <button
                 onClick={() => blockUser(selectedUser.user_id)}
                 disabled={actionLoading}
-                className="w-full px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition disabled:opacity-50 text-sm"
+                className="w-full px-4 py-2 bg-primary hover:bg-red-600 text-white rounded-lg transition disabled:opacity-50 text-sm"
               >
                 Block User
               </button>
@@ -376,8 +376,8 @@ export default function AdminUsers() {
               disabled={actionLoading}
               className={`w-full px-4 py-2 rounded-lg transition disabled:opacity-50 text-sm ${
                 isSuspended
-                  ? "bg-green-500 hover:bg-green-600 text-white"
-                  : "bg-yellow-500 hover:bg-yellow-600 text-white"
+                  ? "bg-primary hover:bg-green-600 text-white"
+                  : "bg-primary hover:bg-yellow-600 text-white"
               }`}
             >
               {isSuspended ? "Unsuspend User" : "Suspend User"}
