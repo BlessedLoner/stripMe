@@ -80,20 +80,29 @@ export default function AdminUsers() {
   }
 
   // Fetch credits for a user
-  async function fetchUserCredits(userId) {
-    if (!userId) return null;
+  async function fetchUserCredits(profileId) {
+    if (!profileId) return null;
 
     try {
+      console.log("💳 Fetching credits for profile:", profileId);
+
       const { data, error } = await supabase
         .from("credits")
         .select("balance")
-        .eq("user_id", userId)
-        .Single();
+        .eq("user_id", profileId)
+        .maybeSingle();
+
+      console.log("💳 ADMIN CREDIT RESULT:", {
+        profileId,
+        data,
+        error,
+      });
 
       if (error) {
         console.error("Error fetching credits:", error);
         return null;
       }
+
       return data;
     } catch (err) {
       console.error("Error fetching credits:", err);
@@ -254,10 +263,14 @@ export default function AdminUsers() {
     setSelectedUser(user);
     setShowUserModal(true);
 
-    // Fetch credits for this user
-    const credits = await fetchUserCredits(user.user_id);
+    // credits.user_id references user_profiles.id
+    const credits = await fetchUserCredits(user.id);
+
     if (credits) {
-      setUserCredits((prev) => ({ ...prev, [user.user_id]: credits }));
+      setUserCredits((prev) => ({
+        ...prev,
+        [user.id]: credits,
+      }));
     }
   }
 
@@ -311,7 +324,7 @@ export default function AdminUsers() {
 
     const isBlocked = isUserBlocked(selectedUser.user_id);
     const isSuspended = selectedUser.role === "suspended";
-    const credits = userCredits[selectedUser.user_id];
+    const credits = userCredits[selectedUser.id];
 
     return (
       <div className="space-y-6">
