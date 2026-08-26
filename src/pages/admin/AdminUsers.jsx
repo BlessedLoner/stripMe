@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabaseClient";
 import { useNavigate } from "react-router-dom";
 
+const ADMIN_API_URL = "https://operator-api-production-de23.up.railway.app";
+
 // List of supported countries
 const COUNTRIES = [
   { name: "United States", code: "US" },
@@ -21,7 +23,6 @@ export default function AdminUsers() {
   const [showUserModal, setShowUserModal] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
   const [blockedUsers, setBlockedUsers] = useState([]);
-  const [userCredits, setUserCredits] = useState({});
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
@@ -37,76 +38,64 @@ export default function AdminUsers() {
     setError(null);
 
     try {
-      // Build the query for user_profiles
-      let query = supabase
-        .from("user_profiles")
-        .select("*", { count: "exact" })
-        .eq("country", selectedCountry)
-        .order("created_at", { ascending: false });
+      const response = await fetch(`${ADMIN_API_URL}/admin/users`);
 
-      // Apply search if provided
-      if (search && search.trim().length >= 2) {
-        const term = search.trim();
-        query = query.or(
-          `display_name.ilike.%${term}%,bio.ilike.%${term}%,city.ilike.%${term}%,state.ilike.%${term}%`,
-        );
-        const { data, error, count } = await query;
-        if (error) throw error;
-
-        setUsers(data || []);
-        setTotalCount(count || 0);
-        setTotalPages(1);
-        setLoading(false);
-        return;
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
       }
 
-      // Paginate non-search queries
+      const result = await response.json();
+
+      if (!result.success) {
+        throw new Error(result.error || "Failed to load users");
+      }
+
+      let allUsers = result.users || [];
+
+      // Country filter
+      if (selectedCountry) {
+        allUsers = allUsers.filter((user) => user.country === selectedCountry);
+      }
+
+      // Search
+      if (search && search.trim().length >= 2) {
+        const term = search.trim().toLowerCase();
+
+        allUsers = allUsers.filter((user) => {
+          return (
+            user.display_name?.toLowerCase().includes(term) ||
+            user.email?.toLowerCase().includes(term) ||
+            user.bio?.toLowerCase().includes(term) ||
+            user.city?.toLowerCase().includes(term) ||
+            user.state?.toLowerCase().includes(term)
+          );
+        });
+      }
+
+      // Total count after filtering/search
+      const total = allUsers.length;
+
+      setTotalCount(total);
+      setTotalPages(Math.max(1, Math.ceil(total / limit)));
+
+      // Pagination
       const from = (page - 1) * limit;
-      const to = from + limit - 1;
-      query = query.range(from, to);
+      const to = from + limit;
 
-      const { data, error, count } = await query;
-      if (error) throw error;
+      const paginatedUsers = allUsers.slice(from, to);
 
-      setUsers(data || []);
-      setTotalCount(count || 0);
-      setTotalPages(Math.ceil((count || 0) / limit));
+      setUsers(paginatedUsers);
+
+      console.log("👥 ADMIN USERS:", {
+        totalUsers: total,
+        currentPage: page,
+        returnedUsers: paginatedUsers.length,
+      });
     } catch (err) {
       console.error("Error fetching users:", err);
       setError(err.message || "Failed to load users");
     } finally {
       setLoading(false);
-    }
-  }
-
-  // Fetch credits for a user
-  async function fetchUserCredits(profileId) {
-    if (!profileId) return null;
-
-    try {
-      console.log("💳 Fetching credits for profile:", profileId);
-
-      const { data, error } = await supabase
-        .from("credits")
-        .select("balance")
-        .eq("user_id", profileId)
-        .maybeSingle();
-
-      console.log("💳 ADMIN CREDIT RESULT:", {
-        profileId,
-        data,
-        error,
-      });
-
-      if (error) {
-        console.error("Error fetching credits:", error);
-        return null;
-      }
-
-      return data;
-    } catch (err) {
-      console.error("Error fetching credits:", err);
-      return null;
     }
   }
 
@@ -259,19 +248,9 @@ export default function AdminUsers() {
   }
 
   // Open user details modal
-  async function openUserModal(user) {
+  function openUserModal(user) {
     setSelectedUser(user);
     setShowUserModal(true);
-
-    // credits.user_id references user_profiles.id
-    const credits = await fetchUserCredits(user.id);
-
-    if (credits) {
-      setUserCredits((prev) => ({
-        ...prev,
-        [user.id]: credits,
-      }));
-    }
   }
 
   // Close modal
@@ -324,7 +303,7 @@ export default function AdminUsers() {
 
     const isBlocked = isUserBlocked(selectedUser.user_id);
     const isSuspended = selectedUser.role === "suspended";
-    const credits = userCredits[selectedUser.id];
+    const credits = selectedUser.credits;
 
     return (
       <div className="space-y-6">
@@ -403,22 +382,25 @@ export default function AdminUsers() {
           <h3 className="text-sm font-semibold text-gray-700 mb-2">
             💰 Credits
           </h3>
+
           <div className="grid grid-cols-3 gap-4">
             <div className="text-center">
               <p className="text-2xl font-bold text-blue-600">
-                {credits?.balance || 0}
+                {credits ? credits.balance : "N/A"}
               </p>
               <p className="text-xs text-gray-500">Balance</p>
             </div>
+
             <div className="text-center">
               <p className="text-2xl font-bold text-green-600">
-                {credits?.total_purchased || 0}
+                {credits?.total_purchased ?? 0}
               </p>
               <p className="text-xs text-gray-500">Total Purchased</p>
             </div>
+
             <div className="text-center">
               <p className="text-2xl font-bold text-orange-600">
-                {credits?.total_used || 0}
+                {credits?.total_used ?? 0}
               </p>
               <p className="text-xs text-gray-500">Total Used</p>
             </div>
