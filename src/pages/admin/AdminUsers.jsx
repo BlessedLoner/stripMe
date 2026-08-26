@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabaseClient";
 import { useNavigate } from "react-router-dom";
 
@@ -21,6 +21,7 @@ export default function AdminUsers() {
   const [showUserModal, setShowUserModal] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
   const [blockedUsers, setBlockedUsers] = useState([]);
+  const [userCredits, setUserCredits] = useState({});
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
@@ -36,23 +37,6 @@ export default function AdminUsers() {
     setError(null);
 
     try {
-      // First, get all user IDs from auth (for emails)
-      const { data: authUsers, error: authError } =
-        await supabase.auth.admin.listUsers();
-
-      if (authError) {
-        console.error("Auth error:", authError);
-        // Continue without emails if auth fails
-      }
-
-      // Create a map of user_id -> email
-      const emailMap = {};
-      if (authUsers?.users) {
-        authUsers.users.forEach((user) => {
-          emailMap[user.id] = user.email;
-        });
-      }
-
       // Build the query for user_profiles
       let query = supabase
         .from("user_profiles")
@@ -69,13 +53,7 @@ export default function AdminUsers() {
         const { data, error, count } = await query;
         if (error) throw error;
 
-        // Add emails to user data
-        const usersWithEmail = (data || []).map((user) => ({
-          ...user,
-          email: emailMap[user.user_id] || "No email found",
-        }));
-
-        setUsers(usersWithEmail);
+        setUsers(data || []);
         setTotalCount(count || 0);
         setTotalPages(1);
         setLoading(false);
@@ -90,13 +68,7 @@ export default function AdminUsers() {
       const { data, error, count } = await query;
       if (error) throw error;
 
-      // Add emails to user data
-      const usersWithEmail = (data || []).map((user) => ({
-        ...user,
-        email: emailMap[user.user_id] || "No email found",
-      }));
-
-      setUsers(usersWithEmail);
+      setUsers(data || []);
       setTotalCount(count || 0);
       setTotalPages(Math.ceil((count || 0) / limit));
     } catch (err) {
@@ -104,6 +76,28 @@ export default function AdminUsers() {
       setError(err.message || "Failed to load users");
     } finally {
       setLoading(false);
+    }
+  }
+
+  // Fetch credits for a user
+  async function fetchUserCredits(userId) {
+    if (!userId) return null;
+
+    try {
+      const { data, error } = await supabase
+        .from("credits")
+        .select("balance, total_purchased, total_used")
+        .eq("user_id", userId)
+        .maybeSingle();
+
+      if (error) {
+        console.error("Error fetching credits:", error);
+        return null;
+      }
+      return data;
+    } catch (err) {
+      console.error("Error fetching credits:", err);
+      return null;
     }
   }
 
@@ -127,38 +121,64 @@ export default function AdminUsers() {
     return blockedUsers.some((block) => block.user_profile_id === userId);
   }
 
-  // Block a user
+  // Block a user - FIXED
   async function blockUser(userId) {
-    if (!window.confirm(`Are you sure you want to block this user?`)) return;
+    if (
+      !window.confirm(
+        `Are you sure you want to block this user? They won't be able to message any fictional profiles.`,
+      )
+    )
+      return;
 
     setActionLoading(true);
     try {
-      // Get all fictional profiles to block (or block all)
-      const { data: fictionalProfiles } = await supabase
+      // Get all fictional profiles to block
+      const { data: fictionalProfiles, error: fetchError } = await supabase
         .from("fictional_profiles")
         .select("id")
         .eq("is_deleted", false);
 
-      if (fictionalProfiles) {
+      if (fetchError) throw fetchError;
+
+      if (fictionalProfiles && fictionalProfiles.length > 0) {
+        // ✅ FIX: Use upsert with proper conflict handling
         const blocks = fictionalProfiles.map((fp) => ({
           user_profile_id: userId,
           blocked_fictional_id: fp.id,
         }));
 
-        const { error } = await supabase
+        // Delete existing blocks first to avoid conflicts
+        const { error: deleteError } = await supabase
           .from("blocked_profiles")
-          .upsert(blocks, {
-            onConflict: "user_profile_id, blocked_fictional_id",
-          });
+          .delete()
+          .eq("user_profile_id", userId);
 
-        if (error) throw error;
+        if (deleteError) {
+          console.error("Delete error:", deleteError);
+        }
+
+        // Insert new blocks
+        const { error: insertError } = await supabase
+          .from("blocked_profiles")
+          .insert(blocks);
+
+        if (insertError) {
+          // If insert fails, try upsert as fallback
+          const { error: upsertError } = await supabase
+            .from("blocked_profiles")
+            .upsert(blocks, {
+              onConflict: "user_profile_id, blocked_fictional_id",
+            });
+
+          if (upsertError) throw upsertError;
+        }
       }
 
       await fetchBlockedUsers();
-      alert("User blocked successfully!");
+      alert("✅ User blocked successfully!");
     } catch (err) {
       console.error("Error blocking user:", err);
-      alert("Failed to block user");
+      alert("❌ Failed to block user: " + err.message);
     } finally {
       setActionLoading(false);
     }
@@ -178,19 +198,67 @@ export default function AdminUsers() {
       if (error) throw error;
 
       await fetchBlockedUsers();
-      alert("User unblocked successfully!");
+      alert("✅ User unblocked successfully!");
     } catch (err) {
       console.error("Error unblocking user:", err);
-      alert("Failed to unblock user");
+      alert("❌ Failed to unblock user: " + err.message);
+    } finally {
+      setActionLoading(false);
+    }
+  }
+
+  // Suspend a user (by updating their role)
+  async function suspendUser(userId, currentRole) {
+    const action = currentRole === "suspended" ? "unsuspend" : "suspend";
+    const confirmMsg =
+      action === "suspend"
+        ? "Are you sure you want to SUSPEND this user? They won't be able to log in or use the app."
+        : "Are you sure you want to UNSUSPEND this user?";
+
+    if (!window.confirm(confirmMsg)) return;
+
+    setActionLoading(true);
+    try {
+      const newRole = action === "suspend" ? "suspended" : "user";
+
+      const { error } = await supabase
+        .from("user_profiles")
+        .update({ role: newRole })
+        .eq("id", userId);
+
+      if (error) throw error;
+
+      // Update the user in the list
+      setUsers((prev) =>
+        prev.map((u) => (u.id === userId ? { ...u, role: newRole } : u)),
+      );
+
+      // If modal is open, update selected user
+      if (selectedUser && selectedUser.id === userId) {
+        setSelectedUser((prev) => ({ ...prev, role: newRole }));
+      }
+
+      alert(
+        `✅ User ${action === "suspend" ? "suspended" : "unsuspended"} successfully!`,
+      );
+    } catch (err) {
+      console.error("Error suspending user:", err);
+      alert("❌ Failed to " + action + " user: " + err.message);
     } finally {
       setActionLoading(false);
     }
   }
 
   // Open user details modal
-  function openUserModal(user) {
+  async function openUserModal(user) {
     setSelectedUser(user);
     setShowUserModal(true);
+
+    // Fetch credits for this user
+    const credits = await fetchUserCredits(user.user_id);
+    if (credits) {
+      setUserCredits((prev) => ({ ...prev, [user.user_id]: credits }));
+    }
   }
 
   // Close modal
@@ -242,6 +310,8 @@ export default function AdminUsers() {
     if (!selectedUser) return null;
 
     const isBlocked = isUserBlocked(selectedUser.user_id);
+    const isSuspended = selectedUser.role === "suspended";
+    const credits = userCredits[selectedUser.user_id];
 
     return (
       <div className="space-y-6">
@@ -262,7 +332,9 @@ export default function AdminUsers() {
             <h2 className="text-2xl font-bold text-gray-900">
               {selectedUser.display_name}
             </h2>
-            <p className="text-gray-500">{selectedUser.email}</p>
+            <p className="text-gray-500">
+              {selectedUser.email || "No email found"}
+            </p>
             <div className="flex flex-wrap gap-2 mt-1">
               <span className="text-sm bg-gray-100 px-2 py-1 rounded-full">
                 Age: {selectedUser.age || "N/A"}
@@ -270,17 +342,23 @@ export default function AdminUsers() {
               <span className="text-sm bg-gray-100 px-2 py-1 rounded-full">
                 {selectedUser.gender || "No gender"}
               </span>
-              <span className="text-sm bg-gray-100 px-2 py-1 rounded-full">
+              <span
+                className={`text-sm px-2 py-1 rounded-full ${
+                  isSuspended
+                    ? "bg-red-100 text-red-700"
+                    : "bg-green-100 text-green-700"
+                }`}
+              >
                 {selectedUser.role || "user"}
               </span>
             </div>
           </div>
-          <div className="flex-shrink-0">
+          <div className="flex-shrink-0 space-y-2">
             {isBlocked ? (
               <button
                 onClick={() => unblockUser(selectedUser.user_id)}
                 disabled={actionLoading}
-                className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition"
+                className="w-full px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition disabled:opacity-50 text-sm"
               >
                 Unblock User
               </button>
@@ -288,11 +366,49 @@ export default function AdminUsers() {
               <button
                 onClick={() => blockUser(selectedUser.user_id)}
                 disabled={actionLoading}
-                className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition"
+                className="w-full px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition disabled:opacity-50 text-sm"
               >
                 Block User
               </button>
             )}
+            <button
+              onClick={() => suspendUser(selectedUser.id, selectedUser.role)}
+              disabled={actionLoading}
+              className={`w-full px-4 py-2 rounded-lg transition disabled:opacity-50 text-sm ${
+                isSuspended
+                  ? "bg-green-500 hover:bg-green-600 text-white"
+                  : "bg-yellow-500 hover:bg-yellow-600 text-white"
+              }`}
+            >
+              {isSuspended ? "Unsuspend User" : "Suspend User"}
+            </button>
+          </div>
+        </div>
+
+        {/* Credits Section */}
+        <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-4 rounded-lg border border-blue-200">
+          <h3 className="text-sm font-semibold text-gray-700 mb-2">
+            💰 Credits
+          </h3>
+          <div className="grid grid-cols-3 gap-4">
+            <div className="text-center">
+              <p className="text-2xl font-bold text-blue-600">
+                {credits?.balance || 0}
+              </p>
+              <p className="text-xs text-gray-500">Balance</p>
+            </div>
+            <div className="text-center">
+              <p className="text-2xl font-bold text-green-600">
+                {credits?.total_purchased || 0}
+              </p>
+              <p className="text-xs text-gray-500">Total Purchased</p>
+            </div>
+            <div className="text-center">
+              <p className="text-2xl font-bold text-orange-600">
+                {credits?.total_used || 0}
+              </p>
+              <p className="text-xs text-gray-500">Total Used</p>
+            </div>
           </div>
         </div>
 
@@ -472,7 +588,7 @@ export default function AdminUsers() {
   }
 
   return (
-    <div className="min-h-screen bg-background p-4 sm:p-6 lg:p-8">
+    <div className="min-h-screen bg-background pt-16 p-4 sm:p-6 lg:p-8">
       <div className="max-w-7xl mx-auto">
         {/* Country Header */}
         <div className="bg-white rounded-lg shadow mb-8 overflow-x-auto">
@@ -572,11 +688,14 @@ export default function AdminUsers() {
             ) : (
               users.map((user) => {
                 const isBlocked = isUserBlocked(user.user_id);
+                const isSuspended = user.role === "suspended";
                 return (
                   <div
                     key={user.id}
                     onClick={() => openUserModal(user)}
-                    className="bg-white rounded-lg shadow-md overflow-hidden cursor-pointer transition transform hover:-translate-y-1 hover:shadow-lg"
+                    className={`bg-white rounded-lg shadow-md overflow-hidden cursor-pointer transition transform hover:-translate-y-1 hover:shadow-lg ${
+                      isSuspended ? "opacity-60 border-2 border-red-300" : ""
+                    }`}
                   >
                     {user.profile_img ? (
                       <img
@@ -595,11 +714,18 @@ export default function AdminUsers() {
                         <h2 className="text-xl font-semibold text-gray-800 mb-1">
                           {user.display_name}
                         </h2>
-                        {isBlocked && (
-                          <span className="text-xs bg-red-100 text-red-600 px-2 py-1 rounded-full">
-                            Blocked
-                          </span>
-                        )}
+                        <div className="flex gap-1">
+                          {isBlocked && (
+                            <span className="text-xs bg-primary text-red-600 px-2 py-1 rounded-full">
+                              Blocked
+                            </span>
+                          )}
+                          {isSuspended && (
+                            <span className="text-xs bg-primary text-orange-600 px-2 py-1 rounded-full">
+                              Suspended
+                            </span>
+                          )}
+                        </div>
                       </div>
                       <p className="text-gray-500 text-sm">
                         {user.email || "No email"}
@@ -623,29 +749,6 @@ export default function AdminUsers() {
                         >
                           View Details
                         </button>
-                        {isBlocked ? (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              unblockUser(user.user_id);
-                            }}
-                            disabled={actionLoading}
-                            className="px-3 py-1.5 text-sm bg-green-500 hover:bg-green-600 text-white rounded transition disabled:opacity-50"
-                          >
-                            Unblock
-                          </button>
-                        ) : (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              blockUser(user.user_id);
-                            }}
-                            disabled={actionLoading}
-                            className="px-3 py-1.5 text-sm bg-red-500 hover:bg-red-600 text-white rounded transition disabled:opacity-50"
-                          >
-                            Block
-                          </button>
-                        )}
                       </div>
                     </div>
                   </div>
