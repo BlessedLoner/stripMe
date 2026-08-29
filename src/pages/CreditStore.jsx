@@ -11,10 +11,16 @@ import { loadStripe } from "@stripe/stripe-js";
 import { Elements } from "@stripe/react-stripe-js";
 import StripePaymentForm from "../components/StripePaymentForm";
 
-const stripePromise = loadStripe(
-  import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY,
-);
+// const stripePromise = loadStripe(
+//   import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY,
+// );
 
+const stripeKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
+
+console.log("Stripe key exists:", !!stripeKey);
+console.log("Stripe key prefix:", stripeKey?.slice(0, 7));
+
+const stripePromise = stripeKey ? loadStripe(stripeKey) : null;
 
 function CreditStore() {
   const [currentBalance, setCurrentBalance] = useState(0);
@@ -274,11 +280,11 @@ const [paymentLoading, setPaymentLoading] = useState(false);
   //   }
   // };
 
-  const handlePurchase = (product) => {
+const handlePurchase = async (product) => {
   setSelectedProduct(product);
 
   if (product.type === "credit_package") {
-    setShowPaymentModal(true);
+    await createPaymentIntent(product.id);
   } else if (product.type === "subscription") {
     // Handle subscription purchase later
   }
