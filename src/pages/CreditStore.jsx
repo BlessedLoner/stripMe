@@ -7,6 +7,14 @@ import { supabase } from "../lib/supabaseClient"; // Assuming you have Supabase 
 import { useAuth } from "../context/AuthContext"; // Assuming you have auth context
 import { LoveSpinner } from "../components/Spinner";
 import { Link } from "react-router-dom";
+import { loadStripe } from "@stripe/stripe-js";
+import { Elements } from "@stripe/react-stripe-js";
+import StripePaymentForm from "../components/StripePaymentForm";
+
+const stripePromise = loadStripe(
+  import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY,
+);
+
 
 function CreditStore() {
   const [currentBalance, setCurrentBalance] = useState(0);
@@ -15,10 +23,15 @@ function CreditStore() {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
+
+  const [clientSecret, setClientSecret] = useState(null);
+const [paymentPackage, setPaymentPackage] = useState(null);
+const [paymentLoading, setPaymentLoading] = useState(false);
+
   const [loading, setLoading] = useState(true);
   const [lastPurchaseDate, setLastPurchaseDate] = useState(null);
 
-  const { user } = useAuth(); // Get current user from auth context
+  const { user, session } = useAuth();// Get current user from auth context
 
   const fetchUserBalance = async () => {
     if (!user) return;
@@ -190,17 +203,86 @@ function CreditStore() {
     }
   };
 
-  // Handle purchase button click
-  const handlePurchase = async (product) => {
-    setSelectedProduct(product);
+    // ==========================================
+// CREATE STRIPE PAYMENT INTENT
+// ==========================================
 
-    if (product.type === "credit_package") {
-      // Use Stripe for credit packages
-      await buyCredits(product.id);
-    } else if (product.type === "subscription") {
-      // Handle subscription purchase
+  const createPaymentIntent = async (packageId) => {
+  if (!user) {
+    alert("Please login to purchase credits");
+    return;
+  }
+
+  if (!session?.access_token) {
+    alert("Your login session has expired. Please log in again.");
+    return;
+  }
+
+  setPaymentLoading(true);
+  setClientSecret(null);
+  setPaymentPackage(null);
+
+  try {
+    console.log("💳 Creating PaymentIntent for package:", packageId);
+
+    const res = await fetch(
+      "https://operator-api-production-de23.up.railway.app/payments/create-payment-intent",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          package_id: packageId,
+        }),
+      },
+    );
+
+    const data = await res.json();
+
+    console.log("💳 PaymentIntent response:", data);
+
+    if (!res.ok) {
+      throw new Error(data.error || "Failed to create payment");
     }
-  };
+
+    if (!data.clientSecret) {
+      throw new Error("Payment client secret was not returned");
+    }
+
+    setClientSecret(data.clientSecret);
+    setPaymentPackage(data.package);
+    setShowPaymentModal(true);
+  } catch (error) {
+    console.error("❌ Payment initialization error:", error);
+    alert(error.message || "Failed to initialize payment.");
+  } finally {
+    setPaymentLoading(false);
+  }
+};
+
+  // Handle purchase button click
+  // const handlePurchase = async (product) => {
+  //   setSelectedProduct(product);
+
+  //   if (product.type === "credit_package") {
+  //     // Use Stripe for credit packages
+  //     await buyCredits(product.id);
+  //   } else if (product.type === "subscription") {
+  //     // Handle subscription purchase
+  //   }
+  // };
+
+  const handlePurchase = (product) => {
+  setSelectedProduct(product);
+
+  if (product.type === "credit_package") {
+    setShowPaymentModal(true);
+  } else if (product.type === "subscription") {
+    // Handle subscription purchase later
+  }
+};
 
   // Format price display
   const formatPrice = (price) => {
@@ -255,6 +337,7 @@ function CreditStore() {
 
     checkPaymentStatus();
   }, []);
+
 
   if (loading) {
     return (
@@ -907,6 +990,75 @@ function CreditStore() {
             </div>
           </div>
         </section>
+
+        {showPaymentModal && clientSecret && paymentPackage && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+    <div className="w-full max-w-md max-h-[90vh] overflow-y-auto rounded-2xl bg-white p-6 shadow-2xl">
+
+      {/* Header */}
+      <div className="mb-5 flex items-center justify-between">
+        <div>
+          <h2 className="text-xl font-bold text-gray-900">
+            Purchase Credits
+          </h2>
+
+          <p className="text-sm text-gray-500">
+            Secure payment
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => {
+            setShowPaymentModal(false);
+            setClientSecret(null);
+            setPaymentPackage(null);
+            setSelectedProduct(null);
+          }}
+          className="text-2xl text-gray-500 hover:text-gray-900"
+        >
+          ×
+        </button>
+      </div>
+
+      {/* Stripe Payment Form */}
+      <Elements
+        stripe={stripePromise}
+        options={{
+          clientSecret,
+          appearance: {
+            theme: "stripe",
+          },
+        }}
+      >
+        <StripePaymentForm
+          clientSecret={clientSecret}
+          packageInfo={paymentPackage}
+          onSuccess={async () => {
+            console.log("✅ Payment completed");
+
+            setShowPaymentModal(false);
+            setClientSecret(null);
+            setPaymentPackage(null);
+            setSelectedProduct(null);
+
+            // Give Stripe webhook time to add credits
+            setTimeout(async () => {
+              await fetchUserBalance();
+              await fetchLastPurchaseDate();
+            }, 1500);
+          }}
+          onCancel={() => {
+            setShowPaymentModal(false);
+            setClientSecret(null);
+            setPaymentPackage(null);
+            setSelectedProduct(null);
+          }}
+        />
+      </Elements>
+    </div>
+  </div>
+)}
 
         <footer className="bg-text-primary text-white py-10">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
