@@ -257,7 +257,7 @@ export default function MembersFromDB({ limit = 200 }) {
     async function loadNeighbors() {
       const { data, error } = await supabase
         .from("state_neighbors")
-        .select("neighbor_state_name")
+        .select("*")
         .eq("state_name", filters.state)
         .eq("country_code", currentUser.country);
 
@@ -266,7 +266,7 @@ export default function MembersFromDB({ limit = 200 }) {
         return;
       }
 
-      setNeighborStates(data.map((item) => item.neighbor_state_name) || []);
+      setNeighborStates(data.map((item) => item) || []);
     }
 
     loadNeighbors();
