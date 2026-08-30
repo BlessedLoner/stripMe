@@ -11,16 +11,9 @@ import { loadStripe } from "@stripe/stripe-js";
 import { Elements } from "@stripe/react-stripe-js";
 import StripePaymentForm from "../components/StripePaymentForm";
 
-// const stripePromise = loadStripe(
-//   import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY,
-// );
-
-const stripeKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
-
-console.log("Stripe key exists:", !!stripeKey);
-console.log("Stripe key prefix:", stripeKey?.slice(0, 7));
-
-const stripePromise = stripeKey ? loadStripe(stripeKey) : null;
+const stripePromise = loadStripe(
+  import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY,
+);
 
 function CreditStore() {
   const [currentBalance, setCurrentBalance] = useState(0);
