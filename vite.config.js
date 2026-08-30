@@ -3,10 +3,10 @@ import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 
 export default defineConfig(({ mode }) => {
-  // Load env vars based on mode (production, development, etc.)
+  // Load env vars for the current mode
   const env = loadEnv(mode, process.cwd(), '');
   
-  // Get the key from env
+  // Get the key
   const stripeKey = env.VITE_STRIPE_PUBLISHABLE_KEY || '';
   
   console.log("========== VITE BUILD DEBUG ==========");
@@ -19,9 +19,11 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [react(), tailwindcss()],
     define: {
-      // ✅ FORCE the value to be inlined
+      // Force inline the environment variable
       'import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY': JSON.stringify(stripeKey),
     },
+    // ✅ Add this to ensure proper env handling
+    envPrefix: ['VITE_'],
   };
 });
 

@@ -7,13 +7,9 @@ import { supabase } from "../lib/supabaseClient"; // Assuming you have Supabase 
 import { useAuth } from "../context/AuthContext"; // Assuming you have auth context
 import { LoveSpinner } from "../components/Spinner";
 import { Link } from "react-router-dom";
-import { loadStripe } from "@stripe/stripe-js";
 import { Elements } from "@stripe/react-stripe-js";
+import { getStripe, getStripeKey } from "../lib/stripe";
 import StripePaymentForm from "../components/StripePaymentForm";
-
-const stripePromise = loadStripe(
-  import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY,
-);
 
 function CreditStore() {
   const [currentBalance, setCurrentBalance] = useState(0);
@@ -27,10 +23,26 @@ function CreditStore() {
 const [paymentPackage, setPaymentPackage] = useState(null);
 const [paymentLoading, setPaymentLoading] = useState(false);
 
+// Add a state for Stripe promise
+const [stripePromise, setStripePromise] = useState(null);
+
   const [loading, setLoading] = useState(true);
   const [lastPurchaseDate, setLastPurchaseDate] = useState(null);
 
   const { user, session } = useAuth();// Get current user from auth context
+
+  // Load Stripe when component mounts
+useEffect(() => {
+  const key = getStripeKey();
+  console.log('📝 Stripe key at mount:', key?.substring(0, 7));
+  
+  if (key && key !== '') {
+    const stripe = getStripe();
+    setStripePromise(stripe);
+  } else {
+    console.error('❌ Cannot load Stripe: No key available');
+  }
+}, []);
 
   const fetchUserBalance = async () => {
     if (!user) return;
