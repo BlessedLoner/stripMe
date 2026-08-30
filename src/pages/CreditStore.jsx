@@ -35,7 +35,6 @@ const [paymentPackage, setPaymentPackage] = useState(null);
 
 const [paymentLoading, setPaymentLoading] = useState(false);
 const [paymentError, setPaymentError] = useState("");
-const [loadingPackageId, setLoadingPackageId] = useState(null);
 
   const [loading, setLoading] = useState(true);
   const [lastPurchaseDate, setLastPurchaseDate] = useState(null);
@@ -284,14 +283,13 @@ const [loadingPackageId, setLoadingPackageId] = useState(null);
   // };
 
 const handlePurchase = async (product) => {
-  // Prevent multiple payment requests
-  if (loadingPackageId) return;
+  if (paymentLoading) return;
 
   setSelectedProduct(product);
   setPaymentError("");
-  setLoadingPackageId(product.id);
+  setPaymentLoading(true);
 
-  // Open the payment modal immediately
+  // Open the modal immediately.
   setShowPaymentModal(true);
 
   try {
@@ -307,7 +305,7 @@ const handlePurchase = async (product) => {
       error?.message || "Unable to prepare payment. Please try again.",
     );
   } finally {
-    setLoadingPackageId(null);
+    setPaymentLoading(false);
   }
 };
 
@@ -548,45 +546,36 @@ const handlePurchase = async (product) => {
                     ))}
                   </ul>
 
-{/*
-  Check whether THIS package is currently being prepared.
-*/}
-{(() => {
-  const isLoading = loadingPackageId === pkg.id;
-
-  return (
-    <button
-      disabled={loadingPackageId !== null}
-      className={`btn-primary w-full justify-center ${
-        pkg.name.includes("Premium")
-          ? "bg-secondary hover:bg-secondary-600"
-          : ""
-      } ${
-        isLoading
-          ? "cursor-wait opacity-70"
-          : ""
-      }`}
-      onClick={() =>
-        handlePurchase({
-          id: pkg.id,
-          name: `${pkg.name} Package`,
-          price: pkg.price,
-          credits: pkg.credits + pkg.bonus,
-          type: "credit_package",
-        })
-      }
-    >
-      {isLoading ? (
-        <>
-          <span className="mr-2 inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-          Preparing...
-        </>
-      ) : (
-        `Purchase ${pkg.name}`
-      )}
-    </button>
-  );
-})()}
+              <button
+  disabled={paymentLoading}
+  className={`btn-primary w-full justify-center ${
+    pkg.name.includes("Premium")
+      ? "bg-secondary hover:bg-secondary-600"
+      : ""
+  } ${
+    paymentLoading
+      ? "cursor-wait opacity-70"
+      : ""
+  }`}
+  onClick={() =>
+    handlePurchase({
+      id: pkg.id,
+      name: `${pkg.name} Package`,
+      price: pkg.price,
+      credits: pkg.credits + pkg.bonus,
+      type: "credit_package",
+    })
+  }
+>
+  {paymentLoading ? (
+    <>
+      <span className="mr-2 inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+      Preparing payment...
+    </>
+  ) : (
+    `Purchase ${pkg.name}`
+  )}
+</button>
                 </div>
               ))}
             </div>
