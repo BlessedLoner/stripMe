@@ -32,9 +32,7 @@ function CreditStore() {
 
   const [clientSecret, setClientSecret] = useState(null);
 const [paymentPackage, setPaymentPackage] = useState(null);
-
 const [paymentLoading, setPaymentLoading] = useState(false);
-const [paymentError, setPaymentError] = useState("");
 
   const [loading, setLoading] = useState(true);
   const [lastPurchaseDate, setLastPurchaseDate] = useState(null);
@@ -283,29 +281,12 @@ const [paymentError, setPaymentError] = useState("");
   // };
 
 const handlePurchase = async (product) => {
-  if (paymentLoading) return;
-
   setSelectedProduct(product);
-  setPaymentError("");
-  setPaymentLoading(true);
 
-  // Open the modal immediately.
-  setShowPaymentModal(true);
-
-  try {
-    if (product.type === "credit_package") {
-      await createPaymentIntent(product.id);
-    } else if (product.type === "subscription") {
-      // Handle subscription purchase later
-    }
-  } catch (error) {
-    console.error("❌ Payment initialization failed:", error);
-
-    setPaymentError(
-      error?.message || "Unable to prepare payment. Please try again.",
-    );
-  } finally {
-    setPaymentLoading(false);
+  if (product.type === "credit_package") {
+    await createPaymentIntent(product.id);
+  } else if (product.type === "subscription") {
+    // Handle subscription purchase later
   }
 };
 
@@ -546,36 +527,24 @@ const handlePurchase = async (product) => {
                     ))}
                   </ul>
 
-              <button
-  disabled={paymentLoading}
-  className={`btn-primary w-full justify-center ${
-    pkg.name.includes("Premium")
-      ? "bg-secondary hover:bg-secondary-600"
-      : ""
-  } ${
-    paymentLoading
-      ? "cursor-wait opacity-70"
-      : ""
-  }`}
-  onClick={() =>
-    handlePurchase({
-      id: pkg.id,
-      name: `${pkg.name} Package`,
-      price: pkg.price,
-      credits: pkg.credits + pkg.bonus,
-      type: "credit_package",
-    })
-  }
->
-  {paymentLoading ? (
-    <>
-      <span className="mr-2 inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-      Preparing payment...
-    </>
-  ) : (
-    `Purchase ${pkg.name}`
-  )}
-</button>
+                  <button
+                    className={`btn-primary w-full justify-center ${
+                      pkg.name.includes("Premium")
+                        ? "bg-secondary hover:bg-secondary-600"
+                        : ""
+                    }`}
+                    onClick={() =>
+                      handlePurchase({
+                        id: pkg.id,
+                        name: `${pkg.name} Package`,
+                        price: pkg.price,
+                        credits: pkg.credits + pkg.bonus,
+                        type: "credit_package",
+                      })
+                    }
+                  >
+                    Purchase {pkg.name}
+                  </button>
                 </div>
               ))}
             </div>
@@ -1028,67 +997,71 @@ const handlePurchase = async (product) => {
           </div>
         </section>
 
-        {showPaymentModal && (
+        {showPaymentModal && clientSecret && paymentPackage && (
   <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-    <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl">
+    <div className="w-full max-w-md max-h-[90vh] overflow-y-auto rounded-2xl bg-white p-6 shadow-2xl">
 
       {/* Header */}
       <div className="mb-5 flex items-center justify-between">
         <div>
           <h2 className="text-xl font-bold text-gray-900">
-            Complete Payment
+            Purchase Credits
           </h2>
 
-          {selectedProduct && (
-            <p className="text-sm text-gray-500">
-              {selectedProduct.name}
-            </p>
-          )}
+          <p className="text-sm text-gray-500">
+            Secure payment
+          </p>
         </div>
 
-        {!paymentLoading && (
-          <button
-            onClick={() => setShowPaymentModal(false)}
-            className="text-gray-400 hover:text-gray-700"
-          >
-            ✕
-          </button>
-        )}
+        <button
+          type="button"
+          onClick={() => {
+            setShowPaymentModal(false);
+            setClientSecret(null);
+            setPaymentPackage(null);
+            setSelectedProduct(null);
+          }}
+          className="text-2xl text-gray-500 hover:text-gray-900"
+        >
+          ×
+        </button>
       </div>
 
-      {/* Loading state */}
-      {paymentLoading && (
-        <div className="flex flex-col items-center justify-center py-12">
-          <div className="mb-4 h-10 w-10 animate-spin rounded-full border-4 border-gray-200 border-t-primary" />
+      {/* Stripe Payment Form */}
+      <Elements
+        stripe={stripePromise}
+        options={{
+          clientSecret,
+          appearance: {
+            theme: "stripe",
+          },
+        }}
+      >
+        <StripePaymentForm
+          clientSecret={clientSecret}
+          packageInfo={paymentPackage}
+          onSuccess={async () => {
+            console.log("✅ Payment completed");
 
-          <p className="font-medium text-gray-900">
-            Preparing secure payment...
-          </p>
+            setShowPaymentModal(false);
+            setClientSecret(null);
+            setPaymentPackage(null);
+            setSelectedProduct(null);
 
-          <p className="mt-1 text-sm text-gray-500">
-            Please wait a moment.
-          </p>
-        </div>
-      )}
-
-      {/* Stripe form */}
-      {!paymentLoading && clientSecret && (
-        <StripePaymentProvider clientSecret={clientSecret}>
-          <StripePaymentForm
-            clientSecret={clientSecret}
-            packageInfo={packageInfo}
-            onSuccess={handlePaymentSuccess}
-            onCancel={() => setShowPaymentModal(false)}
-          />
-        </StripePaymentProvider>
-      )}
-
-      {/* Error */}
-      {paymentError && (
-        <div className="mt-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-          {paymentError}
-        </div>
-      )}
+            // Give Stripe webhook time to add credits
+            setTimeout(async () => {
+              await fetchUserBalance();
+              await fetchLastPurchaseDate();
+            }, 1500);
+          }}
+          onCancel={() => {
+            setShowPaymentModal(false);
+            setClientSecret(null);
+            setPaymentPackage(null);
+            setSelectedProduct(null);
+          }}
+        />
+      </Elements>
     </div>
   </div>
 )}
