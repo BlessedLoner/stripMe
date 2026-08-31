@@ -1,5 +1,4 @@
-
- import { loadStripe } from "@stripe/stripe-js";
+import { loadStripe } from "@stripe/stripe-js";
 import { Elements } from "@stripe/react-stripe-js";
 
 // const stripePromise = loadStripe(
@@ -14,9 +13,5 @@ console.log("Stripe key prefix:", stripeKey?.slice(0, 7));
 const stripePromise = stripeKey ? loadStripe(stripeKey) : null;
 
 export default function StripePaymentProvider({ children }) {
-  return (
-    <Elements stripe={stripePromise}>
-      {children}
-    </Elements>
-  );
+  return <Elements stripe={stripePromise}>{children}</Elements>;
 }
