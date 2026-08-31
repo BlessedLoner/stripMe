@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import nipple1 from "../assets/nipple1.jpg";
 import nastypics1 from "../assets/nastypics1.jpg";
 import SlideingCard from "../components/SlideingCard";
@@ -256,6 +256,18 @@ function CreditStore() {
 
     return data;
   };
+
+  const stripeOptions = useMemo(() => {
+    if (!clientSecret) return undefined;
+
+    return {
+      clientSecret,
+      appearance: {
+        theme: "stripe",
+      },
+    };
+  }, [clientSecret]);
+
   // Handle purchase button click
   // const handlePurchase = async (product) => {
   //   setSelectedProduct(product);
@@ -1052,30 +1064,20 @@ function CreditStore() {
               </div>
 
               {/* Stripe Payment Form - Only shows when clientSecret is ready */}
-              {clientSecret ? (
-                <Elements
-                  stripe={stripePromise}
-                  options={{
-                    clientSecret,
-                    appearance: {
-                      theme: "stripe",
-                    },
-                  }}
-                >
+              {clientSecret && stripeOptions ? (
+                <Elements stripe={stripePromise} options={stripeOptions}>
                   <StripePaymentForm
                     clientSecret={clientSecret}
                     packageInfo={selectedPackage}
                     onSuccess={async () => {
                       console.log("✅ Payment completed");
+
                       setShowPaymentModal(false);
                       setSelectedPackage(null);
                       setClientSecret(null);
 
-                      // Refresh balance after payment
-                      setTimeout(async () => {
-                        await fetchUserBalance();
-                        await fetchLastPurchaseDate();
-                      }, 1500);
+                      await fetchUserBalance();
+                      await fetchLastPurchaseDate();
                     }}
                     onCancel={() => {
                       setShowPaymentModal(false);
@@ -1085,10 +1087,10 @@ function CreditStore() {
                   />
                 </Elements>
               ) : (
-                // Loading state inside modal - shows instantly
                 <div className="py-8 text-center">
-                  <div className="inline-block w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-                  <p className="mt-3 text-gray-600 text-sm">
+                  <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+
+                  <p className="mt-3 text-sm text-gray-600">
                     {isProcessingPayment
                       ? "Initializing payment..."
                       : "Loading..."}
