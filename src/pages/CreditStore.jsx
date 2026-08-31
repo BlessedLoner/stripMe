@@ -270,26 +270,32 @@ function CreditStore() {
 
   // NEW: Open modal instantly, THEN create payment intent
   const handlePurchase = async (product) => {
-    // Open modal immediately - no waiting
+    if (!user) {
+      alert("Please login to purchase credits");
+      return;
+    }
+
     setSelectedPackage(product);
+    setClientSecret(null);
     setShowPaymentModal(true);
     setIsProcessingPayment(true);
-    setClientSecret(null);
 
     try {
-      // Create payment intent in background while modal is open
       const result = await createPaymentIntent(product.id);
 
-      if (result.clientSecret) {
-        setClientSecret(result.clientSecret);
-      } else {
+      if (!result?.clientSecret) {
         throw new Error("Failed to get payment client secret");
       }
+
+      setClientSecret(result.clientSecret);
     } catch (error) {
       console.error("❌ Payment initialization error:", error);
-      alert(error.message || "Failed to initialize payment. Please try again.");
+
       setShowPaymentModal(false);
       setSelectedPackage(null);
+      setClientSecret(null);
+
+      alert(error.message || "Failed to initialize payment. Please try again.");
     } finally {
       setIsProcessingPayment(false);
     }

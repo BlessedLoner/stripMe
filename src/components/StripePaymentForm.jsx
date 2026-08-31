@@ -7,16 +7,14 @@ import {
   useElements,
 } from "@stripe/react-stripe-js";
 
-// Custom styling for Stripe Elements
-const ELEMENT_STYLES = {
+const ELEMENT_OPTIONS = {
   style: {
     base: {
-      fontSize: "16px",
+      fontSize: "15px",
       color: "#1a1a1a",
-      fontFamily: "Inter, -apple-system, sans-serif",
+      fontFamily: "Inter, -apple-system, BlinkMacSystemFont, sans-serif",
       "::placeholder": {
         color: "#9ca3af",
-        fontSize: "14px",
       },
     },
     invalid: {
@@ -38,11 +36,12 @@ export default function StripePaymentForm({
   const [processing, setProcessing] = useState(false);
   const [paymentError, setPaymentError] = useState("");
 
-  const [cardComplete, setCardComplete] = useState({
-    number: false,
-    expiry: false,
-    cvc: false,
-  });
+  // Track each field independently
+  const [cardComplete, setCardComplete] = useState(false);
+  const [expiryComplete, setExpiryComplete] = useState(false);
+  const [cvcComplete, setCvcComplete] = useState(false);
+
+  const allFieldsComplete = cardComplete && expiryComplete && cvcComplete;
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -53,11 +52,11 @@ export default function StripePaymentForm({
     }
 
     if (!clientSecret) {
-      setPaymentError("Payment is not ready yet. Please wait.");
+      setPaymentError("Payment session is not ready. Please try again.");
       return;
     }
 
-    if (!cardComplete.number || !cardComplete.expiry || !cardComplete.cvc) {
+    if (!allFieldsComplete) {
       setPaymentError("Please complete all card details.");
       return;
     }
@@ -66,16 +65,15 @@ export default function StripePaymentForm({
     setPaymentError("");
 
     try {
-      // Get the mounted CardNumberElement
       const cardNumberElement = elements.getElement(CardNumberElement);
 
       if (!cardNumberElement) {
-        throw new Error("Card payment form is not ready.");
+        throw new Error("Card input is not ready.");
       }
 
       console.log("💳 Confirming card payment...");
 
-      const { error, paymentIntent } = await stripe.confirmCardPayment(
+      const { paymentIntent, error } = await stripe.confirmCardPayment(
         clientSecret,
         {
           payment_method: {
@@ -87,9 +85,7 @@ export default function StripePaymentForm({
       if (error) {
         console.error("❌ Stripe payment error:", error);
 
-        setPaymentError(
-          error.message || "Payment failed. Please check your card details.",
-        );
+        setPaymentError(error.message || "Payment failed. Please try again.");
 
         setProcessing(false);
         return;
@@ -98,39 +94,35 @@ export default function StripePaymentForm({
       console.log("✅ Stripe payment result:", paymentIntent);
 
       if (paymentIntent?.status === "succeeded") {
-        console.log("✅ Payment succeeded:", paymentIntent.id);
+        console.log("✅ Payment succeeded");
 
         if (onSuccess) {
-          await onSuccess(paymentIntent);
+          await onSuccess();
         }
-
-        return;
-      }
-
-      if (paymentIntent?.status === "processing") {
-        console.log("⏳ Payment is processing:", paymentIntent.id);
-
-        setPaymentError(
-          "Your payment is processing. Please wait a moment before trying again.",
-        );
 
         setProcessing(false);
         return;
       }
 
-      console.warn(
-        "⚠️ Unexpected PaymentIntent status:",
-        paymentIntent?.status,
-      );
+      if (paymentIntent?.status === "processing") {
+        console.log("⏳ Payment is processing");
 
-      setPaymentError("The payment could not be completed. Please try again.");
+        if (onSuccess) {
+          await onSuccess();
+        }
+
+        setProcessing(false);
+        return;
+      }
+
+      setPaymentError(`Payment status: ${paymentIntent?.status || "unknown"}`);
 
       setProcessing(false);
     } catch (err) {
       console.error("❌ Payment confirmation error:", err);
 
       setPaymentError(
-        err?.message || "Something went wrong while processing your payment.",
+        err.message || "Something went wrong while processing payment.",
       );
 
       setProcessing(false);
@@ -141,7 +133,7 @@ export default function StripePaymentForm({
     <div className="space-y-1.5">
       <label className="block text-sm font-medium text-gray-700">{label}</label>
 
-      <div className="relative rounded-lg border border-gray-300 bg-white px-3 py-2 transition-colors focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20">
+      <div className="relative rounded-lg border border-gray-300 bg-white px-3 py-3 transition-colors focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20">
         {children}
       </div>
     </div>
@@ -152,16 +144,13 @@ export default function StripePaymentForm({
       {/* Card Number */}
       <InputWrapper label="Card number">
         <CardNumberElement
-          options={ELEMENT_STYLES}
+          options={ELEMENT_OPTIONS}
           onChange={(event) => {
-            setCardComplete((prev) => ({
-              ...prev,
-              number: event.complete,
-            }));
+            setCardComplete(event.complete);
 
             if (event.error) {
               setPaymentError(event.error.message);
-            } else if (event.complete) {
+            } else {
               setPaymentError("");
             }
           }}
@@ -172,15 +161,14 @@ export default function StripePaymentForm({
       <div className="grid grid-cols-2 gap-4">
         <InputWrapper label="Expiration date">
           <CardExpiryElement
-            options={ELEMENT_STYLES}
+            options={ELEMENT_OPTIONS}
             onChange={(event) => {
-              setCardComplete((prev) => ({
-                ...prev,
-                expiry: event.complete,
-              }));
+              setExpiryComplete(event.complete);
 
               if (event.error) {
                 setPaymentError(event.error.message);
+              } else if (event.complete) {
+                setPaymentError("");
               }
             }}
           />
@@ -188,15 +176,14 @@ export default function StripePaymentForm({
 
         <InputWrapper label="Security code">
           <CardCvcElement
-            options={ELEMENT_STYLES}
+            options={ELEMENT_OPTIONS}
             onChange={(event) => {
-              setCardComplete((prev) => ({
-                ...prev,
-                cvc: event.complete,
-              }));
+              setCvcComplete(event.complete);
 
               if (event.error) {
                 setPaymentError(event.error.message);
+              } else if (event.complete) {
+                setPaymentError("");
               }
             }}
           />
@@ -215,7 +202,7 @@ export default function StripePaymentForm({
         <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
           <path
             fillRule="evenodd"
-            d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
+            d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2-2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
             clipRule="evenodd"
           />
         </svg>
@@ -229,7 +216,7 @@ export default function StripePaymentForm({
           type="button"
           onClick={onCancel}
           disabled={processing}
-          className="flex-1 rounded-lg border border-gray-300 px-4 py-3 text-gray-700 transition hover:bg-gray-50 disabled:opacity-50"
+          className="flex-1 rounded-lg border border-gray-300 px-4 py-3 text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
         >
           Cancel
         </button>
@@ -239,17 +226,15 @@ export default function StripePaymentForm({
           disabled={
             !stripe ||
             !elements ||
-            processing ||
             !clientSecret ||
-            !cardComplete.number ||
-            !cardComplete.expiry ||
-            !cardComplete.cvc
+            !allFieldsComplete ||
+            processing
           }
           className="flex-1 rounded-lg bg-primary px-4 py-3 font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {processing ? (
             <span className="flex items-center justify-center gap-2">
-              <span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+              <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
               Processing...
             </span>
           ) : (
