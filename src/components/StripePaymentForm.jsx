@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   CardNumberElement,
   CardExpiryElement,
@@ -38,47 +38,11 @@ export default function StripePaymentForm({
   const [processing, setProcessing] = useState(false);
   const [paymentError, setPaymentError] = useState("");
 
-  const [cardComplete, setCardComplete] = useState(false);
-  const [expiryComplete, setExpiryComplete] = useState(false);
-  const [cvcComplete, setCvcComplete] = useState(false);
-
-  // --------------------------------------------------
-  // CARD ELEMENT CHANGE HANDLERS
-  // --------------------------------------------------
-
-  const handleCardChange = (event) => {
-    setCardComplete(event.complete);
-
-    if (event.error) {
-      setPaymentError(event.error.message);
-    } else {
-      setPaymentError("");
-    }
-  };
-
-  const handleExpiryChange = (event) => {
-    setExpiryComplete(event.complete);
-
-    if (event.error) {
-      setPaymentError(event.error.message);
-    } else if (cardComplete && cvcComplete) {
-      setPaymentError("");
-    }
-  };
-
-  const handleCvcChange = (event) => {
-    setCvcComplete(event.complete);
-
-    if (event.error) {
-      setPaymentError(event.error.message);
-    } else if (cardComplete && expiryComplete) {
-      setPaymentError("");
-    }
-  };
-
-  // --------------------------------------------------
-  // PAYMENT SUBMISSION
-  // --------------------------------------------------
+  const [cardComplete, setCardComplete] = useState({
+    number: false,
+    expiry: false,
+    cvc: false,
+  });
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -89,11 +53,11 @@ export default function StripePaymentForm({
     }
 
     if (!clientSecret) {
-      setPaymentError("Payment session is not ready. Please try again.");
+      setPaymentError("Payment is not ready yet. Please wait.");
       return;
     }
 
-    if (!cardComplete || !expiryComplete || !cvcComplete) {
+    if (!cardComplete.number || !cardComplete.expiry || !cardComplete.cvc) {
       setPaymentError("Please complete all card details.");
       return;
     }
@@ -102,18 +66,16 @@ export default function StripePaymentForm({
     setPaymentError("");
 
     try {
+      // Get the mounted CardNumberElement
       const cardNumberElement = elements.getElement(CardNumberElement);
 
       if (!cardNumberElement) {
-        throw new Error("Card input is not ready.");
+        throw new Error("Card payment form is not ready.");
       }
 
       console.log("💳 Confirming card payment...");
 
-      // IMPORTANT:
-      // Because we use CardNumberElement/CardExpiryElement/CardCvcElement,
-      // we must use confirmCardPayment().
-      const { paymentIntent, error } = await stripe.confirmCardPayment(
+      const { error, paymentIntent } = await stripe.confirmCardPayment(
         clientSecret,
         {
           payment_method: {
@@ -125,7 +87,9 @@ export default function StripePaymentForm({
       if (error) {
         console.error("❌ Stripe payment error:", error);
 
-        setPaymentError(error.message || "Payment failed. Please try again.");
+        setPaymentError(
+          error.message || "Payment failed. Please check your card details.",
+        );
 
         setProcessing(false);
         return;
@@ -133,16 +97,8 @@ export default function StripePaymentForm({
 
       console.log("✅ Stripe payment result:", paymentIntent);
 
-      // --------------------------------------------------
-      // PAYMENT SUCCESS
-      // --------------------------------------------------
-
-      if (
-        paymentIntent &&
-        (paymentIntent.status === "succeeded" ||
-          paymentIntent.status === "processing")
-      ) {
-        console.log("✅ Payment successfully confirmed");
+      if (paymentIntent?.status === "succeeded") {
+        console.log("✅ Payment succeeded:", paymentIntent.id);
 
         if (onSuccess) {
           await onSuccess(paymentIntent);
@@ -151,49 +107,45 @@ export default function StripePaymentForm({
         return;
       }
 
-      // --------------------------------------------------
-      // OTHER PAYMENT STATES
-      // --------------------------------------------------
+      if (paymentIntent?.status === "processing") {
+        console.log("⏳ Payment is processing:", paymentIntent.id);
 
-      if (paymentIntent?.status === "requires_action") {
-        setPaymentError("Additional payment verification is required.");
-      } else {
         setPaymentError(
-          `Payment status: ${paymentIntent?.status || "unknown"}`,
+          "Your payment is processing. Please wait a moment before trying again.",
         );
+
+        setProcessing(false);
+        return;
       }
+
+      console.warn(
+        "⚠️ Unexpected PaymentIntent status:",
+        paymentIntent?.status,
+      );
+
+      setPaymentError("The payment could not be completed. Please try again.");
 
       setProcessing(false);
     } catch (err) {
       console.error("❌ Payment confirmation error:", err);
 
       setPaymentError(
-        err.message || "Something went wrong while processing payment.",
+        err?.message || "Something went wrong while processing your payment.",
       );
 
       setProcessing(false);
     }
   };
 
-  // --------------------------------------------------
-  // INPUT WRAPPER
-  // --------------------------------------------------
-
   const InputWrapper = ({ children, label }) => (
     <div className="space-y-1.5">
       <label className="block text-sm font-medium text-gray-700">{label}</label>
 
-      <div className="relative rounded-lg border border-gray-300 bg-white px-3 py-3 transition-colors focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20">
+      <div className="relative rounded-lg border border-gray-300 bg-white px-3 py-2 transition-colors focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20">
         {children}
       </div>
     </div>
   );
-
-  // --------------------------------------------------
-  // RENDER
-  // --------------------------------------------------
-
-  const formComplete = cardComplete && expiryComplete && cvcComplete;
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
@@ -201,7 +153,18 @@ export default function StripePaymentForm({
       <InputWrapper label="Card number">
         <CardNumberElement
           options={ELEMENT_STYLES}
-          onChange={handleCardChange}
+          onChange={(event) => {
+            setCardComplete((prev) => ({
+              ...prev,
+              number: event.complete,
+            }));
+
+            if (event.error) {
+              setPaymentError(event.error.message);
+            } else if (event.complete) {
+              setPaymentError("");
+            }
+          }}
         />
       </InputWrapper>
 
@@ -210,12 +173,33 @@ export default function StripePaymentForm({
         <InputWrapper label="Expiration date">
           <CardExpiryElement
             options={ELEMENT_STYLES}
-            onChange={handleExpiryChange}
+            onChange={(event) => {
+              setCardComplete((prev) => ({
+                ...prev,
+                expiry: event.complete,
+              }));
+
+              if (event.error) {
+                setPaymentError(event.error.message);
+              }
+            }}
           />
         </InputWrapper>
 
         <InputWrapper label="Security code">
-          <CardCvcElement options={ELEMENT_STYLES} onChange={handleCvcChange} />
+          <CardCvcElement
+            options={ELEMENT_STYLES}
+            onChange={(event) => {
+              setCardComplete((prev) => ({
+                ...prev,
+                cvc: event.complete,
+              }));
+
+              if (event.error) {
+                setPaymentError(event.error.message);
+              }
+            }}
+          />
         </InputWrapper>
       </div>
 
@@ -252,7 +236,15 @@ export default function StripePaymentForm({
 
         <button
           type="submit"
-          disabled={!stripe || !elements || !formComplete || processing}
+          disabled={
+            !stripe ||
+            !elements ||
+            processing ||
+            !clientSecret ||
+            !cardComplete.number ||
+            !cardComplete.expiry ||
+            !cardComplete.cvc
+          }
           className="flex-1 rounded-lg bg-primary px-4 py-3 font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {processing ? (
