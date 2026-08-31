@@ -1,28 +1,9 @@
 import { useState } from "react";
 import {
-  CardNumberElement,
-  CardExpiryElement,
-  CardCvcElement,
+  PaymentElement,
   useStripe,
   useElements,
 } from "@stripe/react-stripe-js";
-
-const ELEMENT_OPTIONS = {
-  style: {
-    base: {
-      fontSize: "15px",
-      color: "#1a1a1a",
-      fontFamily: "Inter, -apple-system, BlinkMacSystemFont, sans-serif",
-      "::placeholder": {
-        color: "#9ca3af",
-      },
-    },
-    invalid: {
-      color: "#dc2626",
-      iconColor: "#dc2626",
-    },
-  },
-};
 
 export default function StripePaymentForm({
   clientSecret,
@@ -36,28 +17,10 @@ export default function StripePaymentForm({
   const [processing, setProcessing] = useState(false);
   const [paymentError, setPaymentError] = useState("");
 
-  // Track each field independently
-  const [cardComplete, setCardComplete] = useState(false);
-  const [expiryComplete, setExpiryComplete] = useState(false);
-  const [cvcComplete, setCvcComplete] = useState(false);
-
-  const allFieldsComplete = cardComplete && expiryComplete && cvcComplete;
-
   const handleSubmit = async (event) => {
     event.preventDefault();
 
     if (!stripe || !elements) {
-      setPaymentError("Stripe is still loading. Please wait.");
-      return;
-    }
-
-    if (!clientSecret) {
-      setPaymentError("Payment session is not ready. Please try again.");
-      return;
-    }
-
-    if (!allFieldsComplete) {
-      setPaymentError("Please complete all card details.");
       return;
     }
 
@@ -65,52 +28,26 @@ export default function StripePaymentForm({
     setPaymentError("");
 
     try {
-      const cardNumberElement = elements.getElement(CardNumberElement);
-
-      if (!cardNumberElement) {
-        throw new Error("Card input is not ready.");
-      }
-
-      console.log("💳 Confirming card payment...");
-
-      const { paymentIntent, error } = await stripe.confirmCardPayment(
-        clientSecret,
-        {
-          payment_method: {
-            card: cardNumberElement,
-          },
+      const { error } = await stripe.confirmPayment({
+        elements,
+        confirmParams: {
+          return_url: `${window.location.origin}/credits`,
         },
-      );
+        redirect: "if_required",
+      });
 
       if (error) {
         console.error("❌ Stripe payment error:", error);
-        setPaymentError(error.message || "Payment failed. Please try again.");
+        setPaymentError(error.message || "Payment failed.");
         setProcessing(false);
         return;
       }
 
-      console.log("✅ Stripe payment result:", paymentIntent);
+      console.log("✅ Stripe payment completed");
 
-      if (paymentIntent?.status === "succeeded") {
-        console.log("✅ Payment succeeded");
-        if (onSuccess) {
-          await onSuccess();
-        }
-        setProcessing(false);
-        return;
+      if (onSuccess) {
+        onSuccess();
       }
-
-      if (paymentIntent?.status === "processing") {
-        console.log("⏳ Payment is processing");
-        if (onSuccess) {
-          await onSuccess();
-        }
-        setProcessing(false);
-        return;
-      }
-
-      setPaymentError(`Payment status: ${paymentIntent?.status || "unknown"}`);
-      setProcessing(false);
     } catch (err) {
       console.error("❌ Payment confirmation error:", err);
       setPaymentError(
@@ -120,95 +57,30 @@ export default function StripePaymentForm({
     }
   };
 
-  // Clear error when all fields are complete or specific field error clears
-  const handleFieldChange = (field, event, setComplete) => {
-    setComplete(event.complete);
-
-    // Only clear error if:
-    // 1. The field has an error - show the error
-    // 2. The field is complete and NO error
-    // 3. Don't clear if other fields are incomplete
-    if (event.error) {
-      setPaymentError(event.error.message);
-    } else if (event.complete) {
-      // If this field is complete, check if all fields are complete
-      // before clearing the error
-      const newCardComplete = field === "card" ? event.complete : cardComplete;
-      const newExpiryComplete =
-        field === "expiry" ? event.complete : expiryComplete;
-      const newCvcComplete = field === "cvc" ? event.complete : cvcComplete;
-
-      if (newCardComplete && newExpiryComplete && newCvcComplete) {
-        setPaymentError(""); // Clear error only when ALL fields are complete
-      }
-    }
-  };
-
-  const InputWrapper = ({ children, label }) => (
-    <div className="space-y-1.5">
-      <label className="block text-sm font-medium text-gray-700">{label}</label>
-      <div className="relative rounded-lg border border-gray-300 bg-white px-3 py-3 transition-colors focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20">
-        {children}
-      </div>
-    </div>
-  );
-
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
-      {/* Card Number */}
-      <InputWrapper label="Card number">
-        <CardNumberElement
-          options={ELEMENT_OPTIONS}
-          onChange={(event) => {
-            setCardComplete(event.complete);
+      {/* Package summary */}
+      {packageInfo && (
+        <div className="rounded-lg border bg-gray-50 p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="font-semibold text-gray-900">{packageInfo.name}</p>
 
-            if (event.error) {
-              setPaymentError(event.error.message);
-            } else if (event.complete) {
-              // Only clear error if all fields are complete
-              if (expiryComplete && cvcComplete) {
-                setPaymentError("");
-              }
-            }
-          }}
-        />
-      </InputWrapper>
+              <p className="text-sm text-gray-500">
+                {packageInfo.total_credits} credits
+              </p>
+            </div>
 
-      {/* Expiry + CVC */}
-      <div className="grid grid-cols-2 gap-4">
-        <InputWrapper label="Expiration date">
-          <CardExpiryElement
-            options={ELEMENT_OPTIONS}
-            onChange={(event) => {
-              setExpiryComplete(event.complete);
+            <p className="text-lg font-bold text-gray-900">
+              ${Number(packageInfo.price_usd).toFixed(2)}
+            </p>
+          </div>
+        </div>
+      )}
 
-              if (event.error) {
-                setPaymentError(event.error.message);
-              } else if (event.complete) {
-                if (cardComplete && cvcComplete) {
-                  setPaymentError("");
-                }
-              }
-            }}
-          />
-        </InputWrapper>
-
-        <InputWrapper label="Security code">
-          <CardCvcElement
-            options={ELEMENT_OPTIONS}
-            onChange={(event) => {
-              setCvcComplete(event.complete);
-
-              if (event.error) {
-                setPaymentError(event.error.message);
-              } else if (event.complete) {
-                if (cardComplete && expiryComplete) {
-                  setPaymentError("");
-                }
-              }
-            }}
-          />
-        </InputWrapper>
+      {/* Stripe's secure payment UI */}
+      <div className="rounded-lg border p-4">
+        <PaymentElement />
       </div>
 
       {/* Error */}
@@ -218,48 +90,25 @@ export default function StripePaymentForm({
         </div>
       )}
 
-      {/* Secure badge */}
-      <div className="flex items-center gap-2 text-xs text-gray-500">
-        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-          <path
-            fillRule="evenodd"
-            d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2-2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
-            clipRule="evenodd"
-          />
-        </svg>
-        <span>Your payment is secure with Stripe</span>
-      </div>
-
       {/* Buttons */}
-      <div className="flex gap-3 pt-2">
+      <div className="flex gap-3">
         <button
           type="button"
           onClick={onCancel}
           disabled={processing}
-          className="flex-1 rounded-lg border border-gray-300 px-4 py-3 text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+          className="flex-1 rounded-lg border border-gray-300 px-4 py-3 text-gray-700 transition hover:bg-gray-50 disabled:opacity-50"
         >
           Cancel
         </button>
 
         <button
           type="submit"
-          disabled={
-            !stripe ||
-            !elements ||
-            !clientSecret ||
-            !allFieldsComplete ||
-            processing
-          }
+          disabled={!stripe || !elements || processing}
           className="flex-1 rounded-lg bg-primary px-4 py-3 font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          {processing ? (
-            <span className="flex items-center justify-center gap-2">
-              <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-              Processing...
-            </span>
-          ) : (
-            `Pay $${Number(packageInfo?.price || 0).toFixed(2)}`
-          )}
+          {processing
+            ? "Processing..."
+            : `Pay $${Number(packageInfo?.price_usd || 0).toFixed(2)}`}
         </button>
       </div>
     </form>
