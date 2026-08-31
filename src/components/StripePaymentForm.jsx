@@ -18,7 +18,6 @@ const ELEMENT_STYLES = {
         color: "#9ca3af",
         fontSize: "14px",
       },
-      padding: "12px 0",
     },
     invalid: {
       color: "#dc2626",
@@ -43,56 +42,44 @@ export default function StripePaymentForm({
   const [expiryComplete, setExpiryComplete] = useState(false);
   const [cvcComplete, setCvcComplete] = useState(false);
 
-  // ------------------------------------------
-  // LISTEN FOR CARD FIELD CHANGES
-  // ------------------------------------------
-  useEffect(() => {
-    if (!elements) return;
+  // --------------------------------------------------
+  // CARD ELEMENT CHANGE HANDLERS
+  // --------------------------------------------------
 
-    const cardNumber = elements.getElement(CardNumberElement);
-    const cardExpiry = elements.getElement(CardExpiryElement);
-    const cardCvc = elements.getElement(CardCvcElement);
+  const handleCardChange = (event) => {
+    setCardComplete(event.complete);
 
-    if (!cardNumber || !cardExpiry || !cardCvc) {
-      return;
+    if (event.error) {
+      setPaymentError(event.error.message);
+    } else {
+      setPaymentError("");
     }
+  };
 
-    const handleCardChange = (event) => {
-      setCardComplete(event.complete);
-      if (event.error) {
-        setPaymentError(event.error.message);
-      }
-    };
+  const handleExpiryChange = (event) => {
+    setExpiryComplete(event.complete);
 
-    const handleExpiryChange = (event) => {
-      setExpiryComplete(event.complete);
-      if (event.error) {
-        setPaymentError(event.error.message);
-      }
-    };
+    if (event.error) {
+      setPaymentError(event.error.message);
+    } else if (cardComplete && cvcComplete) {
+      setPaymentError("");
+    }
+  };
 
-    const handleCvcChange = (event) => {
-      setCvcComplete(event.complete);
-      if (event.error) {
-        setPaymentError(event.error.message);
-      }
-    };
+  const handleCvcChange = (event) => {
+    setCvcComplete(event.complete);
 
-    cardNumber.on("change", handleCardChange);
-    cardExpiry.on("change", handleExpiryChange);
-    cardCvc.on("change", handleCvcChange);
+    if (event.error) {
+      setPaymentError(event.error.message);
+    } else if (cardComplete && expiryComplete) {
+      setPaymentError("");
+    }
+  };
 
-    // Cleanup listeners
-    return () => {
-      cardNumber.off("change", handleCardChange);
-      cardExpiry.off("change", handleExpiryChange);
-      cardCvc.off("change", handleCvcChange);
-    };
-  }, [elements]);
+  // --------------------------------------------------
+  // PAYMENT SUBMISSION
+  // --------------------------------------------------
 
-  // ------------------------------------------
-  // SUBMIT PAYMENT
-  // ------------------------------------------
   const handleSubmit = async (event) => {
     event.preventDefault();
 
@@ -102,7 +89,7 @@ export default function StripePaymentForm({
     }
 
     if (!clientSecret) {
-      setPaymentError("Payment session is missing. Please try again.");
+      setPaymentError("Payment session is not ready. Please try again.");
       return;
     }
 
@@ -118,15 +105,15 @@ export default function StripePaymentForm({
       const cardNumberElement = elements.getElement(CardNumberElement);
 
       if (!cardNumberElement) {
-        throw new Error("Card input is not available.");
+        throw new Error("Card input is not ready.");
       }
 
       console.log("💳 Confirming card payment...");
 
-      // ------------------------------------------
-      // CONFIRM PAYMENT WITH CARD ELEMENT
-      // ------------------------------------------
-      const { error, paymentIntent } = await stripe.confirmCardPayment(
+      // IMPORTANT:
+      // Because we use CardNumberElement/CardExpiryElement/CardCvcElement,
+      // we must use confirmCardPayment().
+      const { paymentIntent, error } = await stripe.confirmCardPayment(
         clientSecret,
         {
           payment_method: {
@@ -135,9 +122,6 @@ export default function StripePaymentForm({
         },
       );
 
-      // ------------------------------------------
-      // HANDLE STRIPE ERROR
-      // ------------------------------------------
       if (error) {
         console.error("❌ Stripe payment error:", error);
 
@@ -147,17 +131,18 @@ export default function StripePaymentForm({
         return;
       }
 
-      console.log("✅ Stripe PaymentIntent confirmed:", paymentIntent);
+      console.log("✅ Stripe payment result:", paymentIntent);
 
-      // ------------------------------------------
+      // --------------------------------------------------
       // PAYMENT SUCCESS
-      // ------------------------------------------
+      // --------------------------------------------------
+
       if (
         paymentIntent &&
         (paymentIntent.status === "succeeded" ||
           paymentIntent.status === "processing")
       ) {
-        console.log("✅ Payment successful/processing:", paymentIntent.status);
+        console.log("✅ Payment successfully confirmed");
 
         if (onSuccess) {
           await onSuccess(paymentIntent);
@@ -166,82 +151,82 @@ export default function StripePaymentForm({
         return;
       }
 
-      // Unexpected status
-      console.warn(
-        "⚠️ Unexpected PaymentIntent status:",
-        paymentIntent?.status,
-      );
+      // --------------------------------------------------
+      // OTHER PAYMENT STATES
+      // --------------------------------------------------
 
-      setPaymentError("Payment was not completed. Please try again.");
+      if (paymentIntent?.status === "requires_action") {
+        setPaymentError("Additional payment verification is required.");
+      } else {
+        setPaymentError(
+          `Payment status: ${paymentIntent?.status || "unknown"}`,
+        );
+      }
 
       setProcessing(false);
     } catch (err) {
       console.error("❌ Payment confirmation error:", err);
 
       setPaymentError(
-        err.message || "Something went wrong while processing your payment.",
+        err.message || "Something went wrong while processing payment.",
       );
 
       setProcessing(false);
     }
   };
 
-  // ------------------------------------------
+  // --------------------------------------------------
   // INPUT WRAPPER
-  // ------------------------------------------
+  // --------------------------------------------------
+
   const InputWrapper = ({ children, label }) => (
     <div className="space-y-1.5">
       <label className="block text-sm font-medium text-gray-700">{label}</label>
 
-      <div className="relative rounded-lg border border-gray-300 bg-white px-3 py-2 transition-colors focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20">
+      <div className="relative rounded-lg border border-gray-300 bg-white px-3 py-3 transition-colors focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20">
         {children}
       </div>
     </div>
   );
 
+  // --------------------------------------------------
+  // RENDER
+  // --------------------------------------------------
+
+  const formComplete = cardComplete && expiryComplete && cvcComplete;
+
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
-      {/* ------------------------------------------ */}
-      {/* CARD NUMBER */}
-      {/* ------------------------------------------ */}
+      {/* Card Number */}
       <InputWrapper label="Card number">
         <CardNumberElement
           options={ELEMENT_STYLES}
-          className="w-full outline-none"
+          onChange={handleCardChange}
         />
       </InputWrapper>
 
-      {/* ------------------------------------------ */}
-      {/* EXPIRY + CVC */}
-      {/* ------------------------------------------ */}
+      {/* Expiry + CVC */}
       <div className="grid grid-cols-2 gap-4">
         <InputWrapper label="Expiration date">
           <CardExpiryElement
             options={ELEMENT_STYLES}
-            className="w-full outline-none"
+            onChange={handleExpiryChange}
           />
         </InputWrapper>
 
         <InputWrapper label="Security code">
-          <CardCvcElement
-            options={ELEMENT_STYLES}
-            className="w-full outline-none"
-          />
+          <CardCvcElement options={ELEMENT_STYLES} onChange={handleCvcChange} />
         </InputWrapper>
       </div>
 
-      {/* ------------------------------------------ */}
-      {/* ERROR */}
-      {/* ------------------------------------------ */}
+      {/* Error */}
       {paymentError && (
         <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
           {paymentError}
         </div>
       )}
 
-      {/* ------------------------------------------ */}
-      {/* SECURE BADGE */}
-      {/* ------------------------------------------ */}
+      {/* Secure badge */}
       <div className="flex items-center gap-2 text-xs text-gray-500">
         <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
           <path
@@ -254,9 +239,7 @@ export default function StripePaymentForm({
         <span>Your payment is secure with Stripe</span>
       </div>
 
-      {/* ------------------------------------------ */}
-      {/* BUTTONS */}
-      {/* ------------------------------------------ */}
+      {/* Buttons */}
       <div className="flex gap-3 pt-2">
         <button
           type="button"
@@ -269,14 +252,7 @@ export default function StripePaymentForm({
 
         <button
           type="submit"
-          disabled={
-            !stripe ||
-            !elements ||
-            processing ||
-            !cardComplete ||
-            !expiryComplete ||
-            !cvcComplete
-          }
+          disabled={!stripe || !elements || !formComplete || processing}
           className="flex-1 rounded-lg bg-primary px-4 py-3 font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {processing ? (
@@ -285,7 +261,7 @@ export default function StripePaymentForm({
               Processing...
             </span>
           ) : (
-            `Pay $${(packageInfo?.price || 0).toFixed(2)}`
+            `Pay $${Number(packageInfo?.price || 0).toFixed(2)}`
           )}
         </button>
       </div>
