@@ -257,17 +257,6 @@ function CreditStore() {
     return data;
   };
 
-  const stripeOptions = useMemo(() => {
-    if (!clientSecret) return undefined;
-
-    return {
-      clientSecret,
-      appearance: {
-        theme: "stripe",
-      },
-    };
-  }, [clientSecret]);
-
   // Handle purchase button click
   // const handlePurchase = async (product) => {
   //   setSelectedProduct(product);
@@ -280,34 +269,27 @@ function CreditStore() {
   //   }
   // };
 
-  // NEW: Open modal instantly, THEN create payment intent
   const handlePurchase = async (product) => {
-    if (!user) {
-      alert("Please login to purchase credits");
-      return;
-    }
-
+    // Open modal immediately - no waiting
     setSelectedPackage(product);
-    setClientSecret(null);
     setShowPaymentModal(true);
     setIsProcessingPayment(true);
+    setClientSecret(null);
 
     try {
+      // Create payment intent in background while modal is open
       const result = await createPaymentIntent(product.id);
 
-      if (!result?.clientSecret) {
+      if (result.clientSecret) {
+        setClientSecret(result.clientSecret);
+      } else {
         throw new Error("Failed to get payment client secret");
       }
-
-      setClientSecret(result.clientSecret);
     } catch (error) {
       console.error("❌ Payment initialization error:", error);
-
+      alert(error.message || "Failed to initialize payment. Please try again.");
       setShowPaymentModal(false);
       setSelectedPackage(null);
-      setClientSecret(null);
-
-      alert(error.message || "Failed to initialize payment. Please try again.");
     } finally {
       setIsProcessingPayment(false);
     }
@@ -1018,7 +1000,6 @@ function CreditStore() {
             </div>
           </div>
         </section>
-
         {/* Payment Modal - Opens instantly */}
         {showPaymentModal && selectedPackage && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 animate-fadeIn">
@@ -1064,20 +1045,30 @@ function CreditStore() {
               </div>
 
               {/* Stripe Payment Form - Only shows when clientSecret is ready */}
-              {clientSecret && stripeOptions ? (
-                <Elements stripe={stripePromise} options={stripeOptions}>
+              {clientSecret ? (
+                <Elements
+                  stripe={stripePromise}
+                  options={{
+                    clientSecret,
+                    appearance: {
+                      theme: "stripe",
+                    },
+                  }}
+                >
                   <StripePaymentForm
                     clientSecret={clientSecret}
                     packageInfo={selectedPackage}
                     onSuccess={async () => {
                       console.log("✅ Payment completed");
-
                       setShowPaymentModal(false);
                       setSelectedPackage(null);
                       setClientSecret(null);
 
-                      await fetchUserBalance();
-                      await fetchLastPurchaseDate();
+                      // Refresh balance after payment
+                      setTimeout(async () => {
+                        await fetchUserBalance();
+                        await fetchLastPurchaseDate();
+                      }, 1500);
                     }}
                     onCancel={() => {
                       setShowPaymentModal(false);
@@ -1087,10 +1078,10 @@ function CreditStore() {
                   />
                 </Elements>
               ) : (
+                // Loading state inside modal - shows instantly
                 <div className="py-8 text-center">
-                  <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-
-                  <p className="mt-3 text-sm text-gray-600">
+                  <div className="inline-block w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+                  <p className="mt-3 text-gray-600 text-sm">
                     {isProcessingPayment
                       ? "Initializing payment..."
                       : "Loading..."}

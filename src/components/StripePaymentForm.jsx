@@ -7,18 +7,19 @@ import {
   useElements,
 } from "@stripe/react-stripe-js";
 
-const ELEMENT_OPTIONS = {
+// Custom styling for Stripe Elements
+const ELEMENT_STYLES = {
   style: {
     base: {
-      fontSize: "15px",
+      fontSize: "16px",
       color: "#1a1a1a",
-      fontFamily: "Inter, -apple-system, BlinkMacSystemFont, sans-serif",
-
+      fontFamily: "Inter, -apple-system, sans-serif",
       "::placeholder": {
         color: "#9ca3af",
+        fontSize: "14px",
       },
+      padding: "12px 0",
     },
-
     invalid: {
       color: "#dc2626",
       iconColor: "#dc2626",
@@ -42,27 +43,28 @@ export default function StripePaymentForm({
   const [expiryComplete, setExpiryComplete] = useState(false);
   const [cvcComplete, setCvcComplete] = useState(false);
 
-  const allFieldsComplete = cardComplete && expiryComplete && cvcComplete;
+  // ------------------------------------------
+  // LISTEN FOR CARD FIELD CHANGES
+  // ------------------------------------------
 
+  // ------------------------------------------
+  // SUBMIT PAYMENT
+  // ------------------------------------------
   const handleSubmit = async (event) => {
     event.preventDefault();
 
-    if (processing) return;
-
     if (!stripe || !elements) {
-      setPaymentError("Stripe is still loading. Please wait a moment.");
+      setPaymentError("Stripe is still loading. Please wait.");
       return;
     }
 
     if (!clientSecret) {
-      setPaymentError("Payment session is not ready. Please try again.");
+      setPaymentError("Payment session is missing. Please try again.");
       return;
     }
 
-    if (!allFieldsComplete) {
-      setPaymentError(
-        "Please complete your card number, expiration date, and security code.",
-      );
+    if (!cardComplete || !expiryComplete || !cvcComplete) {
+      setPaymentError("Please complete all card details.");
       return;
     }
 
@@ -73,12 +75,15 @@ export default function StripePaymentForm({
       const cardNumberElement = elements.getElement(CardNumberElement);
 
       if (!cardNumberElement) {
-        throw new Error("Card input is not ready.");
+        throw new Error("Card input is not available.");
       }
 
       console.log("💳 Confirming card payment...");
 
-      const { paymentIntent, error } = await stripe.confirmCardPayment(
+      // ------------------------------------------
+      // CONFIRM PAYMENT WITH CARD ELEMENT
+      // ------------------------------------------
+      const { error, paymentIntent } = await stripe.confirmCardPayment(
         clientSecret,
         {
           payment_method: {
@@ -87,6 +92,9 @@ export default function StripePaymentForm({
         },
       );
 
+      // ------------------------------------------
+      // HANDLE STRIPE ERROR
+      // ------------------------------------------
       if (error) {
         console.error("❌ Stripe payment error:", error);
 
@@ -96,39 +104,53 @@ export default function StripePaymentForm({
         return;
       }
 
-      console.log("✅ Payment Intent:", paymentIntent);
+      console.log("✅ Stripe PaymentIntent confirmed:", paymentIntent);
 
+      // ------------------------------------------
+      // PAYMENT SUCCESS
+      // ------------------------------------------
       if (
-        paymentIntent?.status === "succeeded" ||
-        paymentIntent?.status === "processing"
+        paymentIntent &&
+        (paymentIntent.status === "succeeded" ||
+          paymentIntent.status === "processing")
       ) {
-        console.log("✅ Payment successful");
+        console.log("✅ Payment successful/processing:", paymentIntent.status);
 
         if (onSuccess) {
-          await onSuccess();
+          await onSuccess(paymentIntent);
         }
 
         return;
       }
 
-      setPaymentError(`Payment status: ${paymentIntent?.status || "unknown"}`);
+      // Unexpected status
+      console.warn(
+        "⚠️ Unexpected PaymentIntent status:",
+        paymentIntent?.status,
+      );
+
+      setPaymentError("Payment was not completed. Please try again.");
 
       setProcessing(false);
-    } catch (error) {
-      console.error("❌ Payment confirmation error:", error);
+    } catch (err) {
+      console.error("❌ Payment confirmation error:", err);
 
       setPaymentError(
-        error.message || "Something went wrong while processing your payment.",
+        err.message || "Something went wrong while processing your payment.",
       );
 
       setProcessing(false);
     }
   };
 
-  const InputWrapper = ({ label, children }) => (
+  const allFieldsComplete = cardComplete && expiryComplete && cvcComplete;
+
+  // ------------------------------------------
+  // INPUT WRAPPER
+  // ------------------------------------------
+  const InputWrapper = ({ children, label }) => (
     <div className="space-y-1.5">
       <label className="block text-sm font-medium text-gray-700">{label}</label>
-
       <div className="relative rounded-lg border border-gray-300 bg-white px-3 py-3 transition-colors focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20">
         {children}
       </div>
@@ -137,65 +159,97 @@ export default function StripePaymentForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
-      {/* Card number */}
-      <InputWrapper label="Card number">
-        <CardNumberElement
-          options={ELEMENT_OPTIONS}
-          onChange={(event) => {
-            setCardComplete(event.complete);
-
-            if (event.error) {
-              setPaymentError(event.error.message);
-            } else {
-              setPaymentError("");
-            }
-          }}
-        />
-      </InputWrapper>
-
-      {/* Expiration + CVC */}
-      <div className="grid grid-cols-2 gap-4">
-        <InputWrapper label="Expiration date">
-          <CardExpiryElement
-            options={ELEMENT_OPTIONS}
+      {/* ------------------------------------------ */}
+      {/* CARD NUMBER */}
+      {/* ------------------------------------------ */}
+      {/* Card Number - Full width */}
+      <div className="space-y-1.5">
+        <label className="block text-sm font-medium text-gray-700">
+          Card Number
+        </label>
+        <div className="rounded-lg border border-gray-300 bg-white px-4 py-3.5 transition-colors focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20">
+          <CardNumberElement
+            options={ELEMENT_STYLES}
             onChange={(event) => {
-              setExpiryComplete(event.complete);
+              console.log("💳 CARD:", {
+                complete: event.complete,
+                empty: event.empty,
+                error: event.error?.message,
+              });
+
+              setCardComplete(event.complete);
 
               if (event.error) {
                 setPaymentError(event.error.message);
-              } else {
+              } else if (event.complete && expiryComplete && cvcComplete) {
                 setPaymentError("");
               }
             }}
           />
-        </InputWrapper>
-
-        <InputWrapper label="Security code">
-          <CardCvcElement
-            options={ELEMENT_OPTIONS}
-            onChange={(event) => {
-              setCvcComplete(event.complete);
-
-              if (event.error) {
-                setPaymentError(event.error.message);
-              } else {
-                setPaymentError("");
-              }
-            }}
-          />
-        </InputWrapper>
+        </div>
       </div>
 
-      {/* Error */}
+      {/* ------------------------------------------ */}
+      {/* EXPIRY + CVC */}
+      {/* ------------------------------------------ */}
+
+      {/* Expiry + CVC - 2 columns */}
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-1.5">
+          <label className="block text-sm font-medium text-gray-700">
+            Expiration Date
+          </label>
+          <div className="rounded-lg border border-gray-300 bg-white px-4 py-3.5 transition-colors focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20">
+            <CardExpiryElement
+              options={ELEMENT_STYLES}
+              onChange={(event) => {
+                setExpiryComplete(event.complete);
+
+                if (event.error) {
+                  setPaymentError(event.error.message);
+                } else if (event.complete && cardComplete && cvcComplete) {
+                  setPaymentError("");
+                }
+              }}
+            />
+          </div>
+        </div>
+
+        <div className="space-y-1.5">
+          <label className="block text-sm font-medium text-gray-700">
+            Security Code
+          </label>
+          <div className="rounded-lg border border-gray-300 bg-white px-4 py-3.5 transition-colors focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20">
+            <CardCvcElement
+              options={ELEMENT_STYLES}
+              onChange={(event) => {
+                setCvcComplete(event.complete);
+
+                if (event.error) {
+                  setPaymentError(event.error.message);
+                } else if (event.complete && cardComplete && expiryComplete) {
+                  setPaymentError("");
+                }
+              }}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* ------------------------------------------ */}
+      {/* ERROR */}
+      {/* ------------------------------------------ */}
       {paymentError && (
         <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
           {paymentError}
         </div>
       )}
 
-      {/* Secure */}
+      {/* ------------------------------------------ */}
+      {/* SECURE BADGE */}
+      {/* ------------------------------------------ */}
       <div className="flex items-center gap-2 text-xs text-gray-500">
-        <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
           <path
             fillRule="evenodd"
             d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
@@ -206,7 +260,9 @@ export default function StripePaymentForm({
         <span>Your payment is secure with Stripe</span>
       </div>
 
-      {/* Buttons */}
+      {/* ------------------------------------------ */}
+      {/* BUTTONS */}
+      {/* ------------------------------------------ */}
       <div className="flex gap-3 pt-2">
         <button
           type="button"
@@ -230,11 +286,11 @@ export default function StripePaymentForm({
         >
           {processing ? (
             <span className="flex items-center justify-center gap-2">
-              <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+              <span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
               Processing...
             </span>
           ) : (
-            `Pay $${Number(packageInfo?.price || 0).toFixed(2)}`
+            `Pay $${(packageInfo?.price || 0).toFixed(2)}`
           )}
         </button>
       </div>
