@@ -84,9 +84,7 @@ export default function StripePaymentForm({
 
       if (error) {
         console.error("❌ Stripe payment error:", error);
-
         setPaymentError(error.message || "Payment failed. Please try again.");
-
         setProcessing(false);
         return;
       }
@@ -95,44 +93,60 @@ export default function StripePaymentForm({
 
       if (paymentIntent?.status === "succeeded") {
         console.log("✅ Payment succeeded");
-
         if (onSuccess) {
           await onSuccess();
         }
-
         setProcessing(false);
         return;
       }
 
       if (paymentIntent?.status === "processing") {
         console.log("⏳ Payment is processing");
-
         if (onSuccess) {
           await onSuccess();
         }
-
         setProcessing(false);
         return;
       }
 
       setPaymentError(`Payment status: ${paymentIntent?.status || "unknown"}`);
-
       setProcessing(false);
     } catch (err) {
       console.error("❌ Payment confirmation error:", err);
-
       setPaymentError(
         err.message || "Something went wrong while processing payment.",
       );
-
       setProcessing(false);
+    }
+  };
+
+  // Clear error when all fields are complete or specific field error clears
+  const handleFieldChange = (field, event, setComplete) => {
+    setComplete(event.complete);
+
+    // Only clear error if:
+    // 1. The field has an error - show the error
+    // 2. The field is complete and NO error
+    // 3. Don't clear if other fields are incomplete
+    if (event.error) {
+      setPaymentError(event.error.message);
+    } else if (event.complete) {
+      // If this field is complete, check if all fields are complete
+      // before clearing the error
+      const newCardComplete = field === "card" ? event.complete : cardComplete;
+      const newExpiryComplete =
+        field === "expiry" ? event.complete : expiryComplete;
+      const newCvcComplete = field === "cvc" ? event.complete : cvcComplete;
+
+      if (newCardComplete && newExpiryComplete && newCvcComplete) {
+        setPaymentError(""); // Clear error only when ALL fields are complete
+      }
     }
   };
 
   const InputWrapper = ({ children, label }) => (
     <div className="space-y-1.5">
       <label className="block text-sm font-medium text-gray-700">{label}</label>
-
       <div className="relative rounded-lg border border-gray-300 bg-white px-3 py-3 transition-colors focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20">
         {children}
       </div>
@@ -150,8 +164,11 @@ export default function StripePaymentForm({
 
             if (event.error) {
               setPaymentError(event.error.message);
-            } else {
-              setPaymentError("");
+            } else if (event.complete) {
+              // Only clear error if all fields are complete
+              if (expiryComplete && cvcComplete) {
+                setPaymentError("");
+              }
             }
           }}
         />
@@ -168,7 +185,9 @@ export default function StripePaymentForm({
               if (event.error) {
                 setPaymentError(event.error.message);
               } else if (event.complete) {
-                setPaymentError("");
+                if (cardComplete && cvcComplete) {
+                  setPaymentError("");
+                }
               }
             }}
           />
@@ -183,7 +202,9 @@ export default function StripePaymentForm({
               if (event.error) {
                 setPaymentError(event.error.message);
               } else if (event.complete) {
-                setPaymentError("");
+                if (cardComplete && expiryComplete) {
+                  setPaymentError("");
+                }
               }
             }}
           />
@@ -206,7 +227,6 @@ export default function StripePaymentForm({
             clipRule="evenodd"
           />
         </svg>
-
         <span>Your payment is secure with Stripe</span>
       </div>
 
