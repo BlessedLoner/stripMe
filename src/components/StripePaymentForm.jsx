@@ -58,13 +58,13 @@ export default function StripePaymentForm({
       return;
     }
 
-    if (!clientSecret) {
-      setPaymentError("Payment session is missing. Please try again.");
+    if (!cardComplete || !expiryComplete || !cvcComplete) {
+      setPaymentError("Please complete all card details.");
       return;
     }
 
-    if (!cardComplete || !expiryComplete || !cvcComplete) {
-      setPaymentError("Please complete all card details.");
+    if (!createPaymentIntent || !packageInfo?.id) {
+      setPaymentError("Payment information is missing. Please try again.");
       return;
     }
 
@@ -78,13 +78,28 @@ export default function StripePaymentForm({
         throw new Error("Card input is not available.");
       }
 
-      console.log("💳 Confirming card payment...");
+      // ------------------------------------------
+      // STEP 1: CREATE PAYMENT INTENT NOW
+      // ------------------------------------------
+      console.log("💳 Creating payment for package:", packageInfo.id);
+
+      const result = await createPaymentIntent(packageInfo.id);
+
+      if (!result?.clientSecret) {
+        throw new Error("Payment session could not be created.");
+      }
+
+      const paymentClientSecret = result.clientSecret;
+
+      console.log("💳 PaymentIntent created:", result.paymentIntentId);
 
       // ------------------------------------------
-      // CONFIRM PAYMENT WITH CARD ELEMENT
+      // STEP 2: CONFIRM PAYMENT
       // ------------------------------------------
+      console.log("💳 Confirming card payment...");
+
       const { error, paymentIntent } = await stripe.confirmCardPayment(
-        clientSecret,
+        paymentClientSecret,
         {
           payment_method: {
             card: cardNumberElement,
@@ -104,17 +119,17 @@ export default function StripePaymentForm({
         return;
       }
 
-      console.log("✅ Stripe PaymentIntent confirmed:", paymentIntent);
+      console.log(
+        "✅ PaymentIntent confirmed:",
+        paymentIntent?.id,
+        paymentIntent?.status,
+      );
 
       // ------------------------------------------
       // PAYMENT SUCCESS
       // ------------------------------------------
-      if (
-        paymentIntent &&
-        (paymentIntent.status === "succeeded" ||
-          paymentIntent.status === "processing")
-      ) {
-        console.log("✅ Payment successful/processing:", paymentIntent.status);
+      if (paymentIntent && paymentIntent.status === "succeeded") {
+        console.log("✅ Payment succeeded!");
 
         if (onSuccess) {
           await onSuccess(paymentIntent);
@@ -123,7 +138,22 @@ export default function StripePaymentForm({
         return;
       }
 
-      // Unexpected status
+      // ------------------------------------------
+      // PAYMENT PROCESSING
+      // ------------------------------------------
+      if (paymentIntent && paymentIntent.status === "processing") {
+        console.log("⏳ Payment is processing...");
+
+        if (onSuccess) {
+          await onSuccess(paymentIntent);
+        }
+
+        return;
+      }
+
+      // ------------------------------------------
+      // UNEXPECTED STATUS
+      // ------------------------------------------
       console.warn(
         "⚠️ Unexpected PaymentIntent status:",
         paymentIntent?.status,

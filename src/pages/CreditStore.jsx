@@ -215,8 +215,6 @@ function CreditStore() {
   // ==========================================
   // CREATE STRIPE PAYMENT INTENT
   // ==========================================
-
-  // Extract the API call to a separate function
   const createPaymentIntent = async (packageId) => {
     if (!user) {
       throw new Error("Please login to purchase credits");
@@ -244,7 +242,11 @@ function CreditStore() {
 
     const data = await res.json();
 
-    console.log("💳 PaymentIntent response:", data);
+    console.log("💳 PaymentIntent created:", {
+      success: data.success,
+      paymentIntentId: data.paymentIntentId,
+      package: data.package,
+    });
 
     if (!res.ok) {
       throw new Error(data.error || "Failed to create payment");
@@ -269,30 +271,23 @@ function CreditStore() {
   //   }
   // };
 
-  const handlePurchase = async (product) => {
-    // Open modal immediately - no waiting
+  const handlePurchase = (product) => {
+    if (!user) {
+      alert("Please login to purchase credits");
+      return;
+    }
+
+    if (!session?.access_token) {
+      alert("Your login session has expired. Please log in again.");
+      return;
+    }
+
+    // Just open the payment modal.
+    // DO NOT create a PaymentIntent here.
     setSelectedPackage(product);
     setShowPaymentModal(true);
-    setIsProcessingPayment(true);
     setClientSecret(null);
-
-    try {
-      // Create payment intent in background while modal is open
-      const result = await createPaymentIntent(product.id);
-
-      if (result.clientSecret) {
-        setClientSecret(result.clientSecret);
-      } else {
-        throw new Error("Failed to get payment client secret");
-      }
-    } catch (error) {
-      console.error("❌ Payment initialization error:", error);
-      alert(error.message || "Failed to initialize payment. Please try again.");
-      setShowPaymentModal(false);
-      setSelectedPackage(null);
-    } finally {
-      setIsProcessingPayment(false);
-    }
+    setIsProcessingPayment(false);
   };
 
   // Format price display
@@ -1049,22 +1044,23 @@ function CreditStore() {
                 <Elements
                   stripe={stripePromise}
                   options={{
-                    clientSecret,
                     appearance: {
                       theme: "stripe",
                     },
                   }}
                 >
                   <StripePaymentForm
-                    clientSecret={clientSecret}
                     packageInfo={selectedPackage}
-                    onSuccess={async () => {
-                      console.log("✅ Payment completed");
+                    createPaymentIntent={createPaymentIntent}
+                    onSuccess={async (paymentIntent) => {
+                      console.log("✅ Payment completed:", paymentIntent?.id);
+
                       setShowPaymentModal(false);
                       setSelectedPackage(null);
                       setClientSecret(null);
 
-                      // Refresh balance after payment
+                      // Refresh balance after webhook has had time
+                      // to process the successful payment.
                       setTimeout(async () => {
                         await fetchUserBalance();
                         await fetchLastPurchaseDate();
