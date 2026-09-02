@@ -1040,50 +1040,39 @@ function CreditStore() {
               </div>
 
               {/* Stripe Payment Form - Only shows when clientSecret is ready */}
-              {clientSecret ? (
-                <Elements
-                  stripe={stripePromise}
-                  options={{
-                    appearance: {
-                      theme: "stripe",
-                    },
+              {/* Stripe Payment Form */}
+              <Elements
+                stripe={stripePromise}
+                options={{
+                  appearance: {
+                    theme: "stripe",
+                  },
+                }}
+              >
+                <StripePaymentForm
+                  packageInfo={selectedPackage}
+                  createPaymentIntent={createPaymentIntent}
+                  onSuccess={async (paymentIntent) => {
+                    console.log("✅ Payment completed:", paymentIntent?.id);
+
+                    setShowPaymentModal(false);
+                    setSelectedPackage(null);
+                    setClientSecret(null);
+
+                    // Give the webhook a moment to process
+                    // the successful payment before refreshing.
+                    setTimeout(async () => {
+                      await fetchUserBalance();
+                      await fetchLastPurchaseDate();
+                    }, 1500);
                   }}
-                >
-                  <StripePaymentForm
-                    packageInfo={selectedPackage}
-                    createPaymentIntent={createPaymentIntent}
-                    onSuccess={async (paymentIntent) => {
-                      console.log("✅ Payment completed:", paymentIntent?.id);
-
-                      setShowPaymentModal(false);
-                      setSelectedPackage(null);
-                      setClientSecret(null);
-
-                      // Refresh balance after webhook has had time
-                      // to process the successful payment.
-                      setTimeout(async () => {
-                        await fetchUserBalance();
-                        await fetchLastPurchaseDate();
-                      }, 1500);
-                    }}
-                    onCancel={() => {
-                      setShowPaymentModal(false);
-                      setSelectedPackage(null);
-                      setClientSecret(null);
-                    }}
-                  />
-                </Elements>
-              ) : (
-                // Loading state inside modal - shows instantly
-                <div className="py-8 text-center">
-                  <div className="inline-block w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-                  <p className="mt-3 text-gray-600 text-sm">
-                    {isProcessingPayment
-                      ? "Initializing payment..."
-                      : "Loading..."}
-                  </p>
-                </div>
-              )}
+                  onCancel={() => {
+                    setShowPaymentModal(false);
+                    setSelectedPackage(null);
+                    setClientSecret(null);
+                  }}
+                />
+              </Elements>
             </div>
           </div>
         )}

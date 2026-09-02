@@ -28,8 +28,8 @@ const ELEMENT_STYLES = {
 };
 
 export default function StripePaymentForm({
-  clientSecret,
   packageInfo,
+  createPaymentIntent,
   onSuccess,
   onCancel,
 }) {
@@ -305,13 +305,7 @@ export default function StripePaymentForm({
 
         <button
           type="submit"
-          disabled={
-            !stripe ||
-            !elements ||
-            !clientSecret ||
-            !allFieldsComplete ||
-            processing
-          }
+          disabled={!stripe || !elements || !allFieldsComplete || processing}
           className="flex-1 rounded-lg bg-primary px-4 py-3 font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {processing ? (
