@@ -10,5 +10,3 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     },
   },
 });
-
-window.supabase = supabase;
