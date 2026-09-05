@@ -98,14 +98,14 @@ export default function AccountSettings() {
 
   const HEIGHT_OPTIONS = [
     "",
-    "Shorter than 4'7\"",
-    "From 4'7\" till 4'11\" ",
-    "From 4'11\" till 5'3\"",
-    "From 5'3\" till 5'7\"",
-    "From 5'7\" till 5'11\"",
-    "From 5'11\" till 6'3\"",
-    "From 6'3\" till 6'7\"",
-    "Taller than 6'7\"",
+    "5'0\" and below",
+    "5'4\" ",
+    "5'8\" ",
+    "5'10\" ",
+    "5'11\" ",
+    "6'0\" ",
+    "6'2\" ",
+    "6'4\" and above",
   ];
   const BODY_TYPE_OPTIONS = [
     "",
@@ -161,7 +161,8 @@ export default function AccountSettings() {
   const SMOKING_OPTIONS = ["", "Yes", "No"];
 
   // Looking for
-  const GENDER_OPTIONS = ["", "Woman", "Man", "Non-binary", "Any"];
+  // At the top of your component, ensure GENDER_OPTIONS is defined
+  const GENDER_OPTIONS = ["Woman", "Man", "Non-binary", "Any"];
 
   // Fetch available states based on user's country
   useEffect(() => {
@@ -268,7 +269,7 @@ export default function AccountSettings() {
     fetchSentImages();
   }, []);
 
-  // Fetch user data
+  // In fetchUserData function - update the setProfile section
   const fetchUserData = async () => {
     try {
       setLoading(true);
@@ -284,7 +285,7 @@ export default function AccountSettings() {
       }
 
       const { data, error } = await supabase
-        .from("user_profiles") // ✅ correct table
+        .from("user_profiles")
         .select("*")
         .eq("user_id", user.id)
         .maybeSingle();
@@ -322,8 +323,11 @@ export default function AccountSettings() {
         tattoo: data.tattoo ?? "",
         piercing: data.piercing ?? "",
         smoker: data.smoker ?? "",
+
+        // ✅ FIXED: Looking For fields - use the correct column names from your database
         lookingGender: data.looking_gender ?? "",
         lookingState: data.looking_state ?? "",
+
         city: data.city ?? "",
         country: data.country ?? "",
         profilePicture: data.profile_img ?? "",
@@ -463,6 +467,7 @@ export default function AccountSettings() {
   };
 
   // Save profile
+  // In saveProfile function - add looking_for fields to payload
   const saveProfile = async () => {
     try {
       setLoading(true);
@@ -484,8 +489,11 @@ export default function AccountSettings() {
         smoker: profile.smoker || null,
         transportation: profile.transportation || null,
         tattoo: profile.tattoo || null,
+
+        // ✅ FIXED: Save Looking For fields
         looking_gender: profile.lookingGender || null,
         looking_state: profile.lookingState || null,
+
         profile_img: profile.profilePicture || null,
         min_age_preference: Number(profile.minAgePreference),
         max_age_preference: Number(profile.maxAgePreference),
@@ -498,7 +506,7 @@ export default function AccountSettings() {
           : null,
       };
 
-      // Optional: remove undefined keys (extra safety)
+      // Remove undefined keys
       Object.keys(payload).forEach(
         (k) => payload[k] === undefined && delete payload[k],
       );
@@ -518,7 +526,6 @@ export default function AccountSettings() {
       setLoading(false);
     }
   };
-
   // Navigation
   const handleTabClick = (tab) => {
     setActiveTab(tab);
@@ -1682,60 +1689,64 @@ export default function AccountSettings() {
                           </div>
                         </div>
 
+                        {/* Looking For Section */}
                         <div className="mb-6 border rounded-lg overflow-hidden">
                           <button
                             type="button"
                             onClick={() => setShowLookingFor((o) => !o)}
-                            className="w-full flex justify-between items-center p-4 bg-gray-600 text-black font-medium"
+                            className="w-full flex justify-between items-center p-4 bg-gray-50 hover:bg-gray-100 transition-colors text-black font-medium"
                           >
                             <span>I'm looking for</span>
-                            <span>{showLookingFor ? "▲" : "▼"}</span>
+                            <span className="text-gray-500">
+                              {showLookingFor ? "▲" : "▼"}
+                            </span>
                           </button>
 
                           {showLookingFor && (
                             <div className="p-4 bg-white grid grid-cols-1 md:grid-cols-2 gap-4">
                               {/* Gender */}
                               <div>
-                                <label className="block text-sm mb-1">
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
                                   Gender
                                 </label>
                                 <select
-                                  value={profile.lookingGender}
+                                  value={profile.lookingGender || ""}
                                   onChange={(e) =>
                                     setProfile((p) => ({
                                       ...p,
                                       lookingGender: e.target.value,
                                     }))
                                   }
-                                  className="form-input w-full"
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                                 >
+                                  <option value="">-- Please Select --</option>
                                   {GENDER_OPTIONS.map((g) => (
                                     <option key={g || "empty"} value={g}>
-                                      {g || "--Please Select--"}
+                                      {g || "-- Please Select --"}
                                     </option>
                                   ))}
                                 </select>
                               </div>
 
-                              {/* State - NOW DYNAMIC */}
+                              {/* State */}
                               <div>
-                                <label className="block text-sm mb-1">
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
                                   State
                                 </label>
                                 {loadingStates ? (
-                                  <div className="form-input w-full bg-gray-100 animate-pulse">
+                                  <div className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 animate-pulse">
                                     Loading states...
                                   </div>
                                 ) : (
                                   <select
-                                    value={profile.lookingState}
+                                    value={profile.lookingState || ""}
                                     onChange={(e) =>
                                       setProfile((p) => ({
                                         ...p,
                                         lookingState: e.target.value,
                                       }))
                                     }
-                                    className="form-input w-full"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                                   >
                                     <option value="">-- All States --</option>
                                     {availableStates.map((state) => (

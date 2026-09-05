@@ -3,6 +3,22 @@ import { supabase } from "../../lib/supabaseClient";
 import { useNavigate } from "react-router-dom";
 import LocationInput from "../../components/LocationInput";
 
+// Interest Options
+const INTEREST_OPTIONS = [
+  "Kissing",
+  "Safe sex",
+  "Public sex",
+  "Anal sex",
+  "Bondage",
+  "Erotic massage",
+  "Lingerie",
+  "Oral sex",
+  "Exchanging photos",
+  "Threesome",
+  "Sadomasochism",
+  "Group sex",
+];
+
 // List of supported countries
 const COUNTRIES = [
   { name: "United States", code: "US" },
@@ -1647,7 +1663,7 @@ export default function AdminPage() {
                 </div>
 
                 {/* Interests */}
-                <div>
+                {/* <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Interests (comma‑separated)
                   </label>
@@ -1661,6 +1677,94 @@ export default function AdminPage() {
                   <p className="text-xs text-gray-500 mt-1">
                     Separate multiple interests with commas.
                   </p>
+                </div> */}
+
+                {/* Interests - Multi-Select Dropdown */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Interests
+                  </label>
+                  <select
+                    name="interests"
+                    multiple
+                    value={
+                      typeof formData.interests === "string"
+                        ? formData.interests
+                            .split(",")
+                            .map((i) => i.trim())
+                            .filter(Boolean)
+                        : formData.interests || []
+                    }
+                    onChange={(e) => {
+                      const selectedOptions = Array.from(
+                        e.target.selectedOptions,
+                        (option) => option.value,
+                      );
+                      setFormData((prev) => ({
+                        ...prev,
+                        interests: selectedOptions.join(", "),
+                      }));
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[120px]"
+                  >
+                    {INTEREST_OPTIONS.map((interest) => (
+                      <option key={interest} value={interest}>
+                        {interest}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Hold Ctrl (or Cmd on Mac) to select multiple interests.
+                  </p>
+
+                  {/* Selected Interests Display as Tags */}
+                  {(() => {
+                    const interestsArray =
+                      typeof formData.interests === "string"
+                        ? formData.interests
+                            .split(",")
+                            .map((i) => i.trim())
+                            .filter(Boolean)
+                        : formData.interests || [];
+
+                    if (interestsArray.length === 0) return null;
+
+                    return (
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {interestsArray.map((interest) => (
+                          <span
+                            key={interest}
+                            className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+                          >
+                            {interest}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const currentInterests =
+                                  typeof formData.interests === "string"
+                                    ? formData.interests
+                                        .split(",")
+                                        .map((i) => i.trim())
+                                        .filter(Boolean)
+                                    : formData.interests || [];
+
+                                const newInterests = currentInterests.filter(
+                                  (i) => i !== interest,
+                                );
+                                setFormData((prev) => ({
+                                  ...prev,
+                                  interests: newInterests.join(", "),
+                                }));
+                              }}
+                              className="ml-1 text-blue-600 hover:text-blue-800"
+                            >
+                              ×
+                            </button>
+                          </span>
+                        ))}
+                      </div>
+                    );
+                  })()}
                 </div>
 
                 {/* ========== NEW: PRIVATE PHOTOS SECTION ========== */}

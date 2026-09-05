@@ -788,7 +788,7 @@ export default function ProfilePage() {
               <ul className="space-y-2 text-sm">
                 <li>
                   <span className="font-semibold text-white">
-                    Relationship:
+                    Marital Status:
                   </span>{" "}
                   <span className="text-white/80">
                     {member.relationship || "—"}
