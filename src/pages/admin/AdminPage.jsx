@@ -1734,7 +1734,7 @@ export default function AdminPage() {
                         {interestsArray.map((interest) => (
                           <span
                             key={interest}
-                            className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+                            className="inline-flex items-center p-2 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
                           >
                             {interest}
                             <button
