@@ -1705,7 +1705,7 @@ export default function AdminPage() {
                         interests: selectedOptions.join(", "),
                       }));
                     }}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[120px]"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     {INTEREST_OPTIONS.map((interest) => (
                       <option key={interest} value={interest}>
