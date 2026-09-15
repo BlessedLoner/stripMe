@@ -830,9 +830,11 @@ export default function AccountSettings() {
 
   const navButtonClass = (tab) => {
     const base =
-      "w-full text-left px-4 py-3 rounded-lg transition-all duration-300 flex items-center space-x-3";
-    const active = "bg-primary/10 text-primary font-medium shadow-sm";
-    const inactive = "text-gray-600 hover:bg-gray-50 hover:text-primary";
+      "w-full h-17 text-left px-4 py-3.5 rounded-2xl transition-all duration-200 flex items-center space-x-3 border";
+    const active =
+      "bg-primary text-white font-semibold border-primary shadow-lg shadow-primary/20";
+    const inactive =
+      "text-gray-600 border-transparent hover:bg-gray-50 hover:text-primary hover:border-gray-100";
     return `${base} ${activeTab === tab ? active : inactive}`;
   };
 
@@ -857,19 +859,30 @@ export default function AccountSettings() {
         />
       )}
 
-      <main className="min-h-screen pt-16 ">
+      <main className="min-h-screen pt-16 bg-gradient-to-b from-primary/5 via-background to-background">
         {/* Main Content */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div className="grid lg:grid-cols-4 gap-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10 lg:py-12">
+          <div className="mb-8 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+            <div className="inline-flex items-center gap-2 self-start rounded-2xl bg-white border border-gray-200 px-4 py-2 shadow-sm">
+              <div className="h-2.5 w-2.5 rounded-full bg-green-500" />
+              <span className="text-sm font-medium text-gray-700">
+                Account active
+              </span>
+            </div>
+          </div>
+          <div className="grid lg:grid-cols-4 gap-6 xl:gap-8">
             {/* Navigation Sidebar */}
             <div
               className={`lg:col-span-1 ${showMobileContent ? "hidden lg:block" : ""}`}
             >
-              <div className="card rounded-xl shadow-sm border p-6 sticky top-24">
-                <h3 className="text-lg  font-serif font-semibold text-text-primary mb-6">
-                  Settings
-                </h3>
-                <nav className="space-y-2">
+              <div className="card bg-white rounded-3xl border border-gray-200 shadow-sm p-3 sm:p-4 sticky top-24">
+                <div className="px-3 pt-3 pb-4">
+                  <h3 className="text-lg font-bold text-gray-900">Settings</h3>
+                  <p className="text-sm text-gray-500 mt-1">
+                    Manage your account
+                  </p>
+                </div>
+                <nav className="space-y-4">
                   {[
                     { id: "profile", label: "Profile", icon: "user" },
                     {
@@ -927,11 +940,11 @@ export default function AccountSettings() {
 
               {/* Profile Tab */}
               {activeTab === "profile" && (
-                <div className="bg-background grid lg:grid-cols-3 gap-8">
+                <div className="grid lg:grid-cols-3 gap-6 xl:gap-8">
                   {/* Left Column - Profile Picture and Info */}
                   <div className="lg:col-span-2 space-y-6">
                     {/* Profile Picture Section */}
-                    <div className="card rounded-xl shadow-sm border p-6">
+                    <div className="bg-white rounded-3xl shadow-sm border border-gray-200 p-5 sm:p-6 lg:p-7">
                       <div className="flex items-center justify-between mb-6">
                         <h2 className="text-2xl font-bold text-gray-900">
                           Profile Picture
@@ -944,7 +957,7 @@ export default function AccountSettings() {
 
                       <div className="flex flex-col items-center">
                         <div className="relative">
-                          <div className="w-48 h-48 rounded-full overflow-hidden border-4 border-white shadow-lg cursor-pointer group relative">
+                          <div className="w-40 h-40 sm:w-48 sm:h-48 rounded-full overflow-hidden border-4 border-white shadow-xl ring-4 ring-primary/10 cursor-pointer group relative">
                             <img
                               src={profileImageSrc}
                               alt="Profile picture"
@@ -999,7 +1012,7 @@ export default function AccountSettings() {
                       </div>
                     </div>
                     {/* Photo Gallery Section */}
-                    <div className="card rounded-xl shadow-sm border p-6 mt-6">
+                    <div className="bg-white rounded-3xl shadow-sm border border-gray-200 p-5 sm:p-6 lg:p-7 mt-6">
                       <div className="flex items-center justify-between mb-6">
                         <div>
                           <h2 className="text-2xl font-bold text-gray-900">
@@ -1046,7 +1059,7 @@ export default function AccountSettings() {
 
                       {/* Photo Grid */}
                       {galleryPhotos.length === 0 ? (
-                        <div className="text-center py-12 bg-primary/10 rounded-lg border-2 border-dashed border-gray-300">
+                        <div className="text-center py-14 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200">
                           <svg
                             className="w-16 h-16 mx-auto text-gray-400 mb-3"
                             fill="none"
@@ -1073,7 +1086,7 @@ export default function AccountSettings() {
                               className="relative group"
                             >
                               {/* Photo Card */}
-                              <div className="relative rounded-xl overflow-hidden aspect-square bg-gray-100 shadow-md">
+                              <div className="relative rounded-2xl overflow-hidden aspect-square bg-gray-100 shadow-sm ring-1 ring-black/5">
                                 <img
                                   src={photo.image_url}
                                   alt={`Gallery photo ${index + 1}`}
@@ -1167,7 +1180,7 @@ export default function AccountSettings() {
                                   .getElementById("gallery-photo-input")
                                   ?.click()
                               }
-                              className="aspect-square rounded-xl border-2 border-dashed border-gray-300 bg-gray-50 hover:bg-gray-100 transition flex flex-col items-center justify-center gap-2"
+                              className="aspect-square rounded-2xl border-2 border-dashed border-gray-300 bg-gray-50 hover:bg-primary/5 hover:border-primary/40 transition flex flex-col items-center justify-center gap-2"
                             >
                               <svg
                                 className="w-8 h-8 text-gray-400"
@@ -1192,7 +1205,7 @@ export default function AccountSettings() {
                     </div>
 
                     {/* Basic Information */}
-                    <div className="card rounded-xl shadow-sm border p-6">
+                    <div className="bg-white rounded-3xl shadow-sm border border-gray-200 p-5 sm:p-6 lg:p-7">
                       <h2 className="text-2xl font-bold text-gray-900 mb-6">
                         Basic Information
                       </h2>
@@ -1292,11 +1305,11 @@ export default function AccountSettings() {
                         </div>
 
                         {/* New Line */}
-                        <div className="mb-6 border rounded-lg overflow-hidden">
+                        <div className="mb-6 border border-gray-200 rounded-2xl overflow-hidden bg-white shadow-sm">
                           <button
                             type="button"
                             onClick={() => setShowInterests((o) => !o)}
-                            className="w-full flex justify-between items-center p-4 bg-gray-600 text-black font-medium"
+                            className="w-full flex justify-between items-center p-4 bg-gray-50 hover:bg-primary/5 text-gray-900 font-semibold transition-colors"
                           >
                             <span>Interests</span>
                             <span>{showInterests ? "▲" : "▼"}</span>
@@ -1342,11 +1355,11 @@ export default function AccountSettings() {
                         </div>
 
                         {/* Personal Data */}
-                        <div className="mb-6 border rounded-lg overflow-hidden">
+                        <div className="mb-6 border border-gray-200 rounded-2xl overflow-hidden bg-white shadow-sm">
                           <button
                             type="button"
                             onClick={() => setShowPersonal((o) => !o)}
-                            className="w-full flex justify-between items-center p-4 bg-gray-600 text-black font-medium"
+                            className="w-full flex justify-between items-center p-4 bg-gray-50 hover:bg-primary/5 text-gray-900 font-semibold transition-colors"
                           >
                             <span>Personal Information</span>
                             <span>{showPersonal ? "▲" : "▼"}</span>
@@ -1690,11 +1703,11 @@ export default function AccountSettings() {
                         </div>
 
                         {/* Looking For Section */}
-                        <div className="mb-6 border rounded-lg overflow-hidden">
+                        <div className="mb-6 border border-gray-200 rounded-2xl overflow-hidden bg-white shadow-sm">
                           <button
                             type="button"
                             onClick={() => setShowLookingFor((o) => !o)}
-                            className="w-full flex justify-between items-center p-4 bg-gray-50 hover:bg-gray-100 transition-colors text-black font-medium"
+                            className="w-full flex justify-between items-center p-4 bg-gray-50 hover:bg-primary/5 transition-colors text-gray-900 font-semibold"
                           >
                             <span>I'm looking for</span>
                             <span className="text-gray-500">
@@ -1762,11 +1775,11 @@ export default function AccountSettings() {
                         </div>
 
                         {/* Save Button */}
-                        <div className="flex justify-end pt-6">
+                        <div className="sticky bottom-0 bg-white/95 backdrop-blur border-t border-gray-100 -mx-5 sm:-mx-6 lg:-mx-7 px-5 sm:px-6 lg:px-7 py-4 mt-8 flex justify-end">
                           <button
                             onClick={saveProfile}
                             disabled={loading}
-                            className="btn-primary px-8 py-3 text-lg font-medium"
+                            className="btn-primary px-8 py-3 text-base font-semibold rounded-2xl shadow-lg shadow-primary/20 min-w-[180px] justify-center"
                           >
                             {loading ? (
                               <>
@@ -1784,7 +1797,7 @@ export default function AccountSettings() {
 
                   {/* Right Column - Sent Images Sidebar */}
                   <div className="lg:col-span-1">
-                    <div className="card rounded-xl shadow-sm border p-6 sticky top-24">
+                    <div className="bg-white rounded-3xl shadow-sm border border-gray-200 p-5 sm:p-6 sticky top-24">
                       <div className="flex items-center justify-between mb-6">
                         <h2 className="text-xl font-bold text-gray-900">
                           Sent Images
@@ -1846,8 +1859,8 @@ export default function AccountSettings() {
               {/* Other Tabs (keep your existing structure for other tabs) */}
               {/* Privacy Tab */}
               {activeTab === "privacy" && (
-                <div className="settings-tab-content">
-                  <div className="card">
+                <div className="space-y-6">
+                  <div className="bg-white rounded-3xl shadow-sm border border-gray-200 p-5 sm:p-6 lg:p-7">
                     <div className="flex items-center justify-between mb-6">
                       <h2 className="text-2xl font-serif font-semibold text-text-primary">
                         Privacy &amp; Safety
@@ -1873,7 +1886,7 @@ export default function AccountSettings() {
 
                     {/*  Privacy Controls */}
                     <div className="space-y-6">
-                      <div className="bg-primary-50 rounded-lg p-4">
+                      <div className="rounded-2xl border border-primary/10 bg-primary/5 p-5">
                         <h3 className="text-lg font-serif font-semibold text-text-primary mb-2">
                           Profile Visibility
                         </h3>
@@ -2216,8 +2229,8 @@ export default function AccountSettings() {
 
               {/* Notifications Tab */}
               {activeTab === "notifications" && (
-                <div className="settings-tab-content">
-                  <div className="card">
+                <div className="space-y-6">
+                  <div className="bg-white rounded-3xl shadow-sm border border-gray-200 p-5 sm:p-6 lg:p-7">
                     <div className="flex items-center justify-between mb-6">
                       <h2 className="text-2xl font-serif font-semibold text-text-primary">
                         Notification Preferences
@@ -2226,7 +2239,7 @@ export default function AccountSettings() {
 
                     {/* Notification Categories */}
                     <div className="space-y-6">
-                      <div className="bg-accent-50 rounded-lg p-4">
+                      <div className="rounded-2xl border border-gray-200 bg-gray-50 p-5">
                         <h3 className="text-lg font-serif font-semibold text-text-primary mb-4">
                           Matches &amp; Messages
                         </h3>
@@ -2378,8 +2391,8 @@ export default function AccountSettings() {
 
               {/* Security Tab */}
               {activeTab === "security" && (
-                <div className="settings-tab-content">
-                  <div className="card">
+                <div className="space-y-6">
+                  <div className="bg-white rounded-3xl shadow-sm border border-gray-200 p-5 sm:p-6 lg:p-7">
                     <div className="flex items-center justify-between mb-6">
                       <h2 className="text-2xl font-serif  font-semibold text-text-primary">
                         Account Security
@@ -2423,7 +2436,7 @@ export default function AccountSettings() {
                     ) : (
                       // Your change password form here
                       <form action="">
-                        <div className="card rounded-lg p-4 mb-6">
+                        <div className="bg-gray-50 rounded-2xl border border-gray-200 p-5 mb-5">
                           <h3 className="text-lg font-serif font-semibold text-text-primary mb-2">
                             Current password:
                           </h3>
@@ -2436,7 +2449,7 @@ export default function AccountSettings() {
                           />
                         </div>
 
-                        <div className="card rounded-lg p-4 mb-6">
+                        <div className="bg-gray-50 rounded-2xl border border-gray-200 p-5 mb-5">
                           <h3 className="text-lg font-serif font-semibold text-text-primary mb-2">
                             New password:
                           </h3>
@@ -2449,7 +2462,7 @@ export default function AccountSettings() {
                           />
                         </div>
 
-                        <div className="card rounded-lg p-4 mb-6">
+                        <div className="bg-gray-50 rounded-2xl border border-gray-200 p-5 mb-5">
                           <h3 className="text-lg font-serif font-semibold text-text-primary mb-2">
                             Confirm password:
                           </h3>
@@ -2493,7 +2506,7 @@ export default function AccountSettings() {
         )}
 
         {/* Footer */}
-        <footer className="sticky top-[100vh] bg-text-primary text-white py-10">
+        <footer className="mt-16 bg-text-primary text-white py-10">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             {/* Logo & Name - Centered */}
             <div className="flex justify-center mb-8">

@@ -656,7 +656,7 @@ export default function ChatLayout() {
   const isLoading = filter === "flirts" ? loadingFlirts : loading;
 
   return (
-    <main className="h-screen pt-16 flex flex-col md:flex-row bg-primary/10 overflow-hidden">
+    <main className="h-screen pt-16 flex flex-col md:flex-row bg-[#f8f5f7] overflow-hidden">
       {/* Sidebar - Full height with fixed header and scrollable list */}
       <div
         className={`
@@ -668,7 +668,7 @@ export default function ChatLayout() {
               ? "translate-x-0"
               : "-translate-x-full md:translate-x-0"
           }
-         h-full bg-primary/10 backdrop-blur-sm border-r border-primary/10
+         h-full bg-white/95 backdrop-blur-xl border-r border-gray-200/80 shadow-[8px_0_30px_rgba(45,20,35,0.04)]
         `}
       >
         {/* Toast Notification */}
@@ -691,15 +691,15 @@ export default function ChatLayout() {
         {/* Fixed Header Section */}
         <div className="flex-shrink-0">
           {/* Header */}
-          <div className="p-4 sm:p-6 border-b border-primary/10">
+          <div className="px-4 sm:px-5 pt-5 pb-4 border-b border-gray-100 bg-white">
             <div className="flex items-center justify-between mb-4">
-              <h1 className="text-xl sm:text-2xl font-serif font-semibold text-text-primary">
+              <h1 className="text-2xl font-bold tracking-tight text-gray-950">
                 Messages
               </h1>
               <button
                 onClick={loadConversations}
                 disabled={loading}
-                className="p-2 rounded-lg text-primary hover:bg-primary/10 transition-colors disabled:opacity-50"
+                className="w-9 h-9 rounded-xl text-[#8b4b6b] bg-[#8b4b6b]/5 hover:bg-[#8b4b6b]/10 flex items-center justify-center transition disabled:opacity-50"
                 aria-label="Refresh conversations"
               >
                 <svg
@@ -724,10 +724,10 @@ export default function ChatLayout() {
                 placeholder="Search conversations..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="form-input pl-10 pr-4 py-2 text-sm w-full"
+                className="w-full h-11 pl-10 pr-4 rounded-2xl bg-gray-50 border border-gray-200/80 text-sm outline-none focus:bg-white focus:border-[#8b4b6b]/40 focus:ring-4 focus:ring-[#8b4b6b]/10 transition"
               />
               <svg
-                className="absolute left-3 top-2/3 transform -translate-y-1/2 w-4 h-4 text-text-secondary"
+                className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -743,11 +743,11 @@ export default function ChatLayout() {
           </div>
 
           {/* Filter Buttons */}
-          <div className="px-4 sm:px-6 py-3 border-b border-primary/10 overflow-x-auto">
-            <div className="flex gap-2 whitespace-nowrap">
+          <div className="px-4 sm:px-5 py-3 border-b border-gray-100 overflow-x-auto bg-white">
+            <div className="flex gap-2 whitespace-nowrap p-1 rounded-2xl bg-gray-50 w-max min-w-full">
               <button
                 onClick={() => setFilter("all")}
-                className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                className={`px-4 py-2 text-sm font-semibold rounded-xl transition-all ${
                   filter === "all"
                     ? "text-white bg-primary"
                     : "text-text-secondary hover:text-primary hover:bg-primary/10"
@@ -757,7 +757,7 @@ export default function ChatLayout() {
               </button>
               <button
                 onClick={() => setFilter("unread")}
-                className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                className={`px-4 py-2 text-sm font-semibold rounded-xl transition-all ${
                   filter === "unread"
                     ? "text-white bg-primary"
                     : "text-text-secondary hover:text-primary hover:bg-primary/10"
@@ -772,7 +772,7 @@ export default function ChatLayout() {
               </button>
               <button
                 onClick={() => setFilter("flirts")}
-                className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                className={`px-4 py-2 text-sm font-semibold rounded-xl transition-all ${
                   filter === "flirts"
                     ? "text-white bg-primary"
                     : "text-text-secondary hover:text-primary hover:bg-primary/10"
@@ -787,7 +787,7 @@ export default function ChatLayout() {
               </button>
               <button
                 onClick={() => setFilter("favorites")}
-                className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                className={`px-4 py-2 text-sm font-semibold rounded-xl transition-all ${
                   filter === "favorites"
                     ? "text-white bg-primary"
                     : "text-text-secondary hover:text-primary hover:bg-primary/10"
@@ -800,7 +800,7 @@ export default function ChatLayout() {
         </div>
 
         {/* Scrollable Conversation List */}
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto bg-white">
           {isLoading ? (
             <ChatListSkeleton />
           ) : error ? (
@@ -834,7 +834,7 @@ export default function ChatLayout() {
               </p>
             </div>
           ) : (
-            <div className="divide-y divide-gray-100">
+            <div className="p-2 space-y-1.5">
               {displayConversations.map((conversation) => (
                 <div
                   key={conversation.id}
@@ -851,10 +851,10 @@ export default function ChatLayout() {
                     active:bg-gray-100 transition-colors text-left cursor-pointer
                     ${
                       conversationId === conversation.id
-                        ? "bg-primary border-l-4 border-primary"
+                        ? "bg-[#8b4b6b]/10 ring-1 ring-[#8b4b6b]/10"
                         : ""
                     }
-                    ${filter === "flirts" ? "border-l-4 border-pink-400" : ""}
+                    ${filter === "flirts" ? "ring-1 ring-pink-100 bg-pink-50/50" : ""}
                   `}
                   aria-current={
                     conversationId === conversation.id ? "page" : undefined
@@ -863,7 +863,7 @@ export default function ChatLayout() {
                   {/* Avatar */}
                   <div className="relative flex-shrink-0">
                     <div
-                      className={`w-12 h-12 rounded-full bg-gradient-to-br ${
+                      className={`w-13 h-13 rounded-2xl overflow-hidden bg-gradient-to-br ${
                         filter === "flirts"
                           ? "from-pink-100 to-rose-100"
                           : "from-blue-100 to-purple-100"
@@ -873,7 +873,7 @@ export default function ChatLayout() {
                         <img
                           src={conversation.fictional_profiles.image_url}
                           alt={conversation.fictional_profiles.display_name}
-                          className="w-full h-full rounded-full object-cover"
+                          className="w-full h-full object-cover"
                         />
                       ) : (
                         <span
@@ -890,14 +890,14 @@ export default function ChatLayout() {
                         </span>
                       )}
                     </div>
-                    <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></div>
+                    <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-emerald-500 border-[2.5px] border-white rounded-full shadow-sm"></div>
                   </div>
 
                   {/* Content */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between">
                       <div className="flex items-center gap-2 min-w-0">
-                        <h3 className="font-semibold text-gray-800 truncate">
+                        <h3 className="font-bold text-gray-900 truncate">
                           {conversation.fictional_profiles?.display_name ||
                             "Unknown"}
                         </h3>
@@ -928,12 +928,12 @@ export default function ChatLayout() {
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <p className="text-sm text-gray-500 truncate flex-1">
+                      <p className="text-sm text-gray-500/90 truncate flex-1 mt-0.5">
                         {conversation.last_message_preview || "No messages yet"}
                       </p>
                       {!conversation.is_flirt_conversation &&
                         conversation.unread_count > 0 && (
-                          <span className="text-xs bg-red-500 text-white rounded-full px-2 py-0.5 flex-shrink-0">
+                          <span className="min-w-5 h-5 px-1.5 inline-flex items-center justify-center text-[10px] font-bold bg-[#8b4b6b] text-white rounded-full flex-shrink-0">
                             {conversation.unread_count}
                           </span>
                         )}
@@ -965,12 +965,12 @@ export default function ChatLayout() {
         {conversationId ? (
           <Outlet context={{ onBack: () => setIsMobileListOpen(true) }} />
         ) : (
-          <div className="flex-1 flex items-center bg-surface justify-center p-6">
+          <div className="flex-1 flex items-center bg-[radial-gradient(circle_at_top_right,rgba(212,165,116,0.12),transparent_32%),radial-gradient(circle_at_bottom_left,rgba(139,75,107,0.10),transparent_35%),#fbfafb] justify-center p-6">
             <div className="text-center max-w-md">
-              <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-gray-100 flex items-center justify-center">
+              <div className="w-20 h-20 mx-auto mb-6 rounded-[26px] bg-white border border-gray-200 shadow-[0_15px_45px_rgba(70,30,50,0.08)] flex items-center justify-center">
                 <MessageSquare size={32} className="text-gray-400" />
               </div>
-              <h3 className="text-xl font-semibold text-gray-800 mb-2">
+              <h3 className="text-2xl font-bold tracking-tight text-gray-900 mb-2">
                 Select a conversation
               </h3>
               <p className="text-gray-500">

@@ -29,7 +29,7 @@ function NavBar({ user }) {
   const toggleMenu = () => setMenuOpen(!menuOpen);
   return (
     <>
-      <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 shadow">
+      <nav className="max-w-7xl mx-auto px-4 lg:px-8 shadow">
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center">
             <img className="h-24 w-auto" src={Logo} alt="App Logo" />

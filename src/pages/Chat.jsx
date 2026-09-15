@@ -644,7 +644,7 @@ export default function Chat() {
 
   if (loading || !blockChecked) {
     return (
-      <div className="flex justify-center items-center p-6 h-full">
+      <div className="flex flex-col justify-center items-center gap-3 p-6 h-full bg-[#fffafb]">
         <svg
           className="animate-spin h-6 w-6 text-primary"
           xmlns="http://www.w3.org/2000/svg"
@@ -665,14 +665,17 @@ export default function Chat() {
             d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
           ></path>
         </svg>
+        <span className="text-xs font-medium text-gray-400">
+          Opening conversation...
+        </span>
       </div>
     );
   }
 
   return (
-    <div className="h-[95dvh] flex flex-col bg-surface overflow-hidden">
+    <div className="h-[95dvh] flex flex-col bg-[#fffafb] overflow-hidden">
       {/* Header */}
-      <div className="p-3 border-b border-primary/10 bg-primary/10 flex items-center justify-between shrink-0 gap-2">
+      <div className="px-3 sm:px-5 py-3 border-b border-black/5 bg-white/95 backdrop-blur-xl flex items-center justify-between shrink-0 gap-2 shadow-sm">
         <div className="flex items-center space-x-3 min-w-0 flex-1">
           <button
             onClick={() => navigate("/chat")}
@@ -686,7 +689,7 @@ export default function Chat() {
               src={fictionalImage || "/default-avatar.png"}
               alt={fictionalName}
               onClick={() => setActiveImage(fictionalImage)}
-              className="w-12 h-12 rounded-full object-cover cursor-pointer"
+              className="w-11 h-11 sm:w-12 sm:h-12 rounded-full object-cover cursor-pointer ring-2 ring-white shadow-md"
               loading="lazy"
             />
             <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white"></div>
@@ -702,7 +705,7 @@ export default function Chat() {
             className="flex flex-col min-w-0 flex-1 text-left cursor-pointer hover:opacity-80 transition"
           >
             <div className="flex items-center gap-2">
-              <span className="font-bold text-gray-800 truncate">
+              <span className="font-semibold text-gray-900 truncate text-[15px] sm:text-base">
                 {fictionalName || "Unknown"}, {fictionalAge || "?"}
               </span>
 
@@ -713,7 +716,7 @@ export default function Chat() {
               )}
             </div>
 
-            <span className="text-xs text-gray-500 truncate">
+            <span className="text-[11px] sm:text-xs text-gray-500 truncate mt-0.5">
               {fictionalState || "No State"}, {fictionalCity || "No City"}
             </span>
           </button>
@@ -733,7 +736,7 @@ export default function Chat() {
 
           <button
             onClick={() => navigate("/credits")}
-            className="px-3 py-1.5 bg-primary text-white rounded-lg hover:opacity-90 transition text-xs font-medium"
+            className="px-3 py-1.5 bg-primary text-white rounded-full hover:opacity-90 transition text-xs font-semibold shadow-sm"
           >
             Add
           </button>
@@ -764,7 +767,7 @@ export default function Chat() {
                     className="fixed inset-0 z-40"
                     onClick={() => setShowMenu(false)}
                   />
-                  <div className="absolute right-0 mt-2 w-36 bg-primary rounded-lg shadow-lg border border-gray-100 z-50 overflow-hidden">
+                  <div className="absolute right-0 mt-2 w-44 bg-white rounded-2xl shadow-xl border border-black/5 z-50 overflow-hidden p-1">
                     <button
                       onClick={() => {
                         setShowMenu(false);
@@ -822,7 +825,7 @@ export default function Chat() {
       {/* Messages container - ENHANCED with professional image+text display */}
       <div
         ref={messagesContainerRef}
-        className="flex-1 overflow-y-auto p-4 space-y-4 min-h-0"
+        className="flex-1 overflow-y-auto px-3 sm:px-6 py-5 space-y-3 min-h-0 bg-gradient-to-b from-[#fffafb] to-white"
       >
         {allMessages.map((msg) => {
           const isUser = msg.sender_type === "real_user";
@@ -839,10 +842,10 @@ export default function Chat() {
               }`}
             >
               <div
-                className={`max-w-[80%] sm:max-w-md rounded-2xl shadow-sm overflow-hidden ${
+                className={`max-w-[82%] sm:max-w-[70%] lg:max-w-[62%] rounded-[22px] shadow-sm overflow-hidden border border-black/[0.03] ${
                   isUser
-                    ? "bg-primary text-white rounded-br-sm"
-                    : "bg-primary/10 text-black rounded-bl-sm"
+                    ? "bg-primary text-white rounded-br-md"
+                    : "bg-white text-gray-800 rounded-bl-md shadow-sm"
                 } ${isSending ? "opacity-90" : ""}`}
               >
                 {/* ✅ Image with NO extra spacing - directly at top */}
@@ -873,8 +876,10 @@ export default function Chat() {
 
                 {/* ✅ Text with proper padding - no extra space between image and text */}
                 {msg.content && (
-                  <div className={`px-4 py-3 ${msg.image_url ? "pt-2" : ""}`}>
-                    <p className="text-sm break-words leading-relaxed whitespace-pre-wrap">
+                  <div
+                    className={`px-4 py-2.5 ${msg.image_url ? "pt-2.5" : ""}`}
+                  >
+                    <p className="text-[14px] sm:text-[15px] break-words leading-relaxed whitespace-pre-wrap">
                       {msg.content}
                     </p>
                   </div>
@@ -920,7 +925,7 @@ export default function Chat() {
 
       {/* Input area */}
       {isBlocked ? (
-        <div className="p-4 bg-red-50 border-t border-red-200 text-center">
+        <div className="p-4 bg-red-50/90 border-t border-red-100 text-center backdrop-blur">
           <p className="text-red-600 mb-2">
             You have blocked {fictionalName}. You cannot send messages.
           </p>
@@ -932,9 +937,9 @@ export default function Chat() {
           </button>
         </div>
       ) : (
-        <div className="p-1 border-primary/10 bg-surface shrink-0">
+        <div className="bg-white shrink-0 border-t border-black/5">
           {imagePreview && (
-            <div className="mb-3 p-3 bg-primary/10 h-28 rounded-lg border border-gray-200">
+            <div className="m-3 mb-0 p-3 bg-gray-50 h-28 rounded-2xl border border-black/5 shadow-sm">
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-600">Image to send</span>
                 <button
@@ -962,8 +967,8 @@ export default function Chat() {
             </div>
           )}
 
-          <div className="border-t bg-primary/10 pt-3 px-3 pb-3">
-            <div className="flex gap-2 items-center">
+          <div className="bg-white px-3 sm:px-5 py-3">
+            <div className="flex gap-2 sm:gap-3 items-end">
               {/* Emoji Button */}
               <div className="relative">
                 <button
@@ -975,7 +980,7 @@ export default function Chat() {
                     }
                   }}
                   type="button"
-                  className="p-2 rounded-full hover:bg-black/5 transition-colors"
+                  className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors flex-shrink-0"
                 >
                   <svg
                     className="w-5 h-5 text-gray-600"
@@ -994,7 +999,7 @@ export default function Chat() {
 
                 <div
                   id="emoji-picker"
-                  className="absolute bottom-full left-0 mb-2 bg-white rounded-lg shadow-xl border border-gray-200 p-2 w-64 z-50 hidden"
+                  className="absolute bottom-full left-0 mb-3 bg-white rounded-2xl shadow-2xl border border-black/5 p-2 w-64 z-50 hidden"
                   style={{ display: "none" }}
                 >
                   <div className="grid grid-cols-8 gap-1 max-h-48 overflow-y-auto">
@@ -1059,7 +1064,7 @@ export default function Chat() {
               />
               <button
                 onClick={() => fileInputRef.current?.click()}
-                className="p-2 rounded-full hover:bg-black/5 transition-colors"
+                className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors flex-shrink-0"
               >
                 📷
               </button>
@@ -1089,14 +1094,17 @@ export default function Chat() {
                   form-input
                   flex-1
                   border
-                  border-primary
-                  rounded-full  
+                  border-gray-200
+                  bg-gray-50
+                  rounded-[22px]
                   px-4
                   py-3
                   resize-none
                   focus:outline-none
                   focus:ring-2
-                  focus:ring-primary
+                  focus:ring-primary/20
+                  focus:border-primary
+                  focus:bg-white
                   min-h-[44px]
                   max-h-[120px]
                   leading-5
@@ -1107,7 +1115,7 @@ export default function Chat() {
               <button
                 onClick={sendMessage}
                 disabled={sending || (!input.trim() && !imageFile)}
-                className={`p-2 rounded-full transition-all duration-300 ${
+                className={`w-11 h-11 flex items-center justify-center rounded-full flex-shrink-0 transition-all duration-300 shadow-sm ${
                   input.trim() || imageFile
                     ? "bg-primary text-white hover:opacity-90"
                     : "bg-gray-300 text-gray-500 cursor-not-allowed"
@@ -1135,13 +1143,13 @@ export default function Chat() {
       {/* Image Preview Modal */}
       {activeImage && (
         <div
-          className="fixed inset-0 bg-black/90 flex items-center justify-center z-50"
+          className="fixed inset-0 bg-black/95 backdrop-blur-sm flex items-center justify-center z-50 p-4"
           onClick={() => setActiveImage(null)}
         >
           <img
             src={activeImage}
             alt="preview"
-            className="max-w-[90vw] max-h-[90vh] border border-white rounded-lg"
+            className="max-w-[92vw] max-h-[90vh] rounded-2xl shadow-2xl object-contain"
           />
         </div>
       )}
@@ -1149,7 +1157,7 @@ export default function Chat() {
       {/* Low Credit Warning Modal */}
       {showLowCreditModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-red-50 rounded-2xl max-w-md w-full p-6 shadow-xl">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-black/5">
             <div className="text-center">
               <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <svg
@@ -1199,7 +1207,7 @@ export default function Chat() {
       {/* Out of Credits Modal */}
       {showOutOfCreditsModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-red-50 rounded-2xl max-w-md w-full p-6 shadow-xl">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-black/5">
             <div className="text-center">
               <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <svg

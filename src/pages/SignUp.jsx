@@ -1,8 +1,9 @@
 // src/pages/SignUp.jsx
 import React, { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import Logo from "../assets/Logo.png";
-import home1 from "../assets/home_img/home1.jpg";
+import newhome1 from "../assets/home_img/newhome1.jpg";
+import signimage1 from "../assets/home_img/signimage1.jpg";
 import home9 from "../assets/home_img/home9.jpg";
 import home3 from "../assets/home_img/home3.jpg";
 import { supabase } from "../lib/supabaseClient";
@@ -17,7 +18,12 @@ import {
 export default function SignUpPage() {
   const navigate = useNavigate();
 
-  const [showSignIn, setShowSignIn] = useState(false);
+  const [searchParams] = useSearchParams();
+
+  const [showSignIn, setShowSignIn] = useState(
+    searchParams.get("mode") === "signin",
+  );
+
   const [country, setCountry] = useState("");
   const [location, setLocation] = useState(null);
   const [user, setUser] = useState(null);
@@ -63,16 +69,6 @@ export default function SignUpPage() {
   const [emailModalPassword, setEmailModalPassword] = useState("");
   const [emailModalLoading, setEmailModalLoading] = useState(false);
   const [emailModalError, setEmailModalError] = useState(null);
-
-  // slider
-  const slides = [home1, home3, home9];
-  const [index, setIndex] = useState(0);
-  useEffect(() => {
-    const id = setInterval(() => {
-      setIndex((i) => (i + 1) % slides.length);
-    }, 6000);
-    return () => clearInterval(id);
-  }, [slides.length]);
 
   // signin modal states
   const [signinEmail, setSigninEmail] = useState("");
@@ -126,7 +122,6 @@ export default function SignUpPage() {
       setIsDetectingCountry(true);
       try {
         const result = await detectUserCountry();
-        console.log("📍 Detected country:", result);
 
         setDetectedCountryName(result.countryName);
 
@@ -235,8 +230,6 @@ export default function SignUpPage() {
 
   // Handle location selection from LocationInput
   const handleLocationSelect = (place) => {
-    console.log("📍 Location selected:", place);
-
     const locationData = {
       city: place?.city || place?.town || place?.name || "",
       state: place?.state || place?.region || "",
@@ -627,814 +620,760 @@ export default function SignUpPage() {
 
   return (
     <div className="relative min-h-screen overflow-x-hidden bg-transparent text-text-primary z-10">
-      {/* Background slider */}
-      <div
-        className="bg-slider"
-        aria-hidden="true"
-        style={{
-          position: "fixed",
-          inset: 0,
-          zIndex: 0,
-          pointerEvents: "none",
-          overflow: "hidden",
-        }}
-      >
-        {[home1, home9, home3].map((src, i) => (
-          <div
-            key={i}
-            className="bg-slide"
-            style={{
-              position: "absolute",
-              top: 0,
-              left: 0,
-              width: "100%",
-              height: "100vh",
-              backgroundImage: `linear-gradient(rgba(0,0,0,0.55), rgba(0,0,0,0.55)), url(${src})`,
-              backgroundSize: "cover",
-              backgroundPosition: "center center",
-              backgroundRepeat: "no-repeat",
-              transform: "translateZ(0)",
-              willChange: "opacity",
-              opacity: i === index ? 1 : 0,
-              transition: "opacity 1000ms ease-in-out",
-            }}
+      <div>
+        {/* Background images stacked and faded */}
+        <div className="absolute inset-0 z-0">
+          <img
+            src={signimage1}
+            alt="homepage"
+            className="absolute inset-0 w-full h-full object-cover transition-opacity"
           />
-        ))}
-      </div>
 
-      {/* Overlay */}
-      <div
-        className="bg-overlay"
-        aria-hidden="true"
-        style={{
-          position: "fixed",
-          inset: 0,
-          zIndex: 1,
-          pointerEvents: "none",
-          background:
-            "linear-gradient(180deg, rgba(6,8,15,0.35), rgba(6,8,15,0.5))",
-        }}
-      />
+          {/* dark gradient overlay */}
+          <div className="absolute inset-0 bg-black/30" />
+        </div>
 
-      {/* Header */}
-      <div className="relative z-10">
-        <header className="fixed top-0 left-0 right-0 z-50">
-          <nav className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between items-center h-16">
-              <div className="flex items-center">
-                <Link to="/" className="flex items-center">
-                  <img src={Logo} alt="FlingPals" className="w-10 h-10" />
-                </Link>
-              </div>
-              <div className="flex items-center">
-                <span className="text-gray-200 text-sm mr-2">
-                  Already have an account?
-                </span>
-                <button
-                  onClick={() => setShowSignIn(true)}
-                  className="text-primary hover:text-primary-400 font-medium transition-colors duration-300"
-                >
-                  Sign In
-                </button>
-              </div>
-            </div>
-          </nav>
-        </header>
-
-        {/* Google Loading Overlay */}
-        {googleLoading && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
-            <div className="bg-black rounded-2xl p-8 text-center shadow-2xl max-w-sm w-full mx-4 border border-white/20">
-              <div className="w-16 h-16 mx-auto mb-4 relative">
-                <div className="absolute inset-0 rounded-full bg-white/20 animate-ping"></div>
-                <div className="relative bg-white rounded-full p-3">
-                  <svg className="w-10 h-10" viewBox="0 0 24 24">
-                    <path
-                      fill="#4285F4"
-                      d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                    />
-                    <path
-                      fill="#34A853"
-                      d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                    />
-                    <path
-                      fill="#FBBC05"
-                      d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-                    />
-                    <path
-                      fill="#EA4335"
-                      d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-                    />
-                  </svg>
+        {/* Header */}
+        <div className="relative z-10">
+          <header className="fixed top-0 left-0 right-0 z-50">
+            <nav className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="flex justify-between items-center h-16">
+                <div className="flex items-center">
+                  <Link to="/" className="flex items-center">
+                    <img src={Logo} alt="FlingPals" className="w-10 h-10" />
+                  </Link>
                 </div>
-              </div>
-              <div className="flex justify-center mb-4">
-                <div className="w-10 h-10 border-4 border-white border-t-white rounded-full animate-spin"></div>
-              </div>
-              <h3 className="text-xl font-semibold text-white mb-2">
-                Redirecting to Google
-              </h3>
-              <p className="text-white/60 text-sm">Please wait a moment...</p>
-            </div>
-          </div>
-        )}
-
-        {/* Email Sign-Up Modal */}
-        {showEmailModal && (
-          <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-            <div className="bg-black/90 backdrop-blur-sm rounded-2xl max-w-md w-full relative p-8 border border-white/20">
-              {/* Close button */}
-              <button
-                onClick={() => {
-                  setShowEmailModal(false);
-                  setEmailModalError(null);
-                }}
-                className="absolute top-4 right-4 text-gray-400 hover:text-white transition"
-                aria-label="Close modal"
-              >
-                <svg
-                  className="w-6 h-6"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </button>
-
-              {/* Modal Content */}
-              <div className="text-center mb-6">
-                <div className="flex justify-center mb-4">
-                  <img src={Logo} alt="StripPals" className="w-16 h-16" />
-                </div>
-                <h2 className="text-2xl font-serif font-semibold text-white">
-                  Join StripPals
-                </h2>
-                <p className="text-gray-400 text-sm mt-1">
-                  Create your account to start connecting
-                </p>
-              </div>
-
-              {/* Modal Error */}
-              {emailModalError && (
-                <div className="mb-4 p-3 rounded-lg bg-red-500/20 border border-red-500/30 text-red-400 text-sm text-center">
-                  {emailModalError}
-                </div>
-              )}
-
-              <form onSubmit={handleEmailSignUp} className="space-y-4">
-                {/* Email */}
-                <div>
-                  <label className="block text-white/80 text-sm font-medium mb-1.5">
-                    Email
-                  </label>
-                  <input
-                    type="email"
-                    value={emailModalEmail}
-                    onChange={(e) => {
-                      setEmailModalEmail(e.target.value);
-                      setEmailModalError(null);
-                    }}
-                    className="w-full border border-white/20 rounded-lg py-3 px-4 bg-black text-white focus:border-primary focus:ring-2 focus:ring-primary/20"
-                    placeholder="Enter your email"
-                    required
-                  />
-                </div>
-
-                {/* Password */}
-                <div>
-                  <label className="block text-white/80 text-sm font-medium mb-1.5">
-                    Password
-                  </label>
-                  <input
-                    type="password"
-                    value={emailModalPassword}
-                    onChange={(e) => {
-                      setEmailModalPassword(e.target.value);
-                      setEmailModalError(null);
-                    }}
-                    className="w-full border border-white/20 rounded-lg py-3 px-4 bg-black text-white focus:border-primary focus:ring-2 focus:ring-primary/20"
-                    placeholder="Create a password (min 6 characters)"
-                    required
-                    minLength="6"
-                  />
-                  <p className="text-gray-500 text-xs mt-1">
-                    Must be at least 6 characters
-                  </p>
-                </div>
-
-                {/* Submit Button */}
-                <button
-                  type="submit"
-                  disabled={emailModalLoading}
-                  className="w-full py-3 bg-primary hover:bg-primary-600 text-white font-medium rounded-lg transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {emailModalLoading ? "Creating account..." : "Join Now!"}
-                </button>
-              </form>
-
-              {/* Sign In Link inside modal */}
-              <div className="text-center mt-4">
-                <p className="text-gray-400 text-sm">
-                  Already have an account?{" "}
+                <div className="flex items-center">
+                  <span className="text-gray-200 text-sm mr-2">
+                    Already have an account?
+                  </span>
                   <button
-                    type="button"
-                    onClick={() => {
-                      setShowEmailModal(false);
-                      setShowSignIn(true);
-                    }}
-                    className="text-primary hover:text-primary-400 transition"
+                    onClick={() => setShowSignIn(true)}
+                    className="text-primary hover:text-primary-400 font-medium transition-colors duration-300"
                   >
                     Sign In
                   </button>
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Main Content */}
-        <main className="min-h-screen pt-16">
-          <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <div className="flex justify-center">
-              <div className="w-full max-w-6xl">
-                <div className="grid lg:grid-cols-2 gap-8 items-start">
-                  {/* Left benefits */}
-                  <div className="hidden lg:block">
-                    <div className="max-w-lg mt-8">
-                      <h1 className="text-4xl md:text-5xl font-serif font-semibold text-white mb-6 leading-tight">
-                        Your Perfect Match is{" "}
-                        <span className="text-primary font-accent italic">
-                          Waiting
-                        </span>
-                      </h1>
-                      <p className="text-xl text-gray-200 mb-8 leading-relaxed">
-                        Join thousands who've found meaningful relationships
-                        through our intelligent matching system and authentic
-                        community.
-                      </p>
-                      <div className="space-y-4 mb-8">
-                        <Benefit label="Advanced compatibility matching" />
-                        <Benefit label="Verified profiles for authentic connections" />
-                        <Benefit label="Safe & secure messaging platform" />
-                        <Benefit label="Interactive icebreakers & conversation starters" />
-                      </div>
-                      <div className="grid grid-cols-2 gap-6">
-                        <div className="text-center">
-                          <div className="text-3xl font-bold text-primary mb-1">
-                            50K+
-                          </div>
-                          <p className="text-sm text-gray-200">
-                            Active Members
-                          </p>
-                        </div>
-                        <div className="text-center">
-                          <div className="text-3xl font-bold text-secondary mb-1">
-                            2.5K+
-                          </div>
-                          <p className="text-sm text-gray-200">
-                            Success Stories
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Sign Up Form */}
-                  <div className="w-full flex justify-center px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
-                    <div className="w-full max-w-md">
-                      {/* Unsupported Country Banner */}
-                      {isUnsupportedCountry && unsupportedBanner && (
-                        <div className="mb-4 p-4 rounded-lg bg-amber-500/20 border border-amber-500/30">
-                          <div className="flex items-start gap-3">
-                            <span className="text-2xl">🌍</span>
-                            <div>
-                              <p className="text-amber-400 font-semibold text-sm">
-                                We're Expanding to Your Country!
-                              </p>
-                              <p className="text-amber-300/80 text-xs mt-1">
-                                {unsupportedBanner}
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Auth Message */}
-                      {authMessage && (
-                        <div
-                          className={`mb-4 p-3 rounded-lg text-sm text-center ${
-                            authMessage.type === "error"
-                              ? "bg-red-500/20 border border-red-500/30 text-red-400"
-                              : "bg-green-500/20 border border-green-500/30 text-green-400"
-                          }`}
-                        >
-                          {authMessage.text}
-                        </div>
-                      )}
-
-                      <div className="p-4 sm:p-6 bg-black/40 backdrop-blur-sm rounded-2xl border border-white/20 w-full">
-                        {/* Mobile heading */}
-                        <div className="lg:hidden text-center mb-6">
-                          <h1 className="text-2xl sm:text-3xl font-serif font-semibold text-white mb-2">
-                            Join StripPals Today
-                          </h1>
-                          <p className="text-gray-200 text-sm">
-                            Start your journey to meaningful connections
-                          </p>
-                        </div>
-
-                        {/* Form Fields */}
-                        <div className="space-y-5 sm:space-y-6">
-                          {/* I am (Gender) */}
-                          <div>
-                            <label className="block text-white/80 text-sm font-medium mb-1.5">
-                              I am a
-                            </label>
-                            <select
-                              value={formData.gender}
-                              onChange={(e) =>
-                                handleFieldChange("gender", e.target.value)
-                              }
-                              onBlur={() => handleFieldBlur("gender")}
-                              className={`w-full border rounded-lg py-3 px-4 bg-black text-white focus:border-primary focus:ring-2 focus:ring-primary/20 ${
-                                touched.gender && errors.gender
-                                  ? "border-red-500"
-                                  : "border-white/20"
-                              }`}
-                            >
-                              <option value="" className="text-gray-700">
-                                Select...
-                              </option>
-                              <option value="male" className="text-gray-700">
-                                Man
-                              </option>
-                              <option value="female" className="text-gray-700">
-                                Woman
-                              </option>
-                            </select>
-                            {touched.gender && errors.gender && (
-                              <p className="text-red-400 text-xs mt-1">
-                                {errors.gender}
-                              </p>
-                            )}
-                          </div>
-
-                          {/* Looking for */}
-                          <div>
-                            <label className="block text-white/80 text-sm font-medium mb-1.5">
-                              Looking for
-                            </label>
-                            <select
-                              value={formData.lookingFor}
-                              onChange={(e) =>
-                                handleFieldChange("lookingFor", e.target.value)
-                              }
-                              onBlur={() => handleFieldBlur("lookingFor")}
-                              className={`w-full border rounded-lg py-3 px-4 bg-black text-white focus:border-primary focus:ring-2 focus:ring-primary/20 ${
-                                touched.lookingFor && errors.lookingFor
-                                  ? "border-red-500"
-                                  : "border-white/20"
-                              }`}
-                            >
-                              <option value="" className="text-gray-700">
-                                Select...
-                              </option>
-                              <option value="male" className="text-gray-700">
-                                Men
-                              </option>
-                              <option value="female" className="text-gray-700">
-                                Women
-                              </option>
-                            </select>
-                            {touched.lookingFor && errors.lookingFor && (
-                              <p className="text-red-400 text-xs mt-1">
-                                {errors.lookingFor}
-                              </p>
-                            )}
-                          </div>
-
-                          {/* Date of Birth - Custom iOS-friendly */}
-                          <div>
-                            <label className="block text-white/80 text-sm font-medium mb-1.5">
-                              Date of birth
-                            </label>
-                            <div className="relative w-full">
-                              <input
-                                type="date"
-                                value={formData.dateOfBirth}
-                                onChange={(e) =>
-                                  handleFieldChange(
-                                    "dateOfBirth",
-                                    e.target.value,
-                                  )
-                                }
-                                onBlur={() => handleFieldBlur("dateOfBirth")}
-                                className={`w-full min-w-0 border rounded-lg py-3 px-4 bg-black text-white focus:border-primary focus:ring-2 focus:ring-primary/20 appearance-none ${
-                                  touched.dateOfBirth && errors.dateOfBirth
-                                    ? "border-red-500"
-                                    : "border-white/20"
-                                }`}
-                                style={{
-                                  minWidth: 0,
-                                  maxWidth: "100%",
-                                  boxSizing: "border-box",
-                                  WebkitAppearance: "none", // Removes default iOS styling
-                                  appearance: "none",
-                                }}
-                              />
-                              {/* Custom calendar icon */}
-                              <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-                                <svg
-                                  className="w-5 h-5 text-gray-400"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  viewBox="0 0 24 24"
-                                >
-                                  <rect
-                                    x="3"
-                                    y="4"
-                                    width="18"
-                                    height="18"
-                                    rx="2"
-                                    stroke="currentColor"
-                                    strokeWidth="1.5"
-                                  />
-                                  <path
-                                    d="M3 10h18"
-                                    stroke="currentColor"
-                                    strokeWidth="1.5"
-                                  />
-                                  <path
-                                    d="M8 2v4"
-                                    stroke="currentColor"
-                                    strokeWidth="1.5"
-                                    strokeLinecap="round"
-                                  />
-                                  <path
-                                    d="M16 2v4"
-                                    stroke="currentColor"
-                                    strokeWidth="1.5"
-                                    strokeLinecap="round"
-                                  />
-                                </svg>
-                              </div>
-                            </div>
-                            {touched.dateOfBirth && errors.dateOfBirth && (
-                              <p className="text-red-400 text-xs mt-1">
-                                {errors.dateOfBirth}
-                              </p>
-                            )}
-                          </div>
-
-                          {/* City - FIXED: same width as other inputs */}
-                          <div>
-                            <label className="block text-white/80 text-sm font-medium mb-1.5">
-                              City
-                            </label>
-                            {country && (
-                              <LocationInput
-                                countryCode={country}
-                                onSelect={handleLocationSelect}
-                                placeholder="Enter a location..."
-                              />
-                            )}
-                            {touched.city && errors.city && (
-                              <p className="text-red-400 text-xs mt-1">
-                                {errors.city}
-                              </p>
-                            )}
-                          </div>
-
-                          {/* Username */}
-                          <div>
-                            <label className="block text-white/80 text-sm font-medium mb-1.5">
-                              Username
-                            </label>
-                            <input
-                              type="text"
-                              value={formData.displayName}
-                              onChange={(e) =>
-                                handleFieldChange("displayName", e.target.value)
-                              }
-                              onBlur={() => handleFieldBlur("displayName")}
-                              className={`w-full border rounded-lg py-3 px-4 bg-black text-white focus:border-primary focus:ring-2 focus:ring-primary/20 ${
-                                touched.displayName && errors.displayName
-                                  ? "border-red-500"
-                                  : "border-white/20"
-                              }`}
-                              placeholder="Choose a username"
-                            />
-                            {touched.displayName && errors.displayName && (
-                              <p className="text-red-400 text-xs mt-1">
-                                {errors.displayName}
-                              </p>
-                            )}
-                          </div>
-
-                          {/* Divider */}
-                          <div className="relative my-4">
-                            <div className="absolute inset-0 flex items-center">
-                              <div className="w-full border-t border-white/20"></div>
-                            </div>
-                            <div className="relative flex justify-center text-sm">
-                              <span className="px-4 bg-black text-gray-300">
-                                Choose how you want to sign up
-                              </span>
-                            </div>
-                          </div>
-
-                          {/* Sign Up Buttons */}
-                          <div className="space-y-3">
-                            <button
-                              type="button"
-                              onClick={handleGoogleSignIn}
-                              className="w-full flex items-center justify-center space-x-3 py-3 border border-white/20 rounded-lg bg-white/90 hover:bg-white/100 transition-all duration-300 text-black font-medium"
-                            >
-                              <svg
-                                className="w-5 h-5"
-                                viewBox="0 0 533.5 544.3"
-                              >
-                                <path
-                                  fill="#4285f4"
-                                  d="M533.5 278.4c0-17.4-1.6-34.3-4.6-50.7H272v95.9h147.1c-6.4 34.8-25.8 64.3-55 84.1v69.8h88.8c51.9-47.8 82.6-118.1 82.6-198.9z"
-                                />
-                                <path
-                                  fill="#34a853"
-                                  d="M272 544.3c73.7 0 135.6-24.4 180.8-66.2l-88.8-69.8c-24.7 16.6-56.6 26.5-92 26.5-70.8 0-130.9-47.8-152.4-112.1H28.6v70.7C73.8 486.2 167.9 544.3 272 544.3z"
-                                />
-                                <path
-                                  fill="#fbbc04"
-                                  d="M119.6 325.7c-10.2-30.7-10.2-63.7 0-94.4V160.6H28.6c-39.6 78.7-39.6 174.9 0 253.6l91-88.5z"
-                                />
-                                <path
-                                  fill="#ea4335"
-                                  d="M272 108.4c39.9 0 75.8 13.7 104.1 40.6l78-78C406.9 24.2 344.9 0 272 0 167.9 0 73.8 58.1 28.6 160.6l91 88.5C141.1 156.2 201.2 108.4 272 108.4z"
-                                />
-                              </svg>
-                              Sign up with Google
-                            </button>
-
-                            <button
-                              type="button"
-                              onClick={handleOpenEmailModal}
-                              className="w-full py-3 border border-white/20 rounded-lg bg-black/40 hover:bg-white/20 transition-all duration-300 text-white font-medium"
-                            >
-                              Sign up with Email
-                            </button>
-                          </div>
-
-                          {/* Sign In Link */}
-                          <div className="text-center mt-6 pt-6 border-t border-white/20">
-                            <p className="text-gray-300 text-sm">
-                              Already have an account?{" "}
-                              <button
-                                onClick={() => setShowSignIn(true)}
-                                className="text-primary hover:text-primary-400 font-medium transition-colors duration-300"
-                              >
-                                Sign In
-                              </button>
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Security badge */}
-                      <div className="mt-6 text-center">
-                        <div className="flex items-center justify-center space-x-2 text-xs text-gray-300">
-                          <svg
-                            className="w-4 h-4 text-green-400"
-                            fill="currentColor"
-                            viewBox="0 0 20 20"
-                          >
-                            <path
-                              fillRule="evenodd"
-                              d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
-                              clipRule="evenodd"
-                            />
-                          </svg>
-                          <span>
-                            Your data is protected with 256-bit SSL encryption
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
                 </div>
               </div>
-            </div>
-          </div>
-        </main>
+            </nav>
+          </header>
 
-        {/* Footer - unchanged */}
-        <footer className="bg-text-primary text-white py-10">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-center mb-8">
-              <div className="flex items-center">
-                <img src={Logo} alt="StripPals" className="w-12 h-12" />
-                <span className="ml-2 text-xl font-serif font-semibold text-white">
-                  StripPals
-                </span>
-              </div>
-            </div>
-
-            <div className="flex flex-wrap justify-center items-center gap-x-4 gap-y-2 text-xs sm:text-sm text-white/70 mb-8">
-              <Link to="/protect" className="hover:text-white transition">
-                Protect our children!
-              </Link>
-              <span className="text-white/30">/</span>
-              <Link to="/terms" className="hover:text-white transition">
-                Terms of use
-              </Link>
-              <span className="text-white/30">/</span>
-              <Link to="/privacy" className="hover:text-white transition">
-                Privacy
-              </Link>
-              <span className="text-white/30">/</span>
-              <Link to="/cookies" className="hover:text-white transition">
-                Cookies
-              </Link>
-              <span className="text-white/30">/</span>
-              <Link to="/complaint" className="hover:text-white transition">
-                Complaint policy
-              </Link>
-              <span className="text-white/30">/</span>
-              <Link to="/2257" className="hover:text-white transition">
-                2257
-              </Link>
-              <span className="text-white/30">/</span>
-              <Link to="/dmca" className="hover:text-white transition">
-                DMCA
-              </Link>
-              <span className="text-white/30">/</span>
-              <Link to="/pricing" className="hover:text-white transition">
-                Pricing
-              </Link>
-              <span className="text-white/30">/</span>
-              <Link to="/contact" className="hover:text-white transition">
-                Contact
-              </Link>
-              <span className="text-white/30">/</span>
-              <Link to="/affiliates" className="hover:text-white transition">
-                Affiliates
-              </Link>
-            </div>
-
-            <div className="text-center text-white/60 text-xs leading-relaxed max-w-4xl mx-auto mb-6">
-              <p>
-                The minimum age for participation on stripPals.com is 18 years.
-                The site is optimised for desktops, mobile phones and tablets.
-                stripPals.com is a social platform for men and women who are
-                looking for fun, flirty contact. Every day, hundreds of members
-                sign up. Based on your profile settings, you will receive match
-                suggestions. However, you can also use our search functionality
-                and browse for profiles yourself. This is completely up to you.
-                stripPals.com is designed for entertainment. Profiles are partly
-                fictional, physical arrangements with these profiles are not
-                possible. We strongly advise you to read our Terms and
-                Conditions before using our Service.
-              </p>
-            </div>
-
-            <div className="border-t border-white/10 pt-6 text-center">
-              <p className="text-white/50 text-xs">
-                stripPals.com © 2026 All rights reserved.
-              </p>
-            </div>
-          </div>
-        </footer>
-
-        {/* Sign In Modal */}
-        {showSignIn && (
-          <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-            <div className="bg-black/80 backdrop-blur-sm rounded-2xl max-w-md w-full relative p-6 border border-white/20">
-              <button
-                onClick={() => {
-                  setShowSignIn(false);
-                }}
-                className="absolute top-4 right-4 text-white hover:text-primary"
-                aria-label="Close sign in"
-              >
-                <svg
-                  className="w-6 h-6"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </button>
-
-              <div className="w-full">
-                <div className="mt-6 mb-4">
-                  <button
-                    onClick={() => {
-                      setShowSignIn(false);
-                      handleGoogleLogin();
-                    }}
-                    className="w-full flex items-center justify-center space-x-3 py-3 border border-white/20 rounded-lg bg-white/90 hover:bg-white/100 transition-all duration-300 text-black font-medium"
-                  >
-                    <svg className="w-5 h-5 mr-2" viewBox="0 0 533.5 544.3">
+          {/* Google Loading Overlay */}
+          {googleLoading && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
+              <div className="bg-black rounded-2xl p-8 text-center shadow-2xl max-w-sm w-full mx-4 border border-white/20">
+                <div className="w-16 h-16 mx-auto mb-4 relative">
+                  <div className="absolute inset-0 rounded-full bg-white/20 animate-ping"></div>
+                  <div className="relative bg-white rounded-full p-3">
+                    <svg className="w-10 h-10" viewBox="0 0 24 24">
                       <path
-                        fill="#4285f4"
-                        d="M533.5 278.4c0-17.4-1.6-34.3-4.6-50.7H272v95.9h147.1c-6.4 34.8-25.8 64.3-55 84.1v69.8h88.8c51.9-47.8 82.6-118.1 82.6-198.9z"
+                        fill="#4285F4"
+                        d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
                       />
                       <path
-                        fill="#34a853"
-                        d="M272 544.3c73.7 0 135.6-24.4 180.8-66.2l-88.8-69.8c-24.7 16.6-56.6 26.5-92 26.5-70.8 0-130.9-47.8-152.4-112.1H28.6v70.7C73.8 486.2 167.9 544.3 272 544.3z"
+                        fill="#34A853"
+                        d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
                       />
                       <path
-                        fill="#fbbc04"
-                        d="M119.6 325.7c-10.2-30.7-10.2-63.7 0-94.4V160.6H28.6c-39.6 78.7-39.6 174.9 0 253.6l91-88.5z"
+                        fill="#FBBC05"
+                        d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
                       />
                       <path
-                        fill="#ea4335"
-                        d="M272 108.4c39.9 0 75.8 13.7 104.1 40.6l78-78C406.9 24.2 344.9 0 272 0 167.9 0 73.8 58.1 28.6 160.6l91 88.5C141.1 156.2 201.2 108.4 272 108.4z"
+                        fill="#EA4335"
+                        d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
                       />
                     </svg>
-                    Continue with Google
-                  </button>
+                  </div>
+                </div>
+                <div className="flex justify-center mb-4">
+                  <div className="w-10 h-10 border-4 border-white border-t-white rounded-full animate-spin"></div>
+                </div>
+                <h3 className="text-xl font-semibold text-white mb-2">
+                  Redirecting to Google
+                </h3>
+                <p className="text-white/60 text-sm">Please wait a moment...</p>
+              </div>
+            </div>
+          )}
+
+          {/* Email Sign-Up Modal */}
+          {showEmailModal && (
+            <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+              <div className="bg-black/90 backdrop-blur-sm rounded-2xl max-w-md w-full relative p-8 border border-white/20">
+                {/* Close button */}
+                <button
+                  onClick={() => {
+                    setShowEmailModal(false);
+                    setEmailModalError(null);
+                  }}
+                  className="absolute top-4 right-4 text-gray-400 hover:text-white transition"
+                  aria-label="Close modal"
+                >
+                  <svg
+                    className="w-6 h-6"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
+
+                {/* Modal Content */}
+                <div className="text-center mb-6">
+                  <div className="flex justify-center mb-4">
+                    <img src={Logo} alt="StripPals" className="w-16 h-16" />
+                  </div>
+                  <h2 className="text-2xl font-serif font-semibold text-white">
+                    Join StripPals
+                  </h2>
+                  <p className="text-gray-400 text-sm mt-1">
+                    Create your account to start connecting
+                  </p>
                 </div>
 
-                <div className="text-center text-sm text-gray-300 mt-2">or</div>
+                {/* Modal Error */}
+                {emailModalError && (
+                  <div className="mb-4 p-3 rounded-lg bg-red-500/20 border border-red-500/30 text-red-400 text-sm text-center">
+                    {emailModalError}
+                  </div>
+                )}
 
-                <h3 className="text-xl text-white mb-4">Sign In</h3>
-
-                <form onSubmit={handleEmailSignIn} className="space-y-4">
+                <form onSubmit={handleEmailSignUp} className="space-y-4">
+                  {/* Email */}
                   <div>
-                    <label className="block text-sm text-gray-200 mb-2">
+                    <label className="block text-white/80 text-sm font-medium mb-1.5">
                       Email
                     </label>
                     <input
                       type="email"
+                      value={emailModalEmail}
+                      onChange={(e) => {
+                        setEmailModalEmail(e.target.value);
+                        setEmailModalError(null);
+                      }}
+                      className="w-full border border-white/20 rounded-lg py-3 px-4 bg-black text-white focus:border-primary focus:ring-2 focus:ring-primary/20"
+                      placeholder="Enter your email"
                       required
-                      value={signinEmail}
-                      onChange={(e) => setSigninEmail(e.target.value)}
-                      className="w-full border border-white/20 rounded-lg py-3 px-4 bg-gray-200 text-black focus:border-primary focus:ring-2 focus:ring-primary/20"
                     />
                   </div>
 
+                  {/* Password */}
                   <div>
-                    <label className="block text-sm text-gray-200 mb-2">
+                    <label className="block text-white/80 text-sm font-medium mb-1.5">
                       Password
                     </label>
                     <input
                       type="password"
+                      value={emailModalPassword}
+                      onChange={(e) => {
+                        setEmailModalPassword(e.target.value);
+                        setEmailModalError(null);
+                      }}
+                      className="w-full border border-white/20 rounded-lg py-3 px-4 bg-black text-white focus:border-primary focus:ring-2 focus:ring-primary/20"
+                      placeholder="Create a password (min 6 characters)"
                       required
-                      value={signinPassword}
-                      onChange={(e) => setSigninPassword(e.target.value)}
-                      className="w-full border border-white/20 rounded-lg py-3 px-4 bg-gray-200 text-black focus:border-primary focus:ring-2 focus:ring-primary/20"
+                      minLength="6"
                     />
+                    <p className="text-gray-500 text-xs mt-1">
+                      Must be at least 6 characters
+                    </p>
                   </div>
 
-                  {signinError && (
-                    <div className="text-sm text-red-400">{signinError}</div>
-                  )}
+                  {/* Submit Button */}
+                  <button
+                    type="submit"
+                    disabled={emailModalLoading}
+                    className="w-full py-3 bg-primary hover:bg-primary-600 text-white font-medium rounded-lg transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {emailModalLoading ? "Creating account..." : "Join Now!"}
+                  </button>
+                </form>
 
-                  <div className="flex gap-3">
-                    <button
-                      type="submit"
-                      disabled={signinLoading}
-                      className="flex-1 py-3 bg-primary text-white rounded-lg"
-                    >
-                      {signinLoading ? "Signing in..." : "Sign In"}
-                    </button>
-
+                {/* Sign In Link inside modal */}
+                <div className="text-center mt-4">
+                  <p className="text-gray-400 text-sm">
+                    Already have an account?{" "}
                     <button
                       type="button"
                       onClick={() => {
-                        setSigninLoading(true);
-                        supabase.auth
-                          .signInWithOtp({ email: signinEmail })
-                          .then(({ error }) => {
-                            setSigninLoading(false);
-                            if (error) setSigninError(error.message);
-                            else {
-                              setShowSignIn(false);
-                              alert("Magic link sent to your email.");
-                            }
-                          });
+                        setShowEmailModal(false);
+                        setShowSignIn(true);
                       }}
-                      className="flex-1 py-3 border border-white/20 rounded-lg text-white"
+                      className="text-primary hover:text-primary-400 transition"
                     >
-                      Send Magic Link
+                      Sign In
                     </button>
-                  </div>
-                </form>
+                  </p>
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
+
+          {/* Main Content */}
+          <main className="min-h-screen pt-16">
+            <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+              <div className="flex justify-center">
+                <div className="w-full max-w-6xl">
+                  <div className="grid lg:grid-cols-2 gap-8 items-start">
+                    {/* Left benefits */}
+                    <div className="hidden lg:block">
+                      <div className="max-w-lg mt-8">
+                        <h1 className="text-4xl md:text-5xl font-serif font-semibold text-white mb-6 leading-tight">
+                          Your Perfect Match is{" "}
+                          <span className="text-primary font-accent italic">
+                            Waiting
+                          </span>
+                        </h1>
+                        <p className="text-xl text-gray-200 mb-8 leading-relaxed">
+                          Join thousands who've found meaningful relationships
+                          through our intelligent matching system and authentic
+                          community.
+                        </p>
+                        <div className="space-y-4 mb-8">
+                          <Benefit label="Advanced compatibility matching" />
+                          <Benefit label="Verified profiles for authentic connections" />
+                          <Benefit label="Safe & secure messaging platform" />
+                          <Benefit label="Interactive icebreakers & conversation starters" />
+                        </div>
+                        <div className="grid grid-cols-2 gap-6">
+                          <div className="text-center">
+                            <div className="text-3xl font-bold text-primary mb-1">
+                              50K+
+                            </div>
+                            <p className="text-sm text-gray-200">
+                              Active Members
+                            </p>
+                          </div>
+                          <div className="text-center">
+                            <div className="text-3xl font-bold text-secondary mb-1">
+                              2.5K+
+                            </div>
+                            <p className="text-sm text-gray-200">
+                              Success Stories
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Sign Up Form */}
+                    <div className="w-full flex justify-center px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+                      <div className="w-full max-w-md">
+                        {/* Auth Message */}
+                        {authMessage && (
+                          <div
+                            className={`mb-4 p-3 rounded-lg text-sm text-center ${
+                              authMessage.type === "error"
+                                ? "bg-red-500/20 border border-red-500/30 text-red-400"
+                                : "bg-green-500/20 border border-green-500/30 text-green-400"
+                            }`}
+                          >
+                            {authMessage.text}
+                          </div>
+                        )}
+
+                        <div className="p-4 sm:p-6 bg-black/40 backdrop-blur-sm rounded-2xl border border-white/20 w-full">
+                          {/* Mobile heading */}
+                          <div className="lg:hidden text-center mb-6">
+                            <h1 className="text-2xl sm:text-3xl font-serif font-semibold text-white mb-2">
+                              Join StripPals Today
+                            </h1>
+                            <p className="text-gray-200 text-sm">
+                              Start your journey to meaningful connections
+                            </p>
+                          </div>
+
+                          {/* Form Fields */}
+                          <div className="space-y-5 sm:space-y-6">
+                            {/* I am (Gender) */}
+                            <div>
+                              <label className="block text-white/80 text-sm font-medium mb-1.5">
+                                I am a
+                              </label>
+                              <select
+                                value={formData.gender}
+                                onChange={(e) =>
+                                  handleFieldChange("gender", e.target.value)
+                                }
+                                onBlur={() => handleFieldBlur("gender")}
+                                className={`w-full border rounded-lg py-3 px-4 bg-black text-white focus:border-primary focus:ring-2 focus:ring-primary/20 ${
+                                  touched.gender && errors.gender
+                                    ? "border-red-500"
+                                    : "border-white/20"
+                                }`}
+                              >
+                                <option value="" className="text-gray-700">
+                                  Select...
+                                </option>
+                                <option value="male" className="text-gray-700">
+                                  Man
+                                </option>
+                                <option
+                                  value="female"
+                                  className="text-gray-700"
+                                >
+                                  Woman
+                                </option>
+                              </select>
+                              {touched.gender && errors.gender && (
+                                <p className="text-red-400 text-xs mt-1">
+                                  {errors.gender}
+                                </p>
+                              )}
+                            </div>
+
+                            {/* Looking for */}
+                            <div>
+                              <label className="block text-white/80 text-sm font-medium mb-1.5">
+                                Looking for
+                              </label>
+                              <select
+                                value={formData.lookingFor}
+                                onChange={(e) =>
+                                  handleFieldChange(
+                                    "lookingFor",
+                                    e.target.value,
+                                  )
+                                }
+                                onBlur={() => handleFieldBlur("lookingFor")}
+                                className={`w-full border rounded-lg py-3 px-4 bg-black text-white focus:border-primary focus:ring-2 focus:ring-primary/20 ${
+                                  touched.lookingFor && errors.lookingFor
+                                    ? "border-red-500"
+                                    : "border-white/20"
+                                }`}
+                              >
+                                <option value="" className="text-gray-700">
+                                  Select...
+                                </option>
+                                <option value="male" className="text-gray-700">
+                                  Men
+                                </option>
+                                <option
+                                  value="female"
+                                  className="text-gray-700"
+                                >
+                                  Women
+                                </option>
+                              </select>
+                              {touched.lookingFor && errors.lookingFor && (
+                                <p className="text-red-400 text-xs mt-1">
+                                  {errors.lookingFor}
+                                </p>
+                              )}
+                            </div>
+
+                            {/* Date of Birth - Custom iOS-friendly */}
+                            <div>
+                              <label className="block text-white/80 text-sm font-medium mb-1.5">
+                                Date of birth
+                              </label>
+                              <div className="relative w-full">
+                                <input
+                                  type="date"
+                                  value={formData.dateOfBirth}
+                                  onChange={(e) =>
+                                    handleFieldChange(
+                                      "dateOfBirth",
+                                      e.target.value,
+                                    )
+                                  }
+                                  onBlur={() => handleFieldBlur("dateOfBirth")}
+                                  className={`w-full min-w-0 border rounded-lg py-3 px-4 bg-black text-white focus:border-primary focus:ring-2 focus:ring-primary/20 appearance-none ${
+                                    touched.dateOfBirth && errors.dateOfBirth
+                                      ? "border-red-500"
+                                      : "border-white/20"
+                                  }`}
+                                  style={{
+                                    minWidth: 0,
+                                    maxWidth: "100%",
+                                    boxSizing: "border-box",
+                                    WebkitAppearance: "none", // Removes default iOS styling
+                                    appearance: "none",
+                                  }}
+                                />
+                                {/* Custom calendar icon */}
+                                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                                  <svg
+                                    className="w-5 h-5 text-gray-400"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <rect
+                                      x="3"
+                                      y="4"
+                                      width="18"
+                                      height="18"
+                                      rx="2"
+                                      stroke="currentColor"
+                                      strokeWidth="1.5"
+                                    />
+                                    <path
+                                      d="M3 10h18"
+                                      stroke="currentColor"
+                                      strokeWidth="1.5"
+                                    />
+                                    <path
+                                      d="M8 2v4"
+                                      stroke="currentColor"
+                                      strokeWidth="1.5"
+                                      strokeLinecap="round"
+                                    />
+                                    <path
+                                      d="M16 2v4"
+                                      stroke="currentColor"
+                                      strokeWidth="1.5"
+                                      strokeLinecap="round"
+                                    />
+                                  </svg>
+                                </div>
+                              </div>
+                              {touched.dateOfBirth && errors.dateOfBirth && (
+                                <p className="text-red-400 text-xs mt-1">
+                                  {errors.dateOfBirth}
+                                </p>
+                              )}
+                            </div>
+
+                            {/* City - FIXED: same width as other inputs */}
+                            <div>
+                              <label className="block text-white/80 text-sm font-medium mb-1.5">
+                                City
+                              </label>
+                              {country && (
+                                <LocationInput
+                                  countryCode={country}
+                                  onSelect={handleLocationSelect}
+                                  placeholder="Enter a location..."
+                                />
+                              )}
+                              {touched.city && errors.city && (
+                                <p className="text-red-400 text-xs mt-1">
+                                  {errors.city}
+                                </p>
+                              )}
+                            </div>
+
+                            {/* Username */}
+                            <div>
+                              <label className="block text-white/80 text-sm font-medium mb-1.5">
+                                Username
+                              </label>
+                              <input
+                                type="text"
+                                value={formData.displayName}
+                                onChange={(e) =>
+                                  handleFieldChange(
+                                    "displayName",
+                                    e.target.value,
+                                  )
+                                }
+                                onBlur={() => handleFieldBlur("displayName")}
+                                className={`w-full border rounded-lg py-3 px-4 bg-black text-white focus:border-primary focus:ring-2 focus:ring-primary/20 ${
+                                  touched.displayName && errors.displayName
+                                    ? "border-red-500"
+                                    : "border-white/20"
+                                }`}
+                                placeholder="Choose a username"
+                              />
+                              {touched.displayName && errors.displayName && (
+                                <p className="text-red-400 text-xs mt-1">
+                                  {errors.displayName}
+                                </p>
+                              )}
+                            </div>
+
+                            {/* Divider */}
+                            <div className="relative my-4">
+                              <div className="absolute inset-0 flex items-center">
+                                <div className="w-full border-t border-white/20"></div>
+                              </div>
+                              <div className="relative flex justify-center text-sm">
+                                <span className="px-4 bg-black text-gray-300">
+                                  Choose how you want to sign up
+                                </span>
+                              </div>
+                            </div>
+
+                            {/* Sign Up Buttons */}
+                            <div className="space-y-3">
+                              <button
+                                type="button"
+                                onClick={handleGoogleSignIn}
+                                className="w-full flex items-center justify-center space-x-3 py-3 border border-white/20 rounded-lg bg-white/90 hover:bg-white/100 transition-all duration-300 text-black font-medium"
+                              >
+                                <svg
+                                  className="w-5 h-5"
+                                  viewBox="0 0 533.5 544.3"
+                                >
+                                  <path
+                                    fill="#4285f4"
+                                    d="M533.5 278.4c0-17.4-1.6-34.3-4.6-50.7H272v95.9h147.1c-6.4 34.8-25.8 64.3-55 84.1v69.8h88.8c51.9-47.8 82.6-118.1 82.6-198.9z"
+                                  />
+                                  <path
+                                    fill="#34a853"
+                                    d="M272 544.3c73.7 0 135.6-24.4 180.8-66.2l-88.8-69.8c-24.7 16.6-56.6 26.5-92 26.5-70.8 0-130.9-47.8-152.4-112.1H28.6v70.7C73.8 486.2 167.9 544.3 272 544.3z"
+                                  />
+                                  <path
+                                    fill="#fbbc04"
+                                    d="M119.6 325.7c-10.2-30.7-10.2-63.7 0-94.4V160.6H28.6c-39.6 78.7-39.6 174.9 0 253.6l91-88.5z"
+                                  />
+                                  <path
+                                    fill="#ea4335"
+                                    d="M272 108.4c39.9 0 75.8 13.7 104.1 40.6l78-78C406.9 24.2 344.9 0 272 0 167.9 0 73.8 58.1 28.6 160.6l91 88.5C141.1 156.2 201.2 108.4 272 108.4z"
+                                  />
+                                </svg>
+                                Sign up with Google
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={handleOpenEmailModal}
+                                className="w-full py-3 border border-white/20 rounded-lg bg-black/40 hover:bg-white/20 transition-all duration-300 text-white font-medium"
+                              >
+                                Sign up with Email
+                              </button>
+                            </div>
+
+                            {/* Sign In Link */}
+                            <div className="text-center mt-6 pt-6 border-t border-white/20">
+                              <p className="text-gray-300 text-sm">
+                                Already have an account?{" "}
+                                <button
+                                  onClick={() => setShowSignIn(true)}
+                                  className="text-primary hover:text-primary-400 font-medium transition-colors duration-300"
+                                >
+                                  Sign In
+                                </button>
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Security badge */}
+                        <div className="mt-6 text-center">
+                          <div className="flex items-center justify-center space-x-2 text-xs text-gray-300">
+                            <svg
+                              className="w-4 h-4 text-green-400"
+                              fill="currentColor"
+                              viewBox="0 0 20 20"
+                            >
+                              <path
+                                fillRule="evenodd"
+                                d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
+                                clipRule="evenodd"
+                              />
+                            </svg>
+                            <span>
+                              Your data is protected with 256-bit SSL encryption
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </main>
+
+          {/* Footer - unchanged */}
+          <footer className="bg-text-primary text-white py-10">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="flex justify-center mb-8">
+                <div className="flex items-center">
+                  <img src={Logo} alt="StripPals" className="w-12 h-12" />
+                  <span className="ml-2 text-xl font-serif font-semibold text-white">
+                    StripPals
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap justify-center items-center gap-x-4 gap-y-2 text-xs sm:text-sm text-white/70 mb-8">
+                <Link to="/protect" className="hover:text-white transition">
+                  Protect our children!
+                </Link>
+                <span className="text-white/30">/</span>
+                <Link to="/terms" className="hover:text-white transition">
+                  Terms of use
+                </Link>
+                <span className="text-white/30">/</span>
+                <Link to="/privacy" className="hover:text-white transition">
+                  Privacy
+                </Link>
+                <span className="text-white/30">/</span>
+                <Link to="/cookies" className="hover:text-white transition">
+                  Cookies
+                </Link>
+                <span className="text-white/30">/</span>
+                <Link to="/complaint" className="hover:text-white transition">
+                  Complaint policy
+                </Link>
+                <span className="text-white/30">/</span>
+                <Link to="/2257" className="hover:text-white transition">
+                  2257
+                </Link>
+                <span className="text-white/30">/</span>
+                <Link to="/dmca" className="hover:text-white transition">
+                  DMCA
+                </Link>
+                <span className="text-white/30">/</span>
+                <Link to="/pricing" className="hover:text-white transition">
+                  Pricing
+                </Link>
+                <span className="text-white/30">/</span>
+                <Link to="/contact" className="hover:text-white transition">
+                  Contact
+                </Link>
+                <span className="text-white/30">/</span>
+                <Link to="/affiliates" className="hover:text-white transition">
+                  Affiliates
+                </Link>
+              </div>
+
+              <div className="border-t border-white/10 pt-6 text-center">
+                <p className="text-white/50 text-xs">
+                  stripPals.com © 2026 All rights reserved.
+                </p>
+              </div>
+            </div>
+          </footer>
+
+          {/* Sign In Modal */}
+          {showSignIn && (
+            <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+              <div className="bg-black/80 backdrop-blur-sm rounded-2xl max-w-md w-full relative p-6 border border-white/20">
+                <button
+                  onClick={() => {
+                    setShowSignIn(false);
+                  }}
+                  className="absolute top-4 right-4 text-white hover:text-primary"
+                  aria-label="Close sign in"
+                >
+                  <svg
+                    className="w-6 h-6"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
+
+                <div className="w-full">
+                  <div className="mt-6 mb-4">
+                    <button
+                      onClick={() => {
+                        setShowSignIn(false);
+                        handleGoogleLogin();
+                      }}
+                      className="w-full flex items-center justify-center space-x-3 py-3 border border-white/20 rounded-lg bg-white/90 hover:bg-white/100 transition-all duration-300 text-black font-medium"
+                    >
+                      <svg className="w-5 h-5 mr-2" viewBox="0 0 533.5 544.3">
+                        <path
+                          fill="#4285f4"
+                          d="M533.5 278.4c0-17.4-1.6-34.3-4.6-50.7H272v95.9h147.1c-6.4 34.8-25.8 64.3-55 84.1v69.8h88.8c51.9-47.8 82.6-118.1 82.6-198.9z"
+                        />
+                        <path
+                          fill="#34a853"
+                          d="M272 544.3c73.7 0 135.6-24.4 180.8-66.2l-88.8-69.8c-24.7 16.6-56.6 26.5-92 26.5-70.8 0-130.9-47.8-152.4-112.1H28.6v70.7C73.8 486.2 167.9 544.3 272 544.3z"
+                        />
+                        <path
+                          fill="#fbbc04"
+                          d="M119.6 325.7c-10.2-30.7-10.2-63.7 0-94.4V160.6H28.6c-39.6 78.7-39.6 174.9 0 253.6l91-88.5z"
+                        />
+                        <path
+                          fill="#ea4335"
+                          d="M272 108.4c39.9 0 75.8 13.7 104.1 40.6l78-78C406.9 24.2 344.9 0 272 0 167.9 0 73.8 58.1 28.6 160.6l91 88.5C141.1 156.2 201.2 108.4 272 108.4z"
+                        />
+                      </svg>
+                      Continue with Google
+                    </button>
+                  </div>
+
+                  <div className="text-center text-sm text-gray-300 mt-2">
+                    or
+                  </div>
+
+                  <h3 className="text-xl text-white mb-4">Sign In</h3>
+
+                  <form onSubmit={handleEmailSignIn} className="space-y-4">
+                    <div>
+                      <label className="block text-sm text-gray-200 mb-2">
+                        Email
+                      </label>
+                      <input
+                        type="email"
+                        required
+                        value={signinEmail}
+                        onChange={(e) => setSigninEmail(e.target.value)}
+                        className="w-full border border-white/20 rounded-lg py-3 px-4 bg-gray-200 text-black focus:border-primary focus:ring-2 focus:ring-primary/20"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm text-gray-200 mb-2">
+                        Password
+                      </label>
+                      <input
+                        type="password"
+                        required
+                        value={signinPassword}
+                        onChange={(e) => setSigninPassword(e.target.value)}
+                        className="w-full border border-white/20 rounded-lg py-3 px-4 bg-gray-200 text-black focus:border-primary focus:ring-2 focus:ring-primary/20"
+                      />
+                    </div>
+
+                    {signinError && (
+                      <div className="text-sm text-red-400">{signinError}</div>
+                    )}
+
+                    <div className="flex gap-3">
+                      <button
+                        type="submit"
+                        disabled={signinLoading}
+                        className="flex-1 py-3 bg-primary text-white rounded-lg"
+                      >
+                        {signinLoading ? "Signing in..." : "Sign In"}
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSigninLoading(true);
+                          supabase.auth
+                            .signInWithOtp({ email: signinEmail })
+                            .then(({ error }) => {
+                              setSigninLoading(false);
+                              if (error) setSigninError(error.message);
+                              else {
+                                setShowSignIn(false);
+                                alert("Magic link sent to your email.");
+                              }
+                            });
+                        }}
+                        className="flex-1 py-3 border border-white/20 rounded-lg text-white"
+                      >
+                        Send Magic Link
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

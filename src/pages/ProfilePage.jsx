@@ -2,7 +2,6 @@
 import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { supabase } from "../lib/supabaseClient";
-import { LoveSpinner } from "../components/Spinner";
 
 // ----------------------------------------------------------------------
 // Normalize profile data from the database
@@ -635,422 +634,448 @@ export default function ProfilePage() {
   // --------------------------------------------------------------------
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-white">
-        <LoveSpinner size="large" color="#ff6b6b" />
+      <div className="min-h-screen bg-[#09080a] pt-24 px-4">
+        <div className="max-w-6xl mx-auto animate-pulse">
+          <div className="h-[68vh] min-h-[520px] rounded-[2rem] bg-white/5 border border-white/10" />
+          <div className="grid lg:grid-cols-[1.25fr_.75fr] gap-6 mt-6">
+            <div className="h-72 rounded-3xl bg-white/5 border border-white/10" />
+            <div className="h-72 rounded-3xl bg-white/5 border border-white/10" />
+          </div>
+        </div>
       </div>
     );
   }
 
   if (error || !member) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-black text-white">
-        <p>{error ?? "Profile not found"}</p>
-        <button
-          onClick={() => navigate("/members")}
-          className="mt-4 px-4 py-2 bg-purple-600 rounded hover:bg-purple-700 transition"
-        >
-          Back to members
-        </button>
+      <div className="min-h-screen flex items-center justify-center bg-[#09080a] text-white px-4">
+        <div className="max-w-md w-full rounded-3xl border border-white/10 bg-white/[0.04] p-8 text-center shadow-2xl">
+          <div className="w-14 h-14 rounded-2xl bg-white/5 flex items-center justify-center mx-auto mb-5 text-2xl">
+            ♡
+          </div>
+          <h1 className="text-2xl font-semibold mb-2">Profile unavailable</h1>
+          <p className="text-white/55 mb-6">
+            {error ?? "This profile could not be found."}
+          </p>
+          <button
+            onClick={() => navigate("/members")}
+            className="w-full py-3 rounded-xl font-semibold text-white transition hover:opacity-90"
+            style={{
+              backgroundImage: "linear-gradient(135deg,#8b4b6b,#d4a574)",
+            }}
+          >
+            Back to members
+          </button>
+        </div>
       </div>
     );
   }
 
-  // --------------------------------------------------------------------
-  // Render
-  // --------------------------------------------------------------------
+  const locationText = [member.city, member.state, member.country]
+    .filter(Boolean)
+    .join(", ");
+  const detailRows = [
+    ["Relationship", member.relationship || "—"],
+    ["Height", formatHeight(member.height) || "—"],
+    ["Body type", member.body_type || "—"],
+    ["Hair", member.hair_colour || "—"],
+    ["Eyes", member.eye_colour || "—"],
+    ["Tattoo", member.tattoo === null ? "—" : member.tattoo ? "Yes" : "No"],
+    [
+      "Piercing",
+      member.piercing === null ? "—" : member.piercing ? "Yes" : "No",
+    ],
+    ["Smoker", member.smoker === null ? "—" : member.smoker ? "Yes" : "No"],
+  ];
+
   return (
-    <div className="pt-16 min-h-screen bg-background">
-      <section className="relative min-h-screen overflow-hidden pt-16">
-        <div className="absolute inset-0 z-0">
-          <img
-            src={member.image_url}
-            alt={member.display_name}
-            className="w-full h-full object-cover  "
-          />
-        </div>
-        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
+    <div className="min-h-screen bg-[#09080a] text-white pt-16">
+      {/* Premium hero */}
+      <section className="relative min-h-[78vh] lg:min-h-[86vh] overflow-hidden">
+        <img
+          src={member.image_url}
+          alt={member.display_name}
+          className="absolute inset-0 w-full h-full object-cover object-center"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#09080a] via-black/35 to-black/20" />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/55 via-transparent to-transparent" />
 
-        <div className="relative z-10 p-8 max-w-5xl mx-auto h-full flex flex-col justify-end">
-          <h1 className="text-5xl text-primary font-bold">
-            {member.display_name}, {member.age}
-          </h1>
-          <p className="mt-2 text-white/80">
-            {[member.city, member.state, member.country]
-              .filter(Boolean)
-              .join(", ")}
-          </p>
-
-          <button
-            onClick={handleMessage}
-            className="mt-6 w-48 py-3 rounded-xl font-semibold hover:from-purple-700 hover:to-pink-700 transition"
-            style={{
-              backgroundImage: "linear-gradient(to right, #8b4b6b, #d4a574)",
-            }}
+        <button
+          onClick={() => navigate(-1)}
+          className="absolute top-6 left-4 sm:left-8 z-20 w-11 h-11 rounded-full bg-black/35 backdrop-blur-xl border border-white/15 flex items-center justify-center hover:bg-black/55 transition"
+          aria-label="Go back"
+        >
+          <svg
+            className="w-5 h-5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
           >
-            Message
-          </button>
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              d="M15 19l-7-7 7-7"
+            />
+          </svg>
+        </button>
 
-          <div className="flex flex-wrap gap-2 mt-4">
-            <h2 className="text-3xl text-white font-semibold mb-2">
-              Quick Flirt
-            </h2>
-            <br />
+        <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 min-h-[78vh] lg:min-h-[86vh] flex items-end pb-10 sm:pb-14">
+          <div className="w-full max-w-3xl">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/35 backdrop-blur-xl border border-white/15 text-xs sm:text-sm text-white/80 mb-4">
+              <span className="w-2 h-2 rounded-full bg-emerald-400" />
+              Profile
+            </div>
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-semibold tracking-tight leading-none">
+              {member.display_name}
+              <span className="text-[#d4a574]">, {member.age}</span>
+            </h1>
+            {locationText && (
+              <p className="mt-4 text-white/75 flex items-center gap-2 text-sm sm:text-base">
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M17.657 16.657L13.414 20.9a2 2 0 01-2.828 0l-4.243-4.243a8 8 0 1111.314 0z"
+                  />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                  />
+                </svg>
+                {locationText}
+              </p>
+            )}
 
-            {flirtMessages.map((msg, idx) => (
+            <div className="mt-7 flex flex-col sm:flex-row gap-3">
               <button
-                key={idx}
-                onClick={() => sendQuickFlirt(msg)}
-                disabled={sendingFlirt !== null}
-                className={`px-4 py-2 rounded-full text-white text-sm transition-all duration-300 flex items-center justify-center gap-2 ${
-                  sendingFlirt === msg
-                    ? "opacity-80 cursor-not-allowed"
-                    : "hover:scale-105"
-                }`}
+                onClick={handleMessage}
+                className="sm:w-52 py-3.5 px-6 rounded-2xl font-semibold shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl"
                 style={{
-                  backgroundImage:
-                    "linear-gradient(to right, #8b4b6b, #d4a574)",
+                  backgroundImage: "linear-gradient(135deg,#8b4b6b,#d4a574)",
                 }}
               >
-                {sendingFlirt === msg ? (
-                  <>
-                    <svg
-                      className="w-4 h-4 items-center animate-spin"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <circle
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                      />
-                      <path
-                        d="M4 12a8 8 0 018-8"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                      />
-                    </svg>
-                    Sending...
-                  </>
-                ) : (
-                  msg
-                )}
+                Message {member.display_name}
               </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Two‑column layout for Bio/About (left) and Preferences (right) */}
-        <div className="relative max-w-5xl mx-auto p-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {/* Left Column */}
-            <div className="space-y-6">
-              <section>
-                <h2 className="text-3xl text-white font-semibold mb-2">Bio</h2>
-                <p className="text-white/80">
-                  {member.bio || "No bio provided."}
-                </p>
-              </section>
-
-              <section>
-                <h2 className="text-3xl text-white font-semibold mb-2">
-                  About
-                </h2>
-                <p className="text-white/80">
-                  {member.about || "No additional details."}
-                </p>
-              </section>
-
-              <div className="mt-6  max-w-5xl mx-auto">
-                <h2 className="text-3xl font-semibold mb-3 text-white">
-                  Photos
-                </h2>
-
-                <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
-                  {member.previewImages?.map((img, index) => (
-                    <img
-                      key={index}
-                      src={img}
-                      alt={`preview-${index}`}
-                      onClick={() => setActiveImage(img)}
-                      className="w-28 h-36 object-cover rounded-lg flex-shrink-0 cursor-pointer hover:scale-105 transition"
-                    />
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Right Column – Preferences */}
-            <div className="relative bg-black/30 rounded-lg p-6 border border-white/10 text-white/90">
-              <h2 className="text-2xl font-semibold mb-4">Details</h2>
-              <ul className="space-y-2 text-sm">
-                <li>
-                  <span className="font-semibold text-white">
-                    Marital Status:
-                  </span>{" "}
-                  <span className="text-white/80">
-                    {member.relationship || "—"}
-                  </span>
-                </li>
-                <li>
-                  <span className="font-semibold text-white">Height:</span>{" "}
-                  <span className="text-white/80">
-                    {formatHeight(member.height) || "—"}
-                  </span>
-                </li>
-                <li>
-                  <span className="font-semibold text-white">Body Type:</span>{" "}
-                  <span className="text-white/80">
-                    {member.body_type || "—"}
-                  </span>
-                </li>
-                <li>
-                  <span className="font-semibold text-white">Hair Color:</span>{" "}
-                  <span className="text-white/80">
-                    {member.hair_colour || "—"}
-                  </span>
-                </li>
-                <li>
-                  <span className="font-semibold text-white">Eye Color:</span>{" "}
-                  <span className="text-white/80">
-                    {member.eye_colour || "—"}
-                  </span>
-                </li>
-                <li>
-                  <span className="font-semibold text-white">Tattoo:</span>{" "}
-                  <span className="text-white/80">
-                    {member.tattoo === null
-                      ? "—"
-                      : member.tattoo
-                        ? "Yes"
-                        : "No"}
-                  </span>
-                </li>
-                <li>
-                  <span className="font-semibold text-white">Piercing:</span>{" "}
-                  {member.piercing === null
-                    ? "—"
-                    : member.piercing
-                      ? "Yes"
-                      : "No"}
-                </li>
-                <li>
-                  <span className="font-semibold text-white">Smoker:</span>{" "}
-                  {member.smoker === null ? "—" : member.smoker ? "Yes" : "No"}
-                </li>
-              </ul>
-              <h1 className="text-2xl pt-3">Interests:</h1>
-              <span>
-                {member.interests?.length
-                  ? member.interests.join(", ")
-                  : "No interest found"}
-              </span>
+              <button
+                onClick={() =>
+                  document
+                    .getElementById("profile-details")
+                    ?.scrollIntoView({ behavior: "smooth" })
+                }
+                className="sm:w-44 py-3.5 px-6 rounded-2xl font-medium bg-white/10 backdrop-blur-xl border border-white/15 hover:bg-white/15 transition"
+              >
+                View profile
+              </button>
             </div>
           </div>
         </div>
       </section>
 
-      {showFlirtSuccess && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
-          <div className="bg-zinc-900 rounded-2xl p-6 w-[90%] max-w-sm text-center border border-pink-500/20">
-            <h3 className="text-xl font-semibold text-white mb-3">
-              Flirt Sent 💕
-            </h3>
-
-            <p className="text-white/70 mb-6">
-              Your flirt message was sent successfully.
-            </p>
-
-            <div className="flex gap-3">
-              <button
-                onClick={() => setShowFlirtSuccess(false)}
-                className="flex-1 py-2 rounded-lg  text-white hover:opacity-90 transition"
-                style={{
-                  backgroundImage:
-                    "linear-gradient(to right, #8b4b6b, #d4a574)",
-                }}
-              >
-                Continue Browsing
-              </button>
-
-              <button
-                onClick={() => navigate(`/chat/${lastFlirtConversationId}`)}
-                className="flex-1 py-2 rounded-lg bg-primary text-white hover:opacity-90 transition"
-              >
-                View Chat
-              </button>
+      <main
+        id="profile-details"
+        className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pb-20"
+      >
+        {/* Quick flirt */}
+        <section className="-mt-1 relative z-20 rounded-3xl border border-white/10 bg-[#111013]/95 backdrop-blur-xl p-5 sm:p-6 shadow-2xl">
+          <div className="flex flex-col lg:flex-row lg:items-center gap-5">
+            <div className="lg:w-48 shrink-0">
+              <p className="text-xs uppercase tracking-[0.2em] text-[#d4a574] font-semibold">
+                Break the ice
+              </p>
+              <h2 className="text-xl font-semibold mt-1">Quick Flirt</h2>
+            </div>
+            <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide lg:flex-wrap">
+              {flirtMessages.map((msg, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => sendQuickFlirt(msg)}
+                  disabled={sendingFlirt !== null}
+                  className={`shrink-0 px-4 py-2.5 rounded-xl border text-sm transition ${sendingFlirt === msg ? "border-[#d4a574]/40 bg-[#d4a574]/10 text-[#d4a574]" : "border-white/10 bg-white/[0.04] text-white/80 hover:bg-white/[0.08] hover:border-white/20"}`}
+                >
+                  {sendingFlirt === msg ? "Sending…" : msg}
+                </button>
+              ))}
             </div>
           </div>
-        </div>
-      )}
+        </section>
 
-      {/* Low Credit Warning Modal */}
-      {showLowCreditModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-red-50 rounded-2xl max-w-md w-full p-6 shadow-xl">
-            <div className="text-center">
-              <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg
-                  className="w-8 h-8 text-orange-500"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-                  />
-                </svg>
+        <div className="grid lg:grid-cols-[1.35fr_.65fr] gap-6 mt-6">
+          <div className="space-y-6">
+            <section className="rounded-3xl border border-white/10 bg-white/[0.035] p-6 sm:p-8">
+              <div className="flex items-center gap-3 mb-5">
+                <div className="w-1 h-7 rounded-full bg-[#d4a574]" />
+                <h2 className="text-2xl font-semibold">
+                  About {member.display_name}
+                </h2>
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">
-                Low Credits!
-              </h3>
-              <p className="text-gray-600 mb-4">
-                You only have{" "}
-                <span className="font-bold text-orange-600">{credits}</span>{" "}
-                credits left.
-                {lowCreditThreshold - credits === 1
-                  ? " This is your last credit!"
-                  : ` You need at least 1 credit to send a message.`}
+              <p className="text-white/72 leading-7">
+                {member.bio || "No bio provided."}
               </p>
-              <div className="flex gap-3">
-                <button
-                  onClick={() => setShowLowCreditModal(false)}
-                  className="flex-1 px-4 py-2 border border-primary rounded-lg text-gray-700 hover:bg-gray-50 transition"
-                >
-                  Dismiss
-                </button>
-                <button
-                  onClick={goToCredits}
-                  className="flex-1 px-4 py-2 bg-primary text-white rounded-lg hover:opacity-90 transition"
-                >
-                  Buy Credits
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+              {member.about && (
+                <p className="text-white/55 leading-7 mt-4 pt-4 border-t border-white/8">
+                  {member.about}
+                </p>
+              )}
+            </section>
 
-      {/* Out of Credits Modal */}
-      {showOutOfCreditsModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-red-50 rounded-2xl max-w-md w-full p-6 shadow-xl">
-            <div className="text-center">
-              <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg
-                  className="w-8 h-8 text-red-500"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2-1.343-2-3-2z"
-                  />
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M12 8V4M8 4h8M4 4h16v12H4V4z"
-                  />
-                </svg>
+            <section className="rounded-3xl border border-white/10 bg-white/[0.035] p-6 sm:p-8">
+              <div className="flex items-center justify-between mb-5">
+                <h2 className="text-2xl font-semibold">Photos</h2>
+                <span className="text-xs text-white/40">
+                  {member.previewImages?.length || 0} photos
+                </span>
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">
-                Out of Credits!
-              </h3>
-              <p className="text-gray-600 mb-2">
-                You don't have enough credits to send a message.
-              </p>
-              <p className="text-sm text-gray-500 mb-6">
-                Each message costs <span className="font-medium">1 credit</span>
-                .
-              </p>
-              <div className="flex gap-3">
-                <button
-                  onClick={() => setShowOutOfCreditsModal(false)}
-                  className="flex-1 px-4 py-2 border border-primary rounded-lg text-gray-700 hover:bg-gray-50 transition"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={goToCredits}
-                  className="flex-1 px-4 py-2 bg-primary text-white rounded-lg hover:opacity-90 transition"
-                >
-                  Buy Credits
-                </button>
+              {member.previewImages?.length ? (
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  {member.previewImages.map((img, index) => (
+                    <button
+                      key={`${img}-${index}`}
+                      onClick={() => setActiveImage(img)}
+                      className={`group relative overflow-hidden rounded-2xl bg-white/5 ${index === 0 ? "col-span-2 sm:col-span-2 row-span-2" : ""}`}
+                    >
+                      <img
+                        src={img}
+                        alt={`${member.display_name} ${index + 1}`}
+                        loading="lazy"
+                        className={`w-full object-cover transition duration-500 group-hover:scale-105 ${index === 0 ? "h-72 sm:h-[390px]" : "h-40 sm:h-[190px]"}`}
+                      />
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/15 transition" />
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-white/45">No additional photos yet.</p>
+              )}
+            </section>
+          </div>
+
+          <aside className="space-y-6">
+            <section className="rounded-3xl border border-white/10 bg-white/[0.035] p-6 sticky top-24">
+              <h2 className="text-xl font-semibold mb-5">Profile details</h2>
+              <div className="divide-y divide-white/[0.07]">
+                {detailRows.map(([label, value]) => (
+                  <div
+                    key={label}
+                    className="py-3 flex items-center justify-between gap-4"
+                  >
+                    <span className="text-sm text-white/45">{label}</span>
+                    <span className="text-sm text-white/85 text-right font-medium">
+                      {value}
+                    </span>
+                  </div>
+                ))}
               </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Related Profiles – below the two columns */}
-      <div className="bg-black px-6 pt-16">
-        <h2 className="text-3xl text-white font-semibold mb-6">
-          {" "}
-          You might also like
-        </h2>
-
-        {loadingRelated ? (
-          <div className="flex flex-col-2 justify-center py-12">
-            <div className="w-8 h-8 border-4 border-purple-600 border-t-transparent rounded-full animate-spin" />
-          </div>
-        ) : relatedProfiles.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
-            {relatedProfiles.map((profile) => (
-              <div
-                key={profile.id}
-                className="bg-black rounded-2xl overflow-hidden cursor-pointer hover:scale-105 transition-transform duration-200"
-                onClick={() =>
-                  navigate(`/profile/${profile.id}`, {
-                    state: { member: profile },
-                  })
-                }
-              >
-                <img
-                  src={
-                    profile.image_url ||
-                    "https://via.placeholder.com/400x300?text=Profile"
-                  }
-                  alt={profile.display_name}
-                  className="w-full h-48 object-cover"
-                />
-                <div className="p-4">
-                  <h3 className="text-xl text-white font-semibold">
-                    {profile.display_name}, {profile.age}
-                  </h3>
-                  <p className="text-white/60 text-sm">
-                    {[profile.city, profile.state, profile.country]
-                      .filter(Boolean)
-                      .join(", ")}
-                  </p>
+              <div className="pt-5 mt-2 border-t border-white/[0.07]">
+                <p className="text-sm text-white/45 mb-3">Interests</p>
+                <div className="flex flex-wrap gap-2">
+                  {member.interests?.length ? (
+                    member.interests.map((interest, index) => (
+                      <span
+                        key={`${interest}-${index}`}
+                        className="px-3 py-1.5 rounded-full bg-[#8b4b6b]/15 border border-[#8b4b6b]/25 text-sm text-white/75"
+                      >
+                        {interest}
+                      </span>
+                    ))
+                  ) : (
+                    <span className="text-sm text-white/50">
+                      No interests listed
+                    </span>
+                  )}
                 </div>
               </div>
-            ))}
+            </section>
+          </aside>
+        </div>
+
+        {/* Related profiles */}
+        <section className="mt-14">
+          <div className="flex items-end justify-between gap-4 mb-6">
+            <div>
+              <p className="text-xs uppercase tracking-[0.2em] text-[#d4a574] font-semibold mb-2">
+                Discover more
+              </p>
+              <h2 className="text-2xl sm:text-3xl font-semibold">
+                You might also like
+              </h2>
+            </div>
+            <button
+              onClick={() => navigate("/members")}
+              className="text-sm text-white/55 hover:text-white transition"
+            >
+              View all →
+            </button>
           </div>
-        ) : (
-          <p className="text-white/60 text-center py-12">
-            No similar profiles found at the moment.
-          </p>
-        )}
-      </div>
+          {loadingRelated ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="h-72 rounded-2xl bg-white/5 border border-white/10 animate-pulse"
+                />
+              ))}
+            </div>
+          ) : relatedProfiles.length > 0 ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-5">
+              {relatedProfiles.slice(0, 8).map((profile) => (
+                <button
+                  key={profile.id}
+                  onClick={() =>
+                    navigate(`/profile/${profile.id}`, {
+                      state: { member: profile },
+                    })
+                  }
+                  className="text-left group rounded-2xl overflow-hidden border border-white/10 bg-white/[0.035] hover:border-white/20 transition"
+                >
+                  <div className="relative overflow-hidden">
+                    <img
+                      src={
+                        profile.image_url ||
+                        "https://via.placeholder.com/400x500?text=Profile"
+                      }
+                      alt={profile.display_name}
+                      loading="lazy"
+                      className="w-full h-56 sm:h-72 object-cover transition duration-500 group-hover:scale-105"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-transparent to-transparent" />
+                  </div>
+                  <div className="p-4">
+                    <h3 className="font-semibold truncate">
+                      {profile.display_name}, {profile.age}
+                    </h3>
+                    <p className="text-white/45 text-xs mt-1 truncate">
+                      {[profile.city, profile.state]
+                        .filter(Boolean)
+                        .join(", ") || profile.country}
+                    </p>
+                  </div>
+                </button>
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-2xl border border-white/10 bg-white/[0.03] py-12 text-center text-white/45">
+              No similar profiles found at the moment.
+            </div>
+          )}
+        </section>
+      </main>
+
+      {showFlirtSuccess && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4">
+          <div className="bg-[#151317] rounded-3xl p-7 w-full max-w-sm text-center border border-white/10 shadow-2xl">
+            <div className="w-14 h-14 rounded-full bg-[#8b4b6b]/20 flex items-center justify-center mx-auto mb-4 text-2xl">
+              💕
+            </div>
+            <h3 className="text-xl font-semibold mb-2">Flirt sent</h3>
+            <p className="text-white/55 mb-6">
+              Your message was sent to {member.display_name}.
+            </p>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                onClick={() => setShowFlirtSuccess(false)}
+                className="py-3 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition"
+              >
+                Keep browsing
+              </button>
+              <button
+                onClick={() => navigate(`/chat/${lastFlirtConversationId}`)}
+                className="py-3 rounded-xl font-semibold"
+                style={{
+                  backgroundImage: "linear-gradient(135deg,#8b4b6b,#d4a574)",
+                }}
+              >
+                View chat
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showLowCreditModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4">
+          <div className="bg-[#151317] rounded-3xl p-7 w-full max-w-sm text-center border border-white/10">
+            <div className="text-3xl mb-3">⚡</div>
+            <h3 className="text-xl font-semibold mb-2">Low credits</h3>
+            <p className="text-white/55 mb-6">
+              You have{" "}
+              <span className="text-[#d4a574] font-semibold">{credits}</span>{" "}
+              credits left.
+            </p>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                onClick={() => setShowLowCreditModal(false)}
+                className="py-3 rounded-xl border border-white/10"
+              >
+                Dismiss
+              </button>
+              <button
+                onClick={goToCredits}
+                className="py-3 rounded-xl font-semibold"
+                style={{
+                  backgroundImage: "linear-gradient(135deg,#8b4b6b,#d4a574)",
+                }}
+              >
+                Buy credits
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showOutOfCreditsModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4">
+          <div className="bg-[#151317] rounded-3xl p-7 w-full max-w-sm text-center border border-white/10">
+            <div className="text-3xl mb-3">♡</div>
+            <h3 className="text-xl font-semibold mb-2">Out of credits</h3>
+            <p className="text-white/55 mb-6">
+              You need at least 1 credit to send a message.
+            </p>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                onClick={() => setShowOutOfCreditsModal(false)}
+                className="py-3 rounded-xl border border-white/10"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={goToCredits}
+                className="py-3 rounded-xl font-semibold"
+                style={{
+                  backgroundImage: "linear-gradient(135deg,#8b4b6b,#d4a574)",
+                }}
+              >
+                Buy credits
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {activeImage && (
         <div
-          className="fixed inset-0 bg-black/90 flex items-center justify-center z-50"
+          className="fixed inset-0 bg-black/95 backdrop-blur-sm flex items-center justify-center z-50 p-4"
           onClick={() => setActiveImage(null)}
         >
+          <button
+            className="absolute top-5 right-5 w-11 h-11 rounded-full bg-white/10 text-2xl"
+            aria-label="Close"
+          >
+            ×
+          </button>
           <img
             src={activeImage}
-            alt="full"
-            className="w-80 h-80 border boreder-white rounded-lg"
+            alt={`${member.display_name} full size`}
+            className="max-w-full max-h-[88vh] object-contain rounded-2xl shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
           />
         </div>
       )}
