@@ -724,10 +724,10 @@ export default function ChatLayout() {
                 placeholder="Search conversations..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full h-11 pl-10 pr-4 rounded-2xl bg-gray-50 border border-gray-200/80 text-sm outline-none focus:bg-white focus:border-[#8b4b6b]/40 focus:ring-4 focus:ring-[#8b4b6b]/10 transition"
+                className="w-full h-11 pl-10 pr-4 rounded-2xl bg-primary/80 border border-gray-200/80 text-sm outline-none focus:bg-white focus:border-[#8b4b6b]/40 focus:ring-4 focus:ring-[#8b4b6b]/10 transition"
               />
               <svg
-                className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"
+                className="absolute left-3.5 top-2/3 -translate-y-1/2 w-4 h-4 text-gray-400"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -744,7 +744,7 @@ export default function ChatLayout() {
 
           {/* Filter Buttons */}
           <div className="px-4 sm:px-5 py-3 border-b border-gray-100 overflow-x-auto bg-white">
-            <div className="flex gap-2 whitespace-nowrap p-1 rounded-2xl bg-gray-50 w-max min-w-full">
+            <div className="flex gap-2 whitespace-nowrap p-1 rounded-2xl w-max min-w-full">
               <button
                 onClick={() => setFilter("all")}
                 className={`px-4 py-2 text-sm font-semibold rounded-xl transition-all ${
@@ -847,11 +847,11 @@ export default function ChatLayout() {
                     }
                   }}
                   className={`
-                    w-full p-4 flex items-center space-x-3 hover:bg-primary/5
-                    active:bg-gray-100 transition-colors text-left cursor-pointer
+                    w-full p-4 flex items-center space-x-3 hover:bg-primary/10
+                    active:bg-primary transition-colors text-left cursor-pointer
                     ${
                       conversationId === conversation.id
-                        ? "bg-[#8b4b6b]/10 ring-1 ring-[#8b4b6b]/10"
+                        ? "bg-primary ring-1 ring-[#8b4b6b]"
                         : ""
                     }
                     ${filter === "flirts" ? "ring-1 ring-pink-100 bg-pink-50/50" : ""}
@@ -933,7 +933,7 @@ export default function ChatLayout() {
                       </p>
                       {!conversation.is_flirt_conversation &&
                         conversation.unread_count > 0 && (
-                          <span className="min-w-5 h-5 px-1.5 inline-flex items-center justify-center text-[10px] font-bold bg-[#8b4b6b] text-white rounded-full flex-shrink-0">
+                          <span className="min-w-5 h-5 px-1.5 inline-flex items-center justify-center text-[10px] font-bold bg-primary text-white rounded-full flex-shrink-0">
                             {conversation.unread_count}
                           </span>
                         )}
