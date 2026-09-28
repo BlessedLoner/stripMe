@@ -16,6 +16,7 @@ import home7 from "../assets/home_img/home7.jpg";
 import home8 from "../assets/home_img/home8.jpg";
 import home9 from "../assets/home_img/home9.jpg";
 import home10 from "../assets/home_img/home10.jpg";
+import strippals1 from "../assets/home_img/strippals1.jpg"
 
 // Placeholder images for the new sections (replace with your actual assets)
 import connectImg from "../assets/home_img/dating.jpeg";
@@ -298,7 +299,7 @@ function Home({ intervalMs = 5000, transitionMs = 800 }) {
               {/* Image Content */}
               <div className="relative rounded-2xl overflow-hidden shadow-2xl h-[400px]">
                 <img
-                  src={newhome2}
+                  src={strippals1}
                   alt="A better way to connect"
                   className="w-full h-full object-cover"
                 />
