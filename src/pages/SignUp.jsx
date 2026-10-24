@@ -2,10 +2,6 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import Logo from "../assets/Logo.png";
-import newhome1 from "../assets/home_img/newhome1.jpg";
-import signimage1 from "../assets/home_img/signimage1.jpg";
-import home9 from "../assets/home_img/home9.jpg";
-import home3 from "../assets/home_img/home3.jpg";
 import { supabase } from "../lib/supabaseClient";
 import { COUNTRIES } from "../components/countries";
 import LocationInput from "../components/LocationInput";
@@ -621,17 +617,14 @@ export default function SignUpPage() {
   return (
     <div className="relative min-h-screen overflow-x-hidden bg-transparent text-text-primary z-10">
       <div>
-        {/* Background images stacked and faded */}
-        <div className="absolute inset-0 z-0">
-          <img
-            src={signimage1}
-            alt="homepage"
-            className="absolute inset-0 w-full h-full object-cover transition-opacity"
-          />
-
-          {/* dark gradient overlay */}
-          <div className="absolute inset-0 bg-black/30" />
-        </div>
+        {/* Brand gradient background */}
+        <div
+          className="absolute inset-0 z-0"
+          style={{
+            background:
+              "radial-gradient(circle at 80% 20%, rgba(247, 209, 170, 0.25), transparent 45%), linear-gradient(135deg, #20070d 0%, #4a1c25 55%, #683039 100%)",
+          }}
+        />
 
         {/* Header */}
         <div className="relative z-10">
@@ -825,40 +818,44 @@ export default function SignUpPage() {
                     <div className="hidden lg:block">
                       <div className="max-w-lg mt-8">
                         <h1 className="text-4xl md:text-5xl font-serif font-semibold text-white mb-6 leading-tight">
-                          Your Perfect Match is{" "}
+                          Flirty Chats Start{" "}
                           <span className="text-primary font-accent italic">
-                            Waiting
+                            Here
                           </span>
                         </h1>
                         <p className="text-xl text-gray-200 mb-8 leading-relaxed">
-                          Join thousands who've found meaningful relationships
-                          through our intelligent matching system and authentic
-                          community.
+                          StripPals is a chat and entertainment site for
+                          adults. Create a free profile, browse members, and
+                          chat using credits.
                         </p>
                         <div className="space-y-4 mb-8">
-                          <Benefit label="Advanced compatibility matching" />
-                          <Benefit label="Verified profiles for authentic connections" />
-                          <Benefit label="Safe & secure messaging platform" />
-                          <Benefit label="Interactive icebreakers & conversation starters" />
+                          <Benefit label="Free to join and browse" />
+                          <Benefit label="Pay-as-you-go credits, no subscription" />
+                          <Benefit label="Private & secure messaging" />
+                          <Benefit label="Icebreakers to get the chat going" />
                         </div>
                         <div className="grid grid-cols-2 gap-6">
                           <div className="text-center">
                             <div className="text-3xl font-bold text-primary mb-1">
-                              50K+
+                              1 = 1
                             </div>
                             <p className="text-sm text-gray-200">
-                              Active Members
+                              One credit, one message
                             </p>
                           </div>
                           <div className="text-center">
                             <div className="text-3xl font-bold text-secondary mb-1">
-                              2.5K+
+                              18+
                             </div>
                             <p className="text-sm text-gray-200">
-                              Success Stories
+                              Adults only
                             </p>
                           </div>
                         </div>
+                        <p className="mt-8 text-sm text-gray-300 leading-relaxed">
+                          Some profiles are fictional and run by our team for
+                          entertainment, so meeting in person isn't possible.
+                        </p>
                       </div>
                     </div>
 
@@ -885,7 +882,8 @@ export default function SignUpPage() {
                               Join StripPals Today
                             </h1>
                             <p className="text-gray-200 text-sm">
-                              Start your journey to meaningful connections
+                              Flirty chat for adults. Some profiles are
+                              fictional and run by our team.
                             </p>
                           </div>
 
@@ -1214,10 +1212,6 @@ export default function SignUpPage() {
                 <span className="text-white/30">/</span>
                 <Link to="/complaint" className="hover:text-white transition">
                   Complaint policy
-                </Link>
-                <span className="text-white/30">/</span>
-                <Link to="/2257" className="hover:text-white transition">
-                  2257
                 </Link>
                 <span className="text-white/30">/</span>
                 <Link to="/dmca" className="hover:text-white transition">

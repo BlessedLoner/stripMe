@@ -2540,10 +2540,6 @@ export default function AccountSettings() {
                 Complaint policy
               </Link>
               <span className="text-white/30">/</span>
-              <Link to="/2257" className="hover:text-white transition">
-                2257
-              </Link>
-              <span className="text-white/30">/</span>
               <Link to="/dmca" className="hover:text-white transition">
                 DMCA
               </Link>

@@ -1,6 +1,5 @@
 import React from "react";
 import LegalPageLayout from "./LegalPageLayout";
-import newbg from "../assets/newbg.jpg";
 
 export default function ProtectOurChildren() {
   return (

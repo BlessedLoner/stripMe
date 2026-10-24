@@ -1,26 +1,19 @@
 // src/pages/Home.jsx
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import SlideingCard from "../components/SlideingCard";
-import SlidingCardTwo from "../components/SlidingCardTwo";
+import {
+  MessageCircle,
+  Coins,
+  Lock,
+  ShieldCheck,
+  Sparkles,
+  Info,
+} from "lucide-react";
 import Logo from "../assets/Logo.png";
-import newhome1 from "../assets/home_img/newhome1.jpg";
-import newhome2 from "../assets/home_img/newhome2.jpg";
-import home from "../assets/home_img/home.jpg";
-import home1 from "../assets/home_img/home1.jpg";
-import home3 from "../assets/home_img/home3.jpg";
-import home4 from "../assets/home_img/home4.jpg";
-import home5 from "../assets/home_img/home5.jpg";
-import home6 from "../assets/home_img/home6.jpg";
-import home7 from "../assets/home_img/home7.jpg";
-import home8 from "../assets/home_img/home8.jpg";
-import home9 from "../assets/home_img/home9.jpg";
-import home10 from "../assets/home_img/home10.jpg";
-import strippals1 from "../assets/home_img/strippals1.jpg"
-
-// Placeholder images for the new sections (replace with your actual assets)
 import connectImg from "../assets/home_img/dating.jpeg";
 import specialImg from "../assets/home_img/found_love.jpeg";
+
+const BRAND_GRADIENT = "linear-gradient(to right, #683039, #f7d1aa)";
 
 // ✅ Check localStorage BEFORE component renders (outside component)
 const getInitialDisclaimerState = () => {
@@ -40,7 +33,7 @@ const getInitialDisclaimerState = () => {
   return true; // Show modal
 };
 
-function Home({ intervalMs = 5000, transitionMs = 800 }) {
+function Home() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
 
@@ -53,58 +46,6 @@ function Home({ intervalMs = 5000, transitionMs = 800 }) {
   useEffect(() => {
     setMobileOpen(false);
   }, [location.pathname]);
-
-  const images = [
-    home9,
-    home,
-    home1,
-    home3,
-    home4,
-    home5,
-    home6,
-    home7,
-    home8,
-    home10,
-  ];
-
-  const [index, setIndex] = useState(0);
-  const intervalRef = useRef(null);
-
-  // preload images once
-  useEffect(() => {
-    images.forEach((src) => {
-      const img = new Image();
-      img.src = src;
-    });
-  }, [images]);
-
-  // rotation timer
-  useEffect(() => {
-    if (intervalRef.current) clearInterval(intervalRef.current);
-
-    intervalRef.current = setInterval(() => {
-      setIndex((i) => (i + 1) % images.length);
-    }, intervalMs);
-
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
-    };
-  }, [intervalMs, images.length]);
-
-  const handleNext = () => {
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
-    }
-    setIndex((i) => (i + 1) % images.length);
-
-    intervalRef.current = setInterval(() => {
-      setIndex((i) => (i + 1) % images.length);
-    }, intervalMs);
-  };
 
   const handleConfirmAndContinue = () => {
     localStorage.setItem("disclaimerAgreed", "true");
@@ -157,51 +98,91 @@ function Home({ intervalMs = 5000, transitionMs = 800 }) {
         </header>
 
         {/* Hero Section */}
-        <section className="relative h-180 flex items-center justify-center overflow-hidden pt-16">
-          {/* Background images stacked and faded */}
-          <div className="absolute inset-0 z-0">
-            <img
-              src={newhome1}
-              alt="homepage"
-              className="absolute inset-0 w-full h-full object-cover transition-opacity"
-            />
-
-            {/* dark gradient overlay */}
-            <div className="absolute inset-0 bg-black/30" />
-          </div>
-
-          {/* Hero Content (z-10) */}
-          <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center sm:text-left">
-            <div className="max-w-2xl">
+        <section
+          className="relative min-h-[44rem] flex items-center overflow-hidden pt-24 pb-32"
+          style={{
+            background:
+              "radial-gradient(circle at 80% 20%, rgba(247, 209, 170, 0.25), transparent 45%), linear-gradient(135deg, #20070d 0%, #4a1c25 55%, #683039 100%)",
+          }}
+        >
+          <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid lg:grid-cols-2 gap-12 items-center">
+            {/* Hero Content */}
+            <div className="text-center lg:text-left">
+              <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-xs font-medium text-white/80 mb-6">
+                <Sparkles className="w-3.5 h-3.5" />
+                Flirty chat &amp; entertainment · 18+
+              </span>
               <h1 className="text-4xl md:text-6xl font-serif font-semibold text-white mb-6 leading-tight">
-                Connect, Discover freely. Keep it discreet.
+                Flirty conversations, whenever you want them.
               </h1>
-              <p className="text-lg md:text-xl text-white/90 mb-8 leading-relaxed">
-                A space for curious, open-minded people to meet, connect, and
-                see where the chemistry takes them with the freedom to choose
-                what comes next.
+              <p className="text-lg md:text-xl text-white/85 mb-4 leading-relaxed">
+                StripPals is a chat site for adults. Browse profiles, pick who
+                you like, and enjoy fun, flirty conversations using credits.
+              </p>
+              <p className="text-sm text-white/60 mb-8 leading-relaxed">
+                Some profiles are fictional and run by our team for
+                entertainment, so meeting in person isn't possible.
               </p>
 
               {/* CTA Buttons */}
-              <div className="flex flex-col sm:flex-row gap-4 justify-center sm:justify-start items-center">
+              <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start items-center">
                 <Link
                   to="/sign-up"
                   state={{ openSignIn: true }} // 👈 Open modal here too
                   className="px-8 py-4 rounded-full text-white font-semibold transition-all duration-300 hover:scale-105 shadow-lg"
-                  style={{
-                    backgroundImage:
-                      "linear-gradient(to right, #683039, #f7d1aa)",
-                  }}
+                  style={{ backgroundImage: BRAND_GRADIENT }}
                 >
-                  Start Discreetly
+                  Join Free
                 </Link>
+                <a
+                  href="#how-it-works"
+                  className="text-white/80 hover:text-white font-medium transition-colors"
+                >
+                  How it works →
+                </a>
+              </div>
+            </div>
+
+            {/* Sample chat preview */}
+            <div className="hidden lg:block" aria-hidden="true">
+              <div className="mx-auto max-w-sm rounded-3xl border border-white/15 bg-white/10 backdrop-blur-md p-6 shadow-2xl space-y-4">
+                <div className="flex items-center gap-3 pb-4 border-b border-white/10">
+                  <div
+                    className="w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold"
+                    style={{ backgroundImage: BRAND_GRADIENT }}
+                  >
+                    S
+                  </div>
+                  <div>
+                    <p className="text-white font-semibold text-sm">Sophie</p>
+                    <p className="text-emerald-300 text-xs">Online now</p>
+                  </div>
+                </div>
+                <div className="max-w-[80%] rounded-2xl rounded-tl-sm bg-white/15 px-4 py-2.5 text-sm text-white">
+                  Hey you 👋 I saw you like travelling too. Where's next?
+                </div>
+                <div
+                  className="ml-auto max-w-[80%] rounded-2xl rounded-tr-sm px-4 py-2.5 text-sm text-white"
+                  style={{ backgroundImage: BRAND_GRADIENT }}
+                >
+                  Thinking Lisbon… any tips? 😄
+                </div>
+                <div className="max-w-[80%] rounded-2xl rounded-tl-sm bg-white/15 px-4 py-2.5 text-sm text-white">
+                  Only if you promise to send me a sunset photo 🌅
+                </div>
+                <p className="text-center text-xs text-white/50 pt-2">
+                  1 message = 1 credit
+                </p>
               </div>
             </div>
           </div>
         </section>
 
         {/* Section: It's easy to match (Warm Gradient Card) */}
-        <section className="relative -mt-20 z-20 px-4 sm:px-6 lg:px-8 pb-16">
+        <section
+          id="how-it-works"
+          className="relative -mt-20 z-20 px-4 sm:px-6 lg:px-8 pb-16 scroll-mt-24"
+        >
           <div
             className="max-w-6xl mx-auto rounded-2xl shadow-xl overflow-hidden text-white"
             style={{
@@ -249,13 +230,11 @@ function Home({ intervalMs = 5000, transitionMs = 800 }) {
                     2
                   </div>
 
-                  <h3 className="text-xl font-semibold">
-                    Find Your Connection
-                  </h3>
+                  <h3 className="text-xl font-semibold">Browse Profiles</h3>
 
                   <p className="text-sm text-white/90 leading-relaxed">
-                    Browse interesting people, discover who's around, and find
-                    someone who catches your attention.
+                    Look through profiles, check who's online, and pick someone
+                    who catches your attention.
                   </p>
                 </div>
 
@@ -265,11 +244,11 @@ function Home({ intervalMs = 5000, transitionMs = 800 }) {
                     3
                   </div>
 
-                  <h3 className="text-xl font-semibold">Start Something</h3>
+                  <h3 className="text-xl font-semibold">Start Chatting</h3>
 
                   <p className="text-sm text-white/90 leading-relaxed">
-                    Send a message, spark a conversation, and let the chemistry
-                    decide where things go.
+                    Buy credits and send messages. Each message costs one
+                    credit, and you only pay for what you use.
                   </p>
                 </div>
               </div>
@@ -284,23 +263,36 @@ function Home({ intervalMs = 5000, transitionMs = 800 }) {
               {/* Text Content */}
               <div className="space-y-6">
                 <h2 className="text-4xl md:text-5xl font-serif font-semibold text-gray-900">
-                  Connection, Made Simple
+                  Chat, Made Simple
                 </h2>
 
                 <p className="text-lg text-gray-600 leading-relaxed">
-                  Discover people who spark your curiosity, start conversations
-                  that feel natural, and see where the chemistry takes you.
-                  Whether you're looking for a casual spark, meaningful
-                  connection, or something in between, you decide what feels
-                  right.
+                  No awkward first dates and no pressure — just light-hearted,
+                  flirty conversation whenever you feel like it. Pick a
+                  profile, say hello, and keep the chat going at your own pace.
                 </p>
+
+                <ul className="space-y-3 text-gray-700">
+                  <li className="flex items-start gap-3">
+                    <MessageCircle className="w-5 h-5 text-[#683039] mt-0.5 flex-shrink-0" />
+                    Chat any time, day or night
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <Coins className="w-5 h-5 text-[#683039] mt-0.5 flex-shrink-0" />
+                    Pay-as-you-go credits — no subscription
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <Info className="w-5 h-5 text-[#683039] mt-0.5 flex-shrink-0" />
+                    Some profiles are fictional and run by our team
+                  </li>
+                </ul>
               </div>
 
               {/* Image Content */}
               <div className="relative rounded-2xl overflow-hidden shadow-2xl h-[400px]">
                 <img
-                  src={strippals1}
-                  alt="A better way to connect"
+                  src={connectImg}
+                  alt="Two people holding hands"
                   className="w-full h-full object-cover"
                 />
               </div>
@@ -312,13 +304,25 @@ function Home({ intervalMs = 5000, transitionMs = 800 }) {
         <section className="py-16 bg-gray-50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="grid md:grid-cols-2 gap-12 items-center">
-              {/* Image Content */}
-              <div className="relative rounded-2xl overflow-hidden shadow-2xl h-[400px]">
-                <img
-                  src={home}
-                  alt="A better way to connect"
-                  className="w-full h-full object-cover"
-                />
+              {/* Icon Panel */}
+              <div
+                className="relative rounded-2xl overflow-hidden shadow-2xl h-[320px] md:h-[400px] flex items-center justify-center"
+                style={{
+                  background:
+                    "linear-gradient(135deg, #20070d 0%, #683039 70%, #b8826a 100%)",
+                }}
+              >
+                <div className="text-center text-white px-8">
+                  <div className="mx-auto mb-6 w-20 h-20 rounded-full bg-white/10 border border-white/20 flex items-center justify-center">
+                    <Lock className="w-9 h-9" />
+                  </div>
+                  <p className="text-2xl font-serif font-semibold">
+                    Private by design
+                  </p>
+                  <p className="text-white/70 text-sm mt-2">
+                    Your details are never shown to other members.
+                  </p>
+                </div>
               </div>
 
               {/* Text Content */}
@@ -328,14 +332,15 @@ function Home({ intervalMs = 5000, transitionMs = 800 }) {
                 </h2>
 
                 <p className="text-gray-600 leading-relaxed">
-                  Meaningful connections should never come at the cost of your
-                  privacy. That's why we've designed every part of the
-                  experience with discretion in mind. Profiles are carefully
-                  reviewed, your personal information is kept protected, and you
-                  remain in control of what you share, when you share it, and
-                  who gets to see it. Connect at your own pace, explore
-                  comfortably, and enjoy the freedom to be yourself without
-                  unnecessary exposure.
+                  Your personal details stay protected, and you stay in control
+                  of what you share. Payments are handled by a secure payment
+                  provider, and your card details are never stored on our
+                  servers.
+                </p>
+
+                <p className="flex items-start gap-3 text-gray-700">
+                  <ShieldCheck className="w-5 h-5 text-[#683039] mt-0.5 flex-shrink-0" />
+                  Adults only — you must be 18 or older to join.
                 </p>
               </div>
             </div>
@@ -349,25 +354,22 @@ function Home({ intervalMs = 5000, transitionMs = 800 }) {
               {/* Text Content */}
               <div className="space-y-6">
                 <h2 className="text-4xl md:text-5xl font-serif font-semibold text-gray-900">
-                  Discover Someone Who Feels Different
+                  Find a Chat That Feels Fun
                 </h2>
 
                 <p className="text-lg text-gray-600 leading-relaxed">
-                  Sometimes, the right connection is simply a matter of finding
-                  someone who matches your energy, interests, and intentions.
-                  Discover carefully selected profiles that could spark your
-                  curiosity, your conversation, or something more meaningful.
-                  Take your time, explore at your own pace, and let each
-                  connection unfold naturally — because the best chemistry can't
-                  always be planned.
+                  Every profile has its own personality, interests, and sense
+                  of humour. Find someone whose vibe matches yours, start a
+                  conversation, and enjoy the banter — it's entertainment, on
+                  your own terms.
                 </p>
               </div>
 
               {/* Image Content */}
               <div className="relative rounded-2xl overflow-hidden shadow-2xl h-[400px]">
                 <img
-                  src={home4}
-                  alt="Dedicated to helping you find your special connection"
+                  src={specialImg}
+                  alt="Two hands close together"
                   className="w-full h-full object-cover"
                 />
               </div>
@@ -377,31 +379,24 @@ function Home({ intervalMs = 5000, transitionMs = 800 }) {
 
         {/* Final CTA - Ready to Find Your Perfect Match */}
         <section
-          className="relative  flex items-center justify-center overflow-hidden 
-            h-156"
+          className="relative flex items-center justify-center overflow-hidden py-24"
           style={{
-            backgroundImage: "linear-gradient(to right, #f5f3f0ff, #f7d1aaff)",
+            background:
+              "linear-gradient(135deg, #683039 0%, #4a1c25 50%, #20070d 100%)",
           }}
         >
-          <div className="absolute inset-0 z-0">
-            <SlideingCard />
-            <SlidingCardTwo />
-            <div className="absolute inset-0 bg-gradient-to-r from-primary-900/80 via-secondary-800/70 to-accent-800/60" />
-          </div>
-
           {/* Hero Content */}
           <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
             <div className="max-w-4xl mx-auto">
               <h2 className="text-4xl md:text-5xl font-serif font-semibold text-white mb-6">
-                Ready to Find Your
+                Ready to Start{" "}
                 <span className="text-accent-200 font-accent italic">
-                  Perfect Match?
+                  Chatting?
                 </span>
               </h2>
               <p className="text-xl text-white/90 mb-8 max-w-2xl mx-auto">
-                With thousands of women looking for a (sex) flirt, you are
-                guaranteed to make your dreams come true! When will YOU become a
-                member?
+                Create your free profile, browse members, and send your first
+                message in minutes.
               </p>
 
               <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
@@ -417,18 +412,17 @@ function Home({ intervalMs = 5000, transitionMs = 800 }) {
                   Create Free Account
                 </Link>
 
-                <Link
-                  to="/sign-up"
-                  state={{ openSignIn: true }}
+                <a
+                  href="#how-it-works"
                   className="text-white hover:text-accent-200 font-medium transition-colors duration-300"
                 >
                   Learn How It Works →
-                </Link>
+                </a>
               </div>
 
               {/* Final Trust Indicator */}
               <div className="mt-8 text-white/70 text-sm">
-                <p>Free to join • No credit card required • Cancel anytime</p>
+                <p>Free to join • No subscription • Pay only for messages</p>
               </div>
             </div>
           </div>
@@ -467,10 +461,6 @@ function Home({ intervalMs = 5000, transitionMs = 800 }) {
               <span className="text-white/30">/</span>
               <Link to="/complaint" className="hover:text-white transition">
                 Complaint policy
-              </Link>
-              <span className="text-white/30">/</span>
-              <Link to="/2257" className="hover:text-white transition">
-                2257
               </Link>
               <span className="text-white/30">/</span>
               <Link to="/dmca" className="hover:text-white transition">
@@ -635,8 +625,9 @@ function Home({ intervalMs = 5000, transitionMs = 800 }) {
                 <li>
                   The purpose of this website is to enable chat conversations
                   between fictitious profiles and users and therefore partly
-                  contain fictitious profiles. Physical meetings are not
-                  possible with these fictitious profiles.
+                  contain fictitious profiles. These profiles are run by our
+                  team for entertainment. Physical meetings are not possible
+                  with these fictitious profiles.
                 </li>
                 <li>
                   Privacy and General Terms and Conditions apply to this

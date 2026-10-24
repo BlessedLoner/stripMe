@@ -4,8 +4,6 @@ import React, { useEffect, useState } from "react";
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import { supabase } from "../lib/supabaseClient";
 import LoveButton from "../components/LoveButton";
-import sexy_pic from "../assets/sexy_pic.jpg";
-import newhome2 from "../assets/home_img/newhome2.jpg";
 import Logo from "../assets/Logo.png";
 import { REGIONS } from "../data/regions";
 
@@ -420,21 +418,13 @@ export default function MembersFromDB({ limit = 200 }) {
 
       {/* Search / discovery hero */}
       <section className="relative overflow-hidden border-b border-rose-100 bg-white">
-        <div className="absolute inset-0 z-0">
-          <img
-            src={newhome2}
-            alt="Happy couple connecting"
-            className="w-full h-full object-cover"
-            loading="lazy"
-            onError={(e) => {
-              e.currentTarget.onerror = null;
-              e.currentTarget.src =
-                "https://images.pexels.com/photos/1024993/pexels-photo-1024993.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2";
-            }}
-          />
-          {/* dark gradient overlay */}
-          <div className="absolute inset-0 bg-black/20" />
-        </div>
+        <div
+          className="absolute inset-0 z-0"
+          style={{
+            background:
+              "radial-gradient(circle at 85% 15%, rgba(247, 209, 170, 0.25), transparent 45%), linear-gradient(135deg, #20070d 0%, #4a1c25 55%, #683039 100%)",
+          }}
+        />
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-7 sm:py-10">
           <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-6">
             <div>
@@ -516,9 +506,7 @@ export default function MembersFromDB({ limit = 200 }) {
                   <option value="long-term">Long-term relationship</option>
                   <option value="casual">Something casual</option>
                   <option value="friends">New friends</option>
-                  <option value="benefits">Friends with benefits</option>
                   <option value="networking">Professional networking</option>
-                  <option value="hookup">Hookup</option>
                   <option value="unsure">Not sure yet</option>
                 </select>
               </div>
@@ -858,10 +846,6 @@ export default function MembersFromDB({ limit = 200 }) {
             <span className="text-white/20">•</span>
             <Link to="/complaint" className="hover:text-white transition">
               Complaint policy
-            </Link>
-            <span className="text-white/20">•</span>
-            <Link to="/2257" className="hover:text-white transition">
-              2257
             </Link>
             <span className="text-white/20">•</span>
             <Link to="/dmca" className="hover:text-white transition">

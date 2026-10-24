@@ -517,10 +517,10 @@ export default function ProfilePage() {
     "🔥 Ready for fun?",
     "💕 You look amazing",
     "😉 Want to chat?",
-    "🍆 Let's get naughty?",
+    "😊 Tell me about your day",
     "💋 Can't stop thinking about you",
     "😏 You caught my eye",
-    "💦 Let's cum together",
+    "✨ You seem like fun",
   ];
 
   const sendQuickFlirt = async (text) => {

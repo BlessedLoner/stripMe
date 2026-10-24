@@ -1,7 +1,4 @@
 import { useState, useEffect, useMemo } from "react";
-import nipple1 from "../assets/nipple1.jpg";
-import nastypics1 from "../assets/nastypics1.jpg";
-import SlideingCard from "../components/SlideingCard";
 import Logo from "../assets/Logo.png";
 import { supabase } from "../lib/supabaseClient"; // Assuming you have Supabase configured
 import { useAuth } from "../context/AuthContext"; // Assuming you have auth context
@@ -369,12 +366,12 @@ function CreditStore() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-12">
               <h1 className="text-4xl md:text-6xl font-serif font-semibold text-text-primary mb-6">
-                Unlock Your{" "}
-                <span className="text-primary">Dating Potential</span>
+                Buy Credits,{" "}
+                <span className="text-primary">Keep Chatting</span>
               </h1>
               <p className="text-xl text-text-secondary max-w-3xl mx-auto mb-8">
-                Boost your connections with premium features designed to help
-                you find meaningful relationships faster and more effectively.
+                Credits let you send messages on StripPals. One message costs
+                one credit. No subscription, no recurring charges.
               </p>
 
               {/* Current Balance Display */}
@@ -402,6 +399,13 @@ function CreditStore() {
                   {currentBalance} credits
                 </span>
               </div>
+
+              {/* What you're paying for */}
+              <p className="max-w-2xl mx-auto mt-6 text-sm text-text-secondary leading-relaxed">
+                StripPals is a chat and entertainment service for adults. Some
+                profiles are fictional and run by our team, so meeting in
+                person isn't possible. Credits are used for messages only.
+              </p>
             </div>
           </div>
         </section>
@@ -600,14 +604,13 @@ function CreditStore() {
         {/* Premium Features Section */}
         <section className="bg-surface">
           <div className="relative min-h-[60vh] sm:min-h-[72vh] lg:min-h-screen flex items-center">
-            <img
-              src={nipple1}
-              alt="Happy couple connecting"
-              className="absolute inset-0 w-full h-full object-cover object-center"
-              loading="lazy"
+            <div
+              className="absolute inset-0"
+              style={{
+                background:
+                  "linear-gradient(135deg, #20070d 0%, #4a1c25 55%, #683039 100%)",
+              }}
             />
-
-            <div className="absolute inset-0 bg-linear-to-r from-primary-900/80 via-secondary-800/70 to-accent-800/60" />
 
             <div className="relative z-10 w-full max-w-4xl mx-auto pt-8 sm:px-6 lg:px-8 text-center">
               <div className="flex items-center justify-center gap-3 mb-4">
@@ -852,14 +855,13 @@ function CreditStore() {
         {/* Trust & Security Section */}
         <section className="bg-surface">
           <div className="relative min-h-[60vh] sm:min-h-[72vh] lg:min-h-screen flex items-center">
-            <img
-              src={nastypics1}
-              alt="Happy user"
-              className="absolute inset-0 w-full h-full object-cover object-center"
-              loading="lazy"
+            <div
+              className="absolute inset-0"
+              style={{
+                background:
+                  "linear-gradient(135deg, #683039 0%, #4a1c25 50%, #20070d 100%)",
+              }}
             />
-
-            <div className="absolute inset-0 bg-gradient-to-r from-primary-900/80 via-secondary-800/70 to-accent-800/60" />
             <div className="relative z-10 w-full max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center mb-16">
               <h2 className="text-4xl md:text-5xl font-serif font-semibold text-text-primary mt-16 mb-6">
                 Secure{" "}
@@ -962,16 +964,15 @@ function CreditStore() {
 
               <div className="bg-gradient-to-r from-primary-50 to-accent-50 rounded-lg p-8 max-w-4xl mx-auto">
                 <h2 className="text-center text-2xl font-bold my-6">
-                  <span className="text-white animate-pulse scale-110">
-                    Flirt, vibe and connect with irresistable people from around
-                    the world
+                  <span className="text-white">
+                    Fun, flirty conversations with profiles from around the
+                    world.
                   </span>
                   <span className="text-primary">
                     {" "}
-                    Your next spark could be just a message away.
+                    Your next chat is just a message away.
                   </span>
                 </h2>
-                <SlideingCard />
               </div>
               <div className="mt-6 pt-6 border-t border-primary/10">
                 <p className="text-sm text-white">
@@ -1109,10 +1110,6 @@ function CreditStore() {
               <span className="text-white/30">/</span>
               <Link to="/complaint" className="hover:text-white transition">
                 Complaint policy
-              </Link>
-              <span className="text-white/30">/</span>
-              <Link to="/2257" className="hover:text-white transition">
-                2257
               </Link>
               <span className="text-white/30">/</span>
               <Link to="/dmca" className="hover:text-white transition">
