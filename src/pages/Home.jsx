@@ -9,8 +9,11 @@ import {
   Sparkles,
   Info,
 } from "lucide-react";
+import SlideingCard from "../components/SlideingCard";
+import SlidingCardTwo from "../components/SlidingCardTwo";
 import Logo from "../assets/Logo.png";
-import connectImg from "../assets/home_img/dating.jpeg";
+import newhome1 from "../assets/home_img/newhome1.jpg";
+import strippals1 from "../assets/home_img/strippals1.jpg";
 import specialImg from "../assets/home_img/found_love.jpeg";
 
 const BRAND_GRADIENT = "linear-gradient(to right, #683039, #f7d1aa)";
@@ -98,16 +101,22 @@ function Home() {
         </header>
 
         {/* Hero Section */}
-        <section
-          className="relative min-h-[44rem] flex items-center overflow-hidden pt-24 pb-32"
-          style={{
-            background:
-              "radial-gradient(circle at 80% 20%, rgba(247, 209, 170, 0.25), transparent 45%), linear-gradient(135deg, #20070d 0%, #4a1c25 55%, #683039 100%)",
-          }}
-        >
-          <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid lg:grid-cols-2 gap-12 items-center">
+        <section className="relative min-h-[44rem] flex items-center overflow-hidden pt-24 pb-32">
+          {/* Background image */}
+          <div className="absolute inset-0 z-0">
+            <img
+              src={newhome1}
+              alt=""
+              className="absolute inset-0 w-full h-full object-cover"
+            />
+
+            {/* dark gradient overlay keeps the text readable */}
+            <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/40 to-black/10" />
+          </div>
+
+          <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             {/* Hero Content */}
-            <div className="text-center lg:text-left">
+            <div className="max-w-2xl text-center lg:text-left">
               <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-xs font-medium text-white/80 mb-6">
                 <Sparkles className="w-3.5 h-3.5" />
                 Flirty chat &amp; entertainment · 18+
@@ -143,38 +152,6 @@ function Home() {
               </div>
             </div>
 
-            {/* Sample chat preview */}
-            <div className="hidden lg:block" aria-hidden="true">
-              <div className="mx-auto max-w-sm rounded-3xl border border-white/15 bg-white/10 backdrop-blur-md p-6 shadow-2xl space-y-4">
-                <div className="flex items-center gap-3 pb-4 border-b border-white/10">
-                  <div
-                    className="w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold"
-                    style={{ backgroundImage: BRAND_GRADIENT }}
-                  >
-                    S
-                  </div>
-                  <div>
-                    <p className="text-white font-semibold text-sm">Sophie</p>
-                    <p className="text-emerald-300 text-xs">Online now</p>
-                  </div>
-                </div>
-                <div className="max-w-[80%] rounded-2xl rounded-tl-sm bg-white/15 px-4 py-2.5 text-sm text-white">
-                  Hey you 👋 I saw you like travelling too. Where's next?
-                </div>
-                <div
-                  className="ml-auto max-w-[80%] rounded-2xl rounded-tr-sm px-4 py-2.5 text-sm text-white"
-                  style={{ backgroundImage: BRAND_GRADIENT }}
-                >
-                  Thinking Lisbon… any tips? 😄
-                </div>
-                <div className="max-w-[80%] rounded-2xl rounded-tl-sm bg-white/15 px-4 py-2.5 text-sm text-white">
-                  Only if you promise to send me a sunset photo 🌅
-                </div>
-                <p className="text-center text-xs text-white/50 pt-2">
-                  1 message = 1 credit
-                </p>
-              </div>
-            </div>
           </div>
         </section>
 
@@ -291,8 +268,8 @@ function Home() {
               {/* Image Content */}
               <div className="relative rounded-2xl overflow-hidden shadow-2xl h-[400px]">
                 <img
-                  src={connectImg}
-                  alt="Two people holding hands"
+                  src={strippals1}
+                  alt="A woman smiling at her phone"
                   className="w-full h-full object-cover"
                 />
               </div>
@@ -379,12 +356,17 @@ function Home() {
 
         {/* Final CTA - Ready to Find Your Perfect Match */}
         <section
-          className="relative flex items-center justify-center overflow-hidden py-24"
+          className="relative flex items-center justify-center overflow-hidden h-156"
           style={{
-            background:
-              "linear-gradient(135deg, #683039 0%, #4a1c25 50%, #20070d 100%)",
+            backgroundImage: "linear-gradient(to right, #f5f3f0ff, #f7d1aaff)",
           }}
         >
+          <div className="absolute inset-0 z-0">
+            <SlideingCard />
+            <SlidingCardTwo />
+            <div className="absolute inset-0 bg-gradient-to-r from-primary-900/80 via-secondary-800/70 to-accent-800/60" />
+          </div>
+
           {/* Hero Content */}
           <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
             <div className="max-w-4xl mx-auto">

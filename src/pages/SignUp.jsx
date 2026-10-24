@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import Logo from "../assets/Logo.png";
+import signimage1 from "../assets/home_img/signimage1.jpg";
 import { supabase } from "../lib/supabaseClient";
 import { COUNTRIES } from "../components/countries";
 import LocationInput from "../components/LocationInput";
@@ -617,14 +618,17 @@ export default function SignUpPage() {
   return (
     <div className="relative min-h-screen overflow-x-hidden bg-transparent text-text-primary z-10">
       <div>
-        {/* Brand gradient background */}
-        <div
-          className="absolute inset-0 z-0"
-          style={{
-            background:
-              "radial-gradient(circle at 80% 20%, rgba(247, 209, 170, 0.25), transparent 45%), linear-gradient(135deg, #20070d 0%, #4a1c25 55%, #683039 100%)",
-          }}
-        />
+        {/* Background image */}
+        <div className="absolute inset-0 z-0">
+          <img
+            src={signimage1}
+            alt="homepage"
+            className="absolute inset-0 w-full h-full object-cover transition-opacity"
+          />
+
+          {/* dark gradient overlay */}
+          <div className="absolute inset-0 bg-black/30" />
+        </div>
 
         {/* Header */}
         <div className="relative z-10">
